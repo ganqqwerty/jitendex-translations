@@ -168,7 +168,7 @@ def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
                     raise ValueError(f"review replacement lost protected token for {source['id']}")
         connection.execute(
             "INSERT INTO review(translation_id,attempt_id,decision,replacement_target,reason) VALUES (?,?,?,?,?)",
-            (source["translation_id"], attempt["id"], decision, replacement, item.get("reason")),
+            (source["translation_id"], attempt["id"], decision, stored_replacement, item.get("reason")),
         )
         if decision in {"accept", "replace"}:
             if decision == "replace":
