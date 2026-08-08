@@ -70,6 +70,18 @@ The live result differs from the earlier 483-manifest simulation by four manifes
 
 The selector deterministically includes minimum/median/p95/maximum serialized sizes, the maximum-unit article, single- and multi-sense entries, Japanese examples, protected tokens, numbers/identifiers, kana-only entries, forms, xrefs, antonyms, sense notes, language-source notes, and culture/domain metadata. High-risk roles use a frozen 110-unit target; all other roles use 100.
 
+## Independent profile runs
+
+The frozen pilot was materialized in three distinct runs so attempts, translations, retries, and review decisions cannot collide between profiles.
+
+| Profile | Run | Batches | Articles | Units | Batch gate |
+|---|---:|---:|---:|---:|---|
+| Conservative 6 / 24 KiB / 100 | 4 | 41 | 57 | 2,377 | pass |
+| Balanced 8 / 32 KiB / 140 | 5 | 37 | 57 | 2,377 | pass |
+| Current control 12 / 48 KiB / 200 | 6 | 35 | 57 | 2,377 | pass |
+
+Every profile independently passes the run-2 source identity gate. Batch verification found zero missing or extra articles, duplicate units, membership mismatches, soft-cap violations in grouped batches, or hard-cap violations in singleton batches.
+
 ## Remaining gate before translation
 
 No translation manifest has been sent. Production and pilot dispatch remain blocked on exact official input-token counts for the complete request bodies. The authenticated Codex transport reports aggregate tokens after execution but does not expose the required input/cached-input/output audit or the input-token-count endpoint. An API credential or equivalent audited Responses transport is required before the pilot can proceed without weakening the frozen protocol.

@@ -1,0 +1,52 @@
+[project]
+work_dir = "work"
+dist_dir = "dist"
+target_language = "ru"
+
+[jitendex]
+version = "2026.07.09.0"
+url = "https://github.com/stephenmk/stephenmk.github.io/releases/download/2026.07.09.0/jitendex-yomitan.zip"
+sha256 = "807d911114af9d2154d270702972aafb2b6a6c2dc2400afa98db870d035c1a0b"
+filename = "jitendex-yomitan.zip"
+
+[kaishi]
+version = "v2.4.1"
+url = "https://github.com/donkuri/kaishi/releases/download/v2.4.1/Kaishi.1.5k.v2.4.1.apkg"
+sha256 = "0bfed7adfb740e49fbe323d05a6899d25942213aa2238749630653e3d11d357e"
+filename = "kaishi-1.5k-v2.4.1.apkg"
+
+[versions]
+extractor = "extractor-v2"
+terminology = "terminology-ru-v1"
+pipeline = "lexicographer-v2"
+translation_prompt = "translate-luna-v1"
+review_prompt = "review-terra-luna-blind-v1"
+
+[models.translation]
+id = "gpt-5.6-luna"
+reasoning_effort = "medium"
+
+[models.review]
+id = "gpt-5.6-terra"
+reasoning_effort = "medium"
+
+[batch]
+profile = "current-control"
+pilot_selection_sha256 = "9e60b1593b739f62c340b45b545f85ca8a59959e4235cbc0c42528d6c68348a8"
+soft_max_articles = 12
+soft_max_bytes = 49152
+soft_max_units = 200
+singleton_threshold_bytes = 16384
+hard_max_article_bytes = 49152
+hard_max_article_units = 200
+
+[schemas.index]
+url = "https://raw.githubusercontent.com/yomidevs/yomitan/649cfb0bdfe7b156447202b151f049784e8468dc/ext/data/schemas/dictionary-index-schema.json"
+sha256 = "dde43ca9ef1580ab638f49bb13bd7d5c55646afd655ff99cf429492598feb69b"
+filename = "dictionary-index-schema.json"
+
+[schemas.term_bank_v3]
+url = "https://raw.githubusercontent.com/yomidevs/yomitan/649cfb0bdfe7b156447202b151f049784e8468dc/ext/data/schemas/dictionary-term-bank-v3-schema.json"
+sha256 = "665904fcaac715a018a7df6b49d3ace08390d614a9da4f62222bce32c8030b87"
+filename = "dictionary-term-bank-v3-schema.json"
+

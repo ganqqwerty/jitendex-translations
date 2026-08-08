@@ -112,6 +112,7 @@ def make_batches(
     connection: sqlite3.Connection, run_id: int, inbox: Path, terminology: dict[str, str],
     soft_max_articles: int, soft_max_bytes: int, soft_max_units: int, singleton_threshold_bytes: int,
     hard_max_article_bytes: int | None = None, hard_max_article_units: int | None = None,
+    article_ids: set[int] | None = None,
 ) -> dict[str, int]:
     grouped: dict[int, list[sqlite3.Row]] = defaultdict(list)
     for unit in connection.execute(
@@ -120,7 +121,8 @@ def make_batches(
                         WHERE bi.unit_id=tu.id AND b.kind='translation')
         ORDER BY tu.article_id,tu.json_pointer""", (run_id,)
     ):
-        grouped[unit["article_id"]].append(unit)
+        if article_ids is None or unit["article_id"] in article_ids:
+            grouped[unit["article_id"]].append(unit)
     articles = {row["id"]: row for row in connection.execute("SELECT * FROM article WHERE selected=1")}
     envelopes = [_article_envelope(connection, articles[article_id], units) for article_id, units in sorted(grouped.items())]
     batches = _pack_envelopes(

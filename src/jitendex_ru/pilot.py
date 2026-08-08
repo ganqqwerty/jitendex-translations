@@ -190,3 +190,94 @@ def build_pilot_selection(
 
 def write_pilot_selection(path: Path, payload: dict[str, Any]) -> None:
     atomic_write(path, canonical_json(payload) + b"\n")
+
+
+def load_pilot_selection(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not isinstance(payload.get("selection_sha256"), str):
+        raise ValueError("invalid pilot selection payload")
+    expected = payload["selection_sha256"]
+    unhashed = dict(payload)
+    unhashed.pop("selection_sha256")
+    actual = sha256_bytes(canonical_json(unhashed))
+    if actual != expected:
+        raise ValueError(f"pilot selection hash mismatch: expected {expected}, got {actual}")
+    articles = payload.get("articles")
+    if not isinstance(articles, list) or not articles:
+        raise ValueError("pilot selection has no articles")
+    article_ids = [article.get("article_id") for article in articles if isinstance(article, dict)]
+    if len(article_ids) != len(articles) or any(not isinstance(item, int) for item in article_ids):
+        raise ValueError("pilot selection contains invalid article IDs")
+    if len(article_ids) != len(set(article_ids)):
+        raise ValueError("pilot selection contains duplicate article IDs")
+    return payload
+
+
+def verify_pilot_batches(
+    connection: sqlite3.Connection, run_id: int, selection: dict[str, Any],
+    limits: Mapping[str, Any],
+) -> dict[str, Any]:
+    selected_ids = {article["article_id"] for article in selection["articles"]}
+    actual_ids = {
+        row[0]
+        for row in connection.execute(
+            """SELECT DISTINCT tu.article_id FROM batch_item bi
+            JOIN batch b ON b.id=bi.batch_id JOIN translation_unit tu ON tu.id=bi.unit_id
+            WHERE b.run_id=? AND b.kind='translation'""",
+            (run_id,),
+        )
+    }
+    batches = connection.execute(
+        "SELECT * FROM batch WHERE run_id=? AND kind='translation' ORDER BY id", (run_id,)
+    ).fetchall()
+    membership_mismatches = connection.execute(
+        """SELECT COUNT(*) FROM batch b WHERE b.run_id=? AND b.kind='translation'
+        AND b.unit_count != (SELECT COUNT(*) FROM batch_item bi WHERE bi.batch_id=b.id)""",
+        (run_id,),
+    ).fetchone()[0]
+    duplicate_units = connection.execute(
+        """SELECT COUNT(*) FROM (
+        SELECT bi.unit_id FROM batch_item bi JOIN batch b ON b.id=bi.batch_id
+        WHERE b.run_id=? AND b.kind='translation' GROUP BY bi.unit_id HAVING COUNT(*) != 1)""",
+        (run_id,),
+    ).fetchone()[0]
+    batched_units = sum(batch["unit_count"] for batch in batches)
+    soft_violations = sum(
+        batch["article_count"] > 1 and (
+            batch["article_count"] > limits["soft_max_articles"]
+            or batch["serialized_bytes"] > limits["soft_max_bytes"]
+            or batch["unit_count"] > limits["soft_max_units"]
+        )
+        for batch in batches
+    )
+    hard_violations = sum(
+        batch["article_count"] == 1 and (
+            batch["serialized_bytes"] > limits["hard_max_article_bytes"]
+            or batch["unit_count"] > limits["hard_max_article_units"]
+        )
+        for batch in batches
+    )
+    report = {
+        "run_id": run_id,
+        "profile": limits["profile"],
+        "selection_sha256": selection["selection_sha256"],
+        "batches": len(batches),
+        "articles": len(actual_ids),
+        "units": batched_units,
+        "missing_articles": sorted(selected_ids - actual_ids),
+        "extra_articles": sorted(actual_ids - selected_ids),
+        "membership_mismatches": membership_mismatches,
+        "duplicate_units": duplicate_units,
+        "soft_cap_violations": soft_violations,
+        "hard_cap_violations": hard_violations,
+    }
+    report["passed"] = (
+        not report["missing_articles"]
+        and not report["extra_articles"]
+        and batched_units == selection["unit_count"]
+        and membership_mismatches == 0
+        and duplicate_units == 0
+        and soft_violations == 0
+        and hard_violations == 0
+    )
+    return report

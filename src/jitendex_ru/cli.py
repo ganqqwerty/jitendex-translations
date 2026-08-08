@@ -14,7 +14,7 @@ from .db import audit, connect, initialize
 from .extract_units import extract_selected
 from .import_jitendex import import_jitendex
 from .import_kaishi import import_kaishi
-from .pilot import build_pilot_selection, write_pilot_selection
+from .pilot import build_pilot_selection, load_pilot_selection, verify_pilot_batches, write_pilot_selection
 from .resolve_selection import apply_resolutions, generate_candidates, make_resolution_batches, selection_manifest_hash, unresolved_report
 from .review import apply_adjudication, ingest_review, make_review_batches
 from .run_integrity import run_history_fingerprint, source_identity_report
@@ -66,6 +66,12 @@ def _parser() -> argparse.ArgumentParser:
     pilot_parser = commands.add_parser("select-luna-pilot")
     pilot_parser.add_argument("--run-id", type=int, required=True)
     pilot_parser.add_argument("--output", type=Path, required=True)
+    pilot_batches_parser = commands.add_parser("make-pilot-batches")
+    pilot_batches_parser.add_argument("--run-id", type=int, required=True)
+    pilot_batches_parser.add_argument("--selection", type=Path, required=True)
+    verify_pilot_parser = commands.add_parser("verify-pilot-batches")
+    verify_pilot_parser.add_argument("--run-id", type=int, required=True)
+    verify_pilot_parser.add_argument("--selection", type=Path, required=True)
     retry = commands.add_parser("retry")
     retry.add_argument("batch_id")
     review_batches = commands.add_parser("make-review-batches")
@@ -306,6 +312,30 @@ def execute(args: argparse.Namespace) -> Any:
                 "run_id", "article_count", "unit_count", "role_counts",
                 "feature_article_counts", "selection_sha256",
             )}
+        if args.command == "make-pilot-batches":
+            selection = load_pilot_selection(args.selection.resolve())
+            article_ids = {article["article_id"] for article in selection["articles"]}
+            limits = config.raw["batch"]
+            terminology = json.loads((config.root / "terminology/ru-v1.json").read_text(encoding="utf-8"))
+            result = make_batches(
+                connection, args.run_id, config.work_dir / f"pilot-{limits['profile']}-inbox", terminology,
+                limits["soft_max_articles"], limits["soft_max_bytes"], limits["soft_max_units"],
+                limits["singleton_threshold_bytes"], limits["hard_max_article_bytes"],
+                limits["hard_max_article_units"], article_ids,
+            )
+            result.update({
+                "run_id": args.run_id,
+                "profile": limits["profile"],
+                "selection_sha256": selection["selection_sha256"],
+            })
+            connection.commit()
+            return result
+        if args.command == "verify-pilot-batches":
+            selection = load_pilot_selection(args.selection.resolve())
+            result = verify_pilot_batches(connection, args.run_id, selection, config.raw["batch"])
+            if not result["passed"]:
+                raise ValueError(f"pilot batch gate failed: {result}")
+            return result
         if args.command == "retry":
             result = retry_or_split(connection, args.batch_id)
             connection.commit()

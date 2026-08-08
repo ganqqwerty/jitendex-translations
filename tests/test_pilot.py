@@ -1,6 +1,9 @@
+import json
+
 import pytest
 
-from jitendex_ru.pilot import ArticleMetric, _select_article_metrics
+from jitendex_ru.pilot import ArticleMetric, _select_article_metrics, load_pilot_selection
+from jitendex_ru.util import canonical_json, sha256_bytes
 
 
 def metric(article_id, units, roles, *features):
@@ -29,3 +32,16 @@ def test_pilot_selector_fails_when_role_floor_is_impossible():
 
     with pytest.raises(ValueError, match="cannot reach role target"):
         _select_article_metrics(metrics, min_units=5, role_targets={"a": 6})
+
+
+def test_pilot_selection_loader_verifies_hash_and_unique_articles(tmp_path):
+    payload = {"articles": [{"article_id": 1}], "unit_count": 1}
+    payload["selection_sha256"] = sha256_bytes(canonical_json(payload))
+    path = tmp_path / "pilot.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert load_pilot_selection(path)["articles"][0]["article_id"] == 1
+    payload["unit_count"] = 2
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="hash mismatch"):
+        load_pilot_selection(path)
