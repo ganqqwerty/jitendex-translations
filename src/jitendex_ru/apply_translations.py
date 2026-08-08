@@ -2,10 +2,33 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 import sqlite3
 from typing import Any
 
-from .util import json_pointer_get, json_pointer_set, sha256_bytes, structural_fingerprint
+from .util import JAPANESE_RE, json_pointer_get, json_pointer_set, sha256_bytes, structural_fingerprint
+
+
+FORM_ONLY_RE = re.compile(r"^(.+?) only$")
+
+
+def _localize_mixed_form_restrictions(node: Any) -> None:
+    """Localize Jitendex's mixed Japanese/English ``<form> only`` labels."""
+    if isinstance(node, dict):
+        content = node.get("content")
+        match = (
+            FORM_ONLY_RE.fullmatch(content)
+            if node.get("lang") == "ja" and isinstance(content, str)
+            else None
+        )
+        if match and JAPANESE_RE.search(match.group(1)):
+            node["content"] = f"только {match.group(1)}"
+            node["lang"] = "ru"
+        for value in node.values():
+            _localize_mixed_form_restrictions(value)
+    elif isinstance(node, list):
+        for item in node:
+            _localize_mixed_form_restrictions(item)
 
 
 def _set_language_for_leaf(source: Any, pointer: str) -> None:
@@ -104,4 +127,7 @@ def apply_article(connection: sqlite3.Connection, run_id: int, article: sqlite3.
             parent["lang"] = source_parent["lang"]
     if structural_fingerprint(comparison, pointers) != expected_fingerprint:
         raise ValueError(f"article {article['id']} unapproved structure changed")
+    # These upstream labels are marked as Japanese and therefore are not
+    # translation units, although their trailing English marker is visible.
+    _localize_mixed_form_restrictions(output)
     return output
