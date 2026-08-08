@@ -85,3 +85,5 @@ Every profile independently passes the run-2 source identity gate. Batch verific
 ## Remaining gate before translation
 
 No translation manifest has been sent. Production and pilot dispatch remain blocked on exact official input-token counts for the complete request bodies. The authenticated Codex transport reports aggregate tokens after execution but does not expose the required input/cached-input/output audit or the input-token-count endpoint. An API credential or equivalent audited Responses transport is required before the pilot can proceed without weakening the frozen protocol.
+
+The `audit-input-tokens` command is implemented against `POST /v1/responses/input_tokens`. It constructs the same tool-free, stateless request body intended for dispatch, including the Luna prompt, separate manifest input, medium/current-turn reasoning configuration, and strict schema. The command currently fails closed with `OPENAI_API_KEY is required for exact input-token counting`; it has not emitted estimated counts or sent a manifest.

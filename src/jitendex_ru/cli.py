@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,7 @@ from .extract_units import extract_selected
 from .import_jitendex import import_jitendex
 from .import_kaishi import import_kaishi
 from .pilot import build_pilot_selection, load_pilot_selection, verify_pilot_batches, write_pilot_selection
+from .openai_requests import audit_run_input_tokens, write_token_audit
 from .resolve_selection import apply_resolutions, generate_candidates, make_resolution_batches, selection_manifest_hash, unresolved_report
 from .review import apply_adjudication, ingest_review, make_review_batches
 from .run_integrity import run_history_fingerprint, source_identity_report
@@ -72,6 +74,9 @@ def _parser() -> argparse.ArgumentParser:
     verify_pilot_parser = commands.add_parser("verify-pilot-batches")
     verify_pilot_parser.add_argument("--run-id", type=int, required=True)
     verify_pilot_parser.add_argument("--selection", type=Path, required=True)
+    token_parser = commands.add_parser("audit-input-tokens")
+    token_parser.add_argument("--run-id", type=int, required=True)
+    token_parser.add_argument("--output", type=Path, required=True)
     retry = commands.add_parser("retry")
     retry.add_argument("batch_id")
     review_batches = commands.add_parser("make-review-batches")
@@ -336,6 +341,18 @@ def execute(args: argparse.Namespace) -> Any:
             if not result["passed"]:
                 raise ValueError(f"pilot batch gate failed: {result}")
             return result
+        if args.command == "audit-input-tokens":
+            model = config.model("translation")
+            prompt = _versioned_prompt(config, "translation_prompt").read_text(encoding="utf-8")
+            report = audit_run_input_tokens(
+                connection, args.run_id, prompt=prompt, model=model["id"],
+                reasoning_effort=model["reasoning_effort"],
+                api_key=os.environ.get("OPENAI_API_KEY", ""),
+            )
+            if not report["passed"]:
+                raise ValueError(f"input-token headroom gate failed: {report}")
+            write_token_audit(args.output.resolve(), report)
+            return {key: report[key] for key in report if key != "requests"}
         if args.command == "retry":
             result = retry_or_split(connection, args.batch_id)
             connection.commit()
