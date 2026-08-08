@@ -16,6 +16,7 @@ from .import_jitendex import import_jitendex
 from .import_kaishi import import_kaishi
 from .resolve_selection import apply_resolutions, generate_candidates, make_resolution_batches, selection_manifest_hash, unresolved_report
 from .review import apply_adjudication, ingest_review, make_review_batches
+from .run_integrity import run_history_fingerprint, source_identity_report
 from .schema_validation import validate_archive
 from .util import canonical_json, sha256_bytes, sha256_file
 from .validate_response import ValidationFailure, ingest_response
@@ -56,6 +57,11 @@ def _parser() -> argparse.ArgumentParser:
     ingest.add_argument("path", type=Path)
     validate_parser = commands.add_parser("validate")
     validate_parser.add_argument("--run-id", type=int)
+    identity_parser = commands.add_parser("verify-run-identity")
+    identity_parser.add_argument("--run-id", type=int, required=True)
+    identity_parser.add_argument("--baseline-run-id", type=int, default=2)
+    history_parser = commands.add_parser("history-fingerprint")
+    history_parser.add_argument("--run-id", type=int, required=True)
     retry = commands.add_parser("retry")
     retry.add_argument("batch_id")
     review_batches = commands.add_parser("make-review-batches")
@@ -277,6 +283,13 @@ def execute(args: argparse.Namespace) -> Any:
             return result
         if args.command == "validate":
             return _validation_report(connection, _active_run(connection, args.run_id))
+        if args.command == "verify-run-identity":
+            result = source_identity_report(connection, args.run_id, args.baseline_run_id)
+            if not result["passed"]:
+                raise ValueError(f"run source identity gate failed: {result}")
+            return result
+        if args.command == "history-fingerprint":
+            return run_history_fingerprint(connection, args.run_id)
         if args.command == "retry":
             result = retry_or_split(connection, args.batch_id)
             connection.commit()
