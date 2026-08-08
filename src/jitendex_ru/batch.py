@@ -66,9 +66,52 @@ def _manifest(batch_id: str, articles: list[dict[str, Any]], terminology: dict[s
     return payload, canonical_json(payload)
 
 
+def _pack_envelopes(
+    envelopes: list[dict[str, Any]], terminology: dict[str, str],
+    soft_max_articles: int, soft_max_bytes: int, soft_max_units: int,
+    singleton_threshold_bytes: int, hard_max_article_bytes: int, hard_max_article_units: int,
+) -> list[list[dict[str, Any]]]:
+    """Pack whole articles using soft group caps and hard article ceilings."""
+    batches: list[list[dict[str, Any]]] = []
+    current: list[dict[str, Any]] = []
+
+    def measured(candidate: list[dict[str, Any]]) -> tuple[int, int]:
+        _, data = _manifest("b-" + "0" * 24, candidate, terminology)
+        return len(data), sum(len(article["units"]) for article in candidate)
+
+    for envelope in envelopes:
+        article_bytes, article_units = measured([envelope])
+        if article_bytes > hard_max_article_bytes or article_units > hard_max_article_units:
+            raise ValueError(f"article {envelope['article_id']} exceeds a hard article limit")
+
+        force_singleton = (
+            article_bytes > singleton_threshold_bytes
+            or article_bytes > soft_max_bytes
+            or article_units > soft_max_units
+        )
+        candidate = current + [envelope]
+        byte_count, unit_count = measured(candidate)
+        if current and (
+            force_singleton
+            or len(candidate) > soft_max_articles
+            or byte_count > soft_max_bytes
+            or unit_count > soft_max_units
+        ):
+            batches.append(current)
+            current = []
+        if force_singleton:
+            batches.append([envelope])
+        else:
+            current.append(envelope)
+    if current:
+        batches.append(current)
+    return batches
+
+
 def make_batches(
     connection: sqlite3.Connection, run_id: int, inbox: Path, terminology: dict[str, str],
-    max_articles: int, max_bytes: int, max_units: int, singleton_threshold: int,
+    soft_max_articles: int, soft_max_bytes: int, soft_max_units: int, singleton_threshold_bytes: int,
+    hard_max_article_bytes: int | None = None, hard_max_article_units: int | None = None,
 ) -> dict[str, int]:
     grouped: dict[int, list[sqlite3.Row]] = defaultdict(list)
     for unit in connection.execute(
@@ -80,29 +123,12 @@ def make_batches(
         grouped[unit["article_id"]].append(unit)
     articles = {row["id"]: row for row in connection.execute("SELECT * FROM article WHERE selected=1")}
     envelopes = [_article_envelope(connection, articles[article_id], units) for article_id, units in sorted(grouped.items())]
-    batches: list[list[dict[str, Any]]] = []
-    current: list[dict[str, Any]] = []
-
-    def measured(candidate: list[dict[str, Any]]) -> tuple[int, int]:
-        _, data = _manifest("b-" + "0" * 24, candidate, terminology)
-        return len(data), sum(len(article["units"]) for article in candidate)
-
-    for envelope in envelopes:
-        article_bytes, article_units = measured([envelope])
-        if article_bytes > max_bytes or article_units > max_units:
-            raise ValueError(f"article {envelope['article_id']} exceeds a hard batch limit")
-        force_singleton = article_bytes > singleton_threshold
-        candidate = current + [envelope]
-        byte_count, unit_count = measured(candidate)
-        if current and (force_singleton or len(candidate) > max_articles or byte_count > max_bytes or unit_count > max_units):
-            batches.append(current)
-            current = []
-        if force_singleton:
-            batches.append([envelope])
-        else:
-            current.append(envelope)
-    if current:
-        batches.append(current)
+    batches = _pack_envelopes(
+        envelopes, terminology,
+        soft_max_articles, soft_max_bytes, soft_max_units, singleton_threshold_bytes,
+        hard_max_article_bytes if hard_max_article_bytes is not None else soft_max_bytes,
+        hard_max_article_units if hard_max_article_units is not None else soft_max_units,
+    )
 
     for article_group in batches:
         identity = {"run_id": run_id, "article_ids": [item["article_id"] for item in article_group],
@@ -127,42 +153,70 @@ def make_batches(
 
 def claim(
     connection: sqlite3.Connection, worker_id: str, outbox: Path,
-    lease_minutes: int = 30, batch_id: str | None = None,
+    *, run_id: int, kind: str, model_id: str, reasoning_effort: str,
+    transport: str, lease_minutes: int | None = None, batch_id: str | None = None,
 ) -> dict[str, str] | None:
     import uuid
 
+    if kind not in {"translation", "review"}:
+        raise ValueError(f"unsupported batch kind: {kind}")
+    if transport not in {"responses-sync", "batch-api", "codex-agent"}:
+        raise ValueError(f"unsupported transport: {transport}")
+    if not model_id:
+        raise ValueError("model_id is required")
+    if not reasoning_effort:
+        raise ValueError("reasoning_effort is required")
+    effective_lease_minutes = lease_minutes if lease_minutes is not None else (26 * 60 if transport == "batch-api" else 30)
     outbox.mkdir(parents=True, exist_ok=True)
     now = dt.datetime.now(dt.timezone.utc)
     with transaction(connection, immediate=True):
         connection.execute(
             """UPDATE batch SET state='ready',lease_token=NULL,lease_expires_at=NULL
-            WHERE state='leased' AND lease_expires_at < ? AND NOT EXISTS (
+            WHERE run_id=? AND kind=? AND state='leased' AND lease_expires_at < ? AND NOT EXISTS (
               SELECT 1 FROM translation t JOIN batch_item bi ON bi.unit_id=t.unit_id WHERE bi.batch_id=batch.id)""",
-            (now.isoformat(),),
+            (run_id, kind, now.isoformat()),
         )
         if batch_id is None:
-            batch = connection.execute("SELECT * FROM batch WHERE state='ready' ORDER BY created_at,id LIMIT 1").fetchone()
+            batch = connection.execute(
+                "SELECT * FROM batch WHERE run_id=? AND kind=? AND state='ready' ORDER BY created_at,id LIMIT 1",
+                (run_id, kind),
+            ).fetchone()
         else:
-            batch = connection.execute("SELECT * FROM batch WHERE id=? AND state='ready'", (batch_id,)).fetchone()
+            batch = connection.execute(
+                "SELECT * FROM batch WHERE id=? AND run_id=? AND kind=? AND state='ready'",
+                (batch_id, run_id, kind),
+            ).fetchone()
         if batch is None:
             return None
         token = secrets.token_urlsafe(24)
         attempt_id = f"att-{uuid.uuid4().hex}"
-        expires = now + dt.timedelta(minutes=lease_minutes)
+        expires = now + dt.timedelta(minutes=effective_lease_minutes)
         response_path = outbox / f"{attempt_id}.json"
         connection.execute(
             "UPDATE batch SET state='leased',lease_token=?,lease_expires_at=?,attempt_count=attempt_count+1 WHERE id=?",
             (token, expires.isoformat(), batch["id"]),
         )
         connection.execute(
-            """INSERT INTO attempt(id,batch_id,worker_id,model,prompt_sha256,lease_token,request_path,response_path)
-            SELECT ?,?,?,?,CASE WHEN ?='review' THEN r.review_prompt_sha256 ELSE r.prompt_sha256 END,?,?,? FROM run r WHERE r.id=?""",
-            (attempt_id, batch["id"], worker_id, "gpt-5.6-terra", batch["kind"], token, batch["manifest_path"], str(response_path), batch["run_id"]),
+            """INSERT INTO attempt(
+            id,batch_id,worker_id,model,prompt_sha256,lease_token,request_path,response_path,
+            reasoning_effort,transport,api_custom_id)
+            SELECT ?,?,?,?,CASE WHEN ?='review' THEN r.review_prompt_sha256 ELSE r.prompt_sha256 END,
+            ?,?,?,?,?,? FROM run r WHERE r.id=?""",
+            (
+                attempt_id, batch["id"], worker_id, model_id, kind, token,
+                batch["manifest_path"], str(response_path), reasoning_effort, transport,
+                attempt_id if transport == "batch-api" else None, run_id,
+            ),
         )
-        audit(connection, "claim", "batch", batch["id"], {"attempt_id": attempt_id, "worker_id": worker_id})
+        audit(connection, "claim", "batch", batch["id"], {
+            "attempt_id": attempt_id, "worker_id": worker_id, "run_id": run_id,
+            "kind": kind, "model_id": model_id, "reasoning_effort": reasoning_effort,
+            "transport": transport,
+        })
     return {
         "batch_id": batch["id"], "attempt_id": attempt_id, "lease_token": token,
         "request_path": batch["manifest_path"], "response_path": str(response_path), "lease_expires_at": expires.isoformat(),
+        "model_id": model_id, "reasoning_effort": reasoning_effort, "transport": transport,
     }
 
 

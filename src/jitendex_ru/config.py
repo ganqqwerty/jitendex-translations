@@ -32,3 +32,15 @@ class Config:
     def db_path(self) -> Path:
         return self.work_dir / "progress.sqlite3"
 
+    def model(self, kind: str) -> dict[str, str]:
+        """Return the explicitly configured effective model for a batch kind."""
+        if kind not in {"translation", "review"}:
+            raise ValueError(f"unsupported model kind: {kind}")
+        spec = self.raw["models"][kind]
+        model_id = spec.get("id")
+        reasoning_effort = spec.get("reasoning_effort")
+        if not isinstance(model_id, str) or not model_id.strip():
+            raise ValueError(f"models.{kind}.id must be a non-empty string")
+        if reasoning_effort not in {"none", "low", "medium", "high", "xhigh", "max"}:
+            raise ValueError(f"models.{kind}.reasoning_effort is invalid")
+        return {"id": model_id, "reasoning_effort": reasoning_effort}

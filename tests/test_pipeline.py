@@ -109,7 +109,10 @@ def test_translation_review_and_reproducible_build(tmp_path):
     assert made["batches_created"] == 1
     connection.commit()
 
-    task = claim(connection, "translator", tmp_path / "outbox")
+    task = claim(
+        connection, "translator", tmp_path / "outbox", run_id=1, kind="translation",
+        model_id="gpt-5.6-luna", reasoning_effort="medium", transport="codex-agent",
+    )
     manifest = json.loads(open(task["request_path"], encoding="utf-8").read())
     unit = manifest["articles"][0]["units"][0]
     response = {
@@ -123,7 +126,10 @@ def test_translation_review_and_reproducible_build(tmp_path):
     make_review_batches(connection, 1, tmp_path / "review-inbox")
     connection.commit()
 
-    review_task = claim(connection, "reviewer", tmp_path / "review-outbox")
+    review_task = claim(
+        connection, "reviewer", tmp_path / "review-outbox", run_id=1, kind="review",
+        model_id="gpt-5.6-terra", reasoning_effort="medium", transport="codex-agent",
+    )
     review_manifest = json.loads(open(review_task["request_path"], encoding="utf-8").read())
     review_response = {
         "schema_version": 1, "batch_id": review_task["batch_id"], "manifest_sha256": review_manifest["manifest_sha256"],

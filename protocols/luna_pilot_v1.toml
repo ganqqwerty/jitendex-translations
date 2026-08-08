@@ -1,0 +1,85 @@
+protocol = "luna-pilot-v1"
+frozen_at = "2026-08-09"
+minimum_pilot_units = 1500
+minimum_units_per_role = 100
+minimum_blind_comparison_units = 200
+first_attempt_acceptance_min = 0.95
+overall_terra_replacement_rate = 0.0433
+overall_noninferiority_margin = 0.01
+per_role_margin = 0.02
+blind_acceptable_min = 0.95
+critical_defects_max = 0
+context_headroom_factor = 4
+cost_pause_over_forecast = 0.15
+
+[models.translation]
+id = "gpt-5.6-luna"
+reasoning_effort = "medium"
+context_window = 1050000
+max_output_tokens = 128000
+
+[models.review]
+id = "gpt-5.6-terra"
+reasoning_effort = "medium"
+context_window = 1050000
+max_output_tokens = 128000
+
+[profiles.conservative]
+order = 1
+soft_max_articles = 6
+soft_max_bytes = 24576
+soft_max_units = 100
+
+[profiles.balanced]
+order = 2
+soft_max_articles = 8
+soft_max_bytes = 32768
+soft_max_units = 140
+
+[profiles.current_control]
+order = 3
+soft_max_articles = 12
+soft_max_bytes = 49152
+soft_max_units = 200
+
+[profiles.optional_expanded]
+order = 4
+soft_max_articles = 9
+soft_max_bytes = 36864
+soft_max_units = 150
+
+[profiles.diagnostic]
+order = 5
+soft_max_articles = 4
+soft_max_bytes = 16384
+soft_max_units = 75
+
+[hard_article_limits]
+max_bytes = 49152
+max_units = 200
+singleton_threshold_bytes = 16384
+
+[terra_role_replacement_rates]
+glossary_set = 0.0835
+label = 0.0653
+example = 0.0497
+pos = 0.0422
+register = 0.0361
+tooltip = 0.0285
+note = 0.0095
+xref_gloss = 0.0055
+
+[price_snapshot]
+date = "2026-08-09"
+currency = "USD"
+unit = "per_1m_tokens"
+luna_input = 0.20
+luna_cached_input = 0.02
+luna_output = 1.20
+terra_input = 2.00
+terra_cached_input = 0.20
+terra_output = 12.00
+batch_discount = 0.50
+luna_source = "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
+terra_source = "https://developers.openai.com/api/docs/models/gpt-5.6-terra"
+batch_source = "https://developers.openai.com/api/docs/guides/batch"

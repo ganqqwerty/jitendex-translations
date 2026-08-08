@@ -19,11 +19,11 @@ filename = "kaishi-1.5k-v2.4.1.apkg"
 extractor = "extractor-v2"
 terminology = "terminology-ru-v1"
 pipeline = "lexicographer-v2"
-translation_prompt = "translate-terra-v2"
-review_prompt = "review-terra-v2"
+translation_prompt = "translate-luna-v1"
+review_prompt = "review-terra-luna-blind-v1"
 
 [models.translation]
-id = "gpt-5.6-terra"
+id = "gpt-5.6-luna"
 reasoning_effort = "medium"
 
 [models.review]
@@ -31,9 +31,9 @@ id = "gpt-5.6-terra"
 reasoning_effort = "medium"
 
 [batch]
-soft_max_articles = 12
-soft_max_bytes = 49152
-soft_max_units = 200
+soft_max_articles = 6
+soft_max_bytes = 24576
+soft_max_units = 100
 singleton_threshold_bytes = 16384
 hard_max_article_bytes = 49152
 hard_max_article_units = 200

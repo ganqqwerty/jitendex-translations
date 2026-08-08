@@ -45,7 +45,13 @@ def _parser() -> argparse.ArgumentParser:
     batches.add_argument("--max-units", type=int)
     claim_parser = commands.add_parser("claim")
     claim_parser.add_argument("--worker-id", required=True)
+    claim_parser.add_argument("--run-id", type=int, required=True)
+    claim_parser.add_argument("--kind", choices=("translation", "review"), required=True)
     claim_parser.add_argument("--batch-id")
+    claim_parser.add_argument(
+        "--transport", choices=("responses-sync", "batch-api", "codex-agent"),
+        default="codex-agent",
+    )
     ingest = commands.add_parser("ingest-response")
     ingest.add_argument("path", type=Path)
     validate_parser = commands.add_parser("validate")
@@ -245,13 +251,22 @@ def execute(args: argparse.Namespace) -> Any:
             terminology = json.loads((config.root / "terminology/ru-v1.json").read_text(encoding="utf-8"))
             result = make_batches(
                 connection, run_id, config.work_dir / "inbox", terminology,
-                args.max_articles or limits["max_articles"], args.max_bytes or limits["max_bytes"],
-                args.max_units or limits["max_units"], limits["singleton_article_bytes"],
+                args.max_articles or limits["soft_max_articles"],
+                args.max_bytes or limits["soft_max_bytes"],
+                args.max_units or limits["soft_max_units"],
+                limits["singleton_threshold_bytes"],
+                limits["hard_max_article_bytes"], limits["hard_max_article_units"],
             )
             connection.commit()
             return result
         if args.command == "claim":
-            return claim(connection, args.worker_id, config.work_dir / "outbox", batch_id=args.batch_id) or {"claimed": False}
+            model = config.model(args.kind)
+            return claim(
+                connection, args.worker_id, config.work_dir / "outbox",
+                run_id=args.run_id, kind=args.kind, batch_id=args.batch_id,
+                model_id=model["id"], reasoning_effort=model["reasoning_effort"],
+                transport=args.transport,
+            ) or {"claimed": False}
         if args.command == "ingest-response":
             try:
                 result = ingest_response(connection, args.path.resolve())
