@@ -133,7 +133,11 @@ def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
     expected = connection.execute(
         """SELECT tu.*,t.id translation_id,source_attempt.worker_id source_worker_id
         FROM batch_item bi JOIN translation_unit tu ON tu.id=bi.unit_id
-        JOIN translation t ON t.unit_id=tu.id AND t.run_id=?
+        JOIN translation t ON t.id=(
+          SELECT t2.id FROM translation t2
+          WHERE t2.unit_id=tu.id AND t2.run_id=?
+          ORDER BY t2.accepted DESC,t2.id DESC LIMIT 1
+        )
         JOIN attempt source_attempt ON source_attempt.id=t.attempt_id
         WHERE bi.batch_id=? ORDER BY bi.ordinal""",
         (attempt["run_id"], attempt["batch_id"]),
@@ -141,7 +145,7 @@ def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
     reviews = payload.get("reviews")
     if not isinstance(reviews, list) or [item.get("unit_id") for item in reviews] != [row["id"] for row in expected]:
         raise ValueError("review unit order or set mismatch")
-    accepted = adjudication = 0
+    accepted = adjudication = already_reviewed = 0
     for source, item in zip(expected, reviews):
         if set(item) != {"unit_id", "source_sha256", "decision", "replacement_target", "reason"}:
             raise ValueError(f"unexpected review fields for {source['id']}")
@@ -166,6 +170,13 @@ def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
             for token in json.loads(source["protected_tokens_json"]):
                 if token not in stored_replacement:
                     raise ValueError(f"review replacement lost protected token for {source['id']}")
+        # Review batches can overlap when a previously prepared pilot batch is
+        # completed after the full review pass is materialized.  Validate the
+        # stale response item, but never let it overwrite an already accepted
+        # editorial decision.
+        if source["status"] == "reviewed":
+            already_reviewed += 1
+            continue
         connection.execute(
             "INSERT INTO review(translation_id,attempt_id,decision,replacement_target,reason) VALUES (?,?,?,?,?)",
             (source["translation_id"], attempt["id"], decision, stored_replacement, item.get("reason")),
@@ -198,8 +209,10 @@ def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
           )
         )""", (attempt["run_id"],)
     )
-    audit(connection, "ingest", "review_attempt", attempt["id"], {"accepted": accepted, "adjudication": adjudication})
-    return {"accepted": accepted, "needs_adjudication": adjudication}
+    audit(connection, "ingest", "review_attempt", attempt["id"], {
+        "accepted": accepted, "already_reviewed": already_reviewed, "adjudication": adjudication,
+    })
+    return {"accepted": accepted, "already_reviewed": already_reviewed, "needs_adjudication": adjudication}
 
 
 def apply_adjudication(connection: sqlite3.Connection, path: Path, actor: str) -> dict[str, Any]:
