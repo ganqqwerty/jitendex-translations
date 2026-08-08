@@ -14,6 +14,7 @@ from .db import audit, connect, initialize
 from .extract_units import extract_selected
 from .import_jitendex import import_jitendex
 from .import_kaishi import import_kaishi
+from .pilot import build_pilot_selection, write_pilot_selection
 from .resolve_selection import apply_resolutions, generate_candidates, make_resolution_batches, selection_manifest_hash, unresolved_report
 from .review import apply_adjudication, ingest_review, make_review_batches
 from .run_integrity import run_history_fingerprint, source_identity_report
@@ -62,6 +63,9 @@ def _parser() -> argparse.ArgumentParser:
     identity_parser.add_argument("--baseline-run-id", type=int, default=2)
     history_parser = commands.add_parser("history-fingerprint")
     history_parser.add_argument("--run-id", type=int, required=True)
+    pilot_parser = commands.add_parser("select-luna-pilot")
+    pilot_parser.add_argument("--run-id", type=int, required=True)
+    pilot_parser.add_argument("--output", type=Path, required=True)
     retry = commands.add_parser("retry")
     retry.add_argument("batch_id")
     review_batches = commands.add_parser("make-review-batches")
@@ -290,6 +294,18 @@ def execute(args: argparse.Namespace) -> Any:
             return result
         if args.command == "history-fingerprint":
             return run_history_fingerprint(connection, args.run_id)
+        if args.command == "select-luna-pilot":
+            terminology = json.loads((config.root / "terminology/ru-v1.json").read_text(encoding="utf-8"))
+            protocol_path = config.root / "protocols/luna_pilot_v1.toml"
+            payload = build_pilot_selection(
+                connection, args.run_id, terminology,
+                protocol_sha256=sha256_bytes(protocol_path.read_bytes()),
+            )
+            write_pilot_selection(args.output.resolve(), payload)
+            return {key: payload[key] for key in (
+                "run_id", "article_count", "unit_count", "role_counts",
+                "feature_article_counts", "selection_sha256",
+            )}
         if args.command == "retry":
             result = retry_or_split(connection, args.batch_id)
             connection.commit()

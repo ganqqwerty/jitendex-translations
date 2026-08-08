@@ -59,6 +59,17 @@ The fingerprints cover the run row and every run-owned `translation_unit`, `run_
 
 The live result differs from the earlier 483-manifest simulation by four manifests. No expected count was forced; the current database, serializer, prompt/config hashes, and deterministic packing implementation are authoritative.
 
+## Frozen pilot selection
+
+- Selection artifact: `protocols/luna_pilot_articles_v1.json`
+- Selection SHA-256 (canonical payload): `9e60b1593b739f62c340b45b545f85ca8a59959e4235cbc0c42528d6c68348a8`
+- Articles: `57`
+- Units: `2,377`
+- Articles over 24 KiB included: `15` (all)
+- Role counts: glossary set `584`, label `114`, example `247`, POS `266`, tooltip `586`, note `208`, xref gloss `264`, register `108`
+
+The selector deterministically includes minimum/median/p95/maximum serialized sizes, the maximum-unit article, single- and multi-sense entries, Japanese examples, protected tokens, numbers/identifiers, kana-only entries, forms, xrefs, antonyms, sense notes, language-source notes, and culture/domain metadata. High-risk roles use a frozen 110-unit target; all other roles use 100.
+
 ## Remaining gate before translation
 
 No translation manifest has been sent. Production and pilot dispatch remain blocked on exact official input-token counts for the complete request bodies. The authenticated Codex transport reports aggregate tokens after execution but does not expose the required input/cached-input/output audit or the input-token-count endpoint. An API credential or equivalent audited Responses transport is required before the pilot can proceed without weakening the frozen protocol.
