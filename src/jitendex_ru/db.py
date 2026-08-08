@@ -181,9 +181,6 @@ def initialize(path: Path) -> None:
             if name not in attempt_columns:
                 connection.execute(f"ALTER TABLE attempt ADD COLUMN {name} {declaration}")
         connection.execute(
-            "UPDATE attempt SET effective_model_id=model WHERE effective_model_id IS NULL"
-        )
-        connection.execute(
             """INSERT OR IGNORE INTO run_article(run_id,article_id,structural_fingerprint)
             SELECT DISTINCT tu.run_id,tu.article_id,a.structural_fingerprint
             FROM translation_unit tu JOIN article a ON a.id=tu.article_id

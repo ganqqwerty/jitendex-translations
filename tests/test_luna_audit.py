@@ -28,7 +28,7 @@ def _insert_attempt(connection, attempt_id="att-audit"):
     )
 
 
-def test_initialize_migrates_attempt_audit_columns_and_backfills_model(tmp_path):
+def test_initialize_migrates_attempt_audit_columns_without_rewriting_history(tmp_path):
     path = tmp_path / "legacy.sqlite3"
     with sqlite3.connect(path) as connection:
         connection.executescript(
@@ -55,7 +55,8 @@ def test_initialize_migrates_attempt_audit_columns_and_backfills_model(tmp_path)
             "api_custom_id", "api_job_id", "input_tokens", "cached_input_tokens",
             "output_tokens", "total_tokens", "finish_reason", "status_reason", "latency_ms",
         } <= columns
-        assert row["effective_model_id"] == "gpt-5.6-terra"
+        assert row["model"] == "gpt-5.6-terra"
+        assert row["effective_model_id"] is None
         assert connection.execute("SELECT MAX(version) FROM schema_meta").fetchone()[0] == 3
         assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
 
