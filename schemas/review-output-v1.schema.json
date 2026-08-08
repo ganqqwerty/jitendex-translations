@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "batch_id", "manifest_sha256", "reviews"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "batch_id": {"type": "string"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["unit_id", "source_sha256", "decision", "replacement_target", "reason"],
+        "properties": {
+          "unit_id": {"type": "string"},
+          "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "decision": {"enum": ["accept", "replace", "needs_adjudication"]},
+          "replacement_target": {"type": ["string", "null"]},
+          "reason": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}
+

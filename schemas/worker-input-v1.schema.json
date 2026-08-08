@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "batch_id", "manifest_sha256", "target_language", "terminology", "articles"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "batch_id": {"type": "string"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "target_language": {"const": "ru"},
+    "terminology": {"type": "object", "additionalProperties": {"type": "string"}},
+    "articles": {"type": "array"}
+  }
+}
+

@@ -1,0 +1,314 @@
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+from .acquire import acquire
+from .batch import claim, make_batches, retry_or_split
+from .build_dictionary import build, record_yomitan_smoke, verify
+from .config import Config
+from .db import audit, connect, initialize
+from .extract_units import extract_selected
+from .import_jitendex import import_jitendex
+from .import_kaishi import import_kaishi
+from .resolve_selection import apply_resolutions, generate_candidates, make_resolution_batches, selection_manifest_hash, unresolved_report
+from .review import apply_adjudication, ingest_review, make_review_batches
+from .schema_validation import validate_archive
+from .util import canonical_json, sha256_bytes, sha256_file
+from .validate_response import ValidationFailure, ingest_response
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="translationctl")
+    parser.add_argument("--config", type=Path, default=Path("config.toml"))
+    commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("init-db")
+    commands.add_parser("acquire")
+    commands.add_parser("import-sources")
+    commands.add_parser("resolve-scope")
+    resolution_batches = commands.add_parser("make-resolution-batches")
+    resolution_batches.add_argument("--max-notes", type=int, default=10)
+    resolution = commands.add_parser("apply-resolutions")
+    resolution.add_argument("path", type=Path)
+    resolution.add_argument("--actor", required=True)
+    report = commands.add_parser("report")
+    report.add_argument("topic", choices=("scope", "progress"))
+    extract = commands.add_parser("extract-units")
+    extract.add_argument("--run-id", type=int)
+    batches = commands.add_parser("make-batches")
+    batches.add_argument("--run-id", type=int)
+    batches.add_argument("--max-articles", type=int)
+    batches.add_argument("--max-bytes", type=int)
+    batches.add_argument("--max-units", type=int)
+    claim_parser = commands.add_parser("claim")
+    claim_parser.add_argument("--worker-id", required=True)
+    claim_parser.add_argument("--batch-id")
+    ingest = commands.add_parser("ingest-response")
+    ingest.add_argument("path", type=Path)
+    validate_parser = commands.add_parser("validate")
+    validate_parser.add_argument("--run-id", type=int)
+    retry = commands.add_parser("retry")
+    retry.add_argument("batch_id")
+    review_batches = commands.add_parser("make-review-batches")
+    review_batches.add_argument("--run-id", type=int)
+    review_ingest = commands.add_parser("ingest-review")
+    review_ingest.add_argument("path", type=Path)
+    adjudicate = commands.add_parser("adjudicate-review")
+    adjudicate.add_argument("path", type=Path)
+    adjudicate.add_argument("--actor", required=True)
+    build_parser = commands.add_parser("build")
+    build_parser.add_argument("--run-id", type=int)
+    build_parser.add_argument("--output", type=Path, required=True)
+    verify_parser = commands.add_parser("verify")
+    verify_parser.add_argument("path", type=Path)
+    smoke_parser = commands.add_parser("record-yomitan-smoke")
+    smoke_parser.add_argument("path", type=Path)
+    smoke_parser.add_argument("--actor", required=True)
+    return parser
+
+
+def _print(value: Any) -> None:
+    print(json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2))
+
+
+def _snapshot(connection, config: Config, kind: str, local_path: Path) -> int:
+    spec = config.raw[kind]
+    connection.execute(
+        """INSERT OR IGNORE INTO source_snapshot(kind,version,url,sha256,local_path,extractor_version)
+        VALUES (?,?,?,?,?,?)""",
+        (kind, spec["version"], spec["url"], spec["sha256"], str(local_path), config.raw["versions"]["extractor"]),
+    )
+    row = connection.execute("SELECT id FROM source_snapshot WHERE kind=? AND sha256=?", (kind, spec["sha256"])).fetchone()
+    return row["id"]
+
+
+def _active_run(connection, explicit: int | None = None) -> int:
+    if explicit is not None:
+        exists = connection.execute("SELECT 1 FROM run WHERE id=?", (explicit,)).fetchone()
+        if not exists:
+            raise ValueError(f"unknown run {explicit}")
+        return explicit
+    row = connection.execute("SELECT id FROM run WHERE state='active' ORDER BY id DESC LIMIT 1").fetchone()
+    if row is None:
+        raise ValueError("no active run; run extract-units first")
+    return row["id"]
+
+
+def _versioned_prompt(config: Config, key: str) -> Path:
+    version = config.raw["versions"][key]
+    path = config.root / "prompts" / f"{version.replace('-', '_')}.txt"
+    if not path.is_file():
+        raise ValueError(f"configured {key} prompt does not exist: {path}")
+    return path
+
+
+def _create_run(connection, config: Config) -> int:
+    total = connection.execute("SELECT COUNT(*) FROM kaishi_note").fetchone()[0]
+    resolution_counts = connection.execute(
+        """SELECT kn.id,COUNT(DISTINCT sd.sequence) count,
+        COUNT(DISTINCT CASE WHEN sd.actor LIKE 'terra-adjudicator-%' THEN sd.sequence END) adjudicated_count
+        FROM kaishi_note kn
+        LEFT JOIN selection_decision sd ON sd.note_id=kn.id AND sd.decision='included' AND sd.review_status='accepted'
+        GROUP BY kn.id"""
+    ).fetchall()
+    resolved = sum(row["count"] == 1 or (row["count"] > 1 and row["adjudicated_count"] == row["count"]) for row in resolution_counts)
+    ambiguous = sum(row["count"] > 1 and row["adjudicated_count"] != row["count"] for row in resolution_counts)
+    if not total or resolved != total or ambiguous:
+        raise ValueError(f"selection gate failed: {resolved}/{total} notes have accepted single or explicitly adjudicated multi-sequence scope; {ambiguous} are ambiguous")
+    jitendex_snapshots = connection.execute("SELECT DISTINCT snapshot_id FROM article WHERE selected=1").fetchall()
+    kaishi_snapshots = connection.execute("SELECT DISTINCT snapshot_id FROM kaishi_note").fetchall()
+    if len(jitendex_snapshots) != 1 or len(kaishi_snapshots) != 1:
+        raise ValueError("a run must bind to exactly one Jitendex and one Kaishi snapshot")
+    jitendex_snapshot_id = jitendex_snapshots[0]["snapshot_id"]
+    kaishi_snapshot_id = kaishi_snapshots[0]["snapshot_id"]
+    prompt = _versioned_prompt(config, "translation_prompt").read_bytes()
+    review_prompt = _versioned_prompt(config, "review_prompt").read_bytes()
+    terminology = (config.root / "terminology/ru-v1.json").read_bytes()
+    limits = config.raw["batch"]
+    pipeline_version = config.raw["versions"].get("pipeline", "scalar-v1")
+    values = (
+        jitendex_snapshot_id, kaishi_snapshot_id, selection_manifest_hash(connection),
+        config.raw["versions"]["extractor"], sha256_bytes(prompt), sha256_bytes(review_prompt),
+        sha256_bytes(terminology), canonical_json(limits).decode(), pipeline_version,
+    )
+    connection.execute(
+        """INSERT OR IGNORE INTO run(jitendex_snapshot_id,kaishi_snapshot_id,selection_sha256,extractor_version,prompt_sha256,review_prompt_sha256,terminology_sha256,limits_json,pipeline_version)
+        VALUES (?,?,?,?,?,?,?,?,?)""", values,
+    )
+    row = connection.execute(
+        """SELECT id FROM run WHERE jitendex_snapshot_id=? AND kaishi_snapshot_id=?
+        AND selection_sha256=? AND extractor_version=? AND prompt_sha256=?
+        AND review_prompt_sha256=? AND terminology_sha256=? AND limits_json=? AND pipeline_version=?""", values,
+    ).fetchone()
+    audit(connection, "create", "run", row["id"], {})
+    return row["id"]
+
+
+def _scope_report(connection) -> dict[str, Any]:
+    total = connection.execute("SELECT COUNT(*) FROM kaishi_note").fetchone()[0]
+    resolved = connection.execute(
+        "SELECT COUNT(DISTINCT note_id) FROM selection_decision WHERE decision='included' AND review_status='accepted'"
+    ).fetchone()[0]
+    candidates = connection.execute("SELECT COUNT(*) FROM selection_candidate").fetchone()[0]
+    selected = connection.execute("SELECT COUNT(*) FROM article WHERE selected=1").fetchone()[0]
+    return {"kaishi_notes": total, "resolved_notes": resolved, "unresolved_notes": total - resolved, "candidates": candidates, "selected_articles": selected, "unresolved": unresolved_report(connection)}
+
+
+def _progress_report(connection) -> dict[str, Any]:
+    runs = []
+    for run in connection.execute("SELECT * FROM run ORDER BY id"):
+        units = {row["status"]: row["count"] for row in connection.execute(
+            "SELECT status,COUNT(*) count FROM translation_unit WHERE run_id=? GROUP BY status", (run["id"],)
+        )}
+        batches = {row["state"]: row["count"] for row in connection.execute(
+            "SELECT state,COUNT(*) count FROM batch WHERE run_id=? GROUP BY state", (run["id"],)
+        )}
+        blocking = connection.execute(
+            "SELECT COUNT(*) FROM validation_issue WHERE run_id=? AND severity='error' AND resolved_at IS NULL", (run["id"],)
+        ).fetchone()[0]
+        runs.append({"run_id": run["id"], "state": run["state"], "units": units, "batches": batches, "blocking_issues": blocking})
+    return {"runs": runs}
+
+
+def _validation_report(connection, run_id: int) -> dict[str, Any]:
+    total = connection.execute("SELECT COUNT(*) FROM translation_unit WHERE run_id=?", (run_id,)).fetchone()[0]
+    accepted = connection.execute(
+        """SELECT COUNT(*) FROM translation_unit tu WHERE tu.run_id=? AND EXISTS (
+        SELECT 1 FROM translation t WHERE t.unit_id=tu.id AND t.run_id=tu.run_id AND t.accepted=1)""", (run_id,)
+    ).fetchone()[0]
+    reviewed = connection.execute(
+        """SELECT COUNT(*) FROM translation_unit tu WHERE tu.run_id=? AND EXISTS (
+        SELECT 1 FROM translation t JOIN review r ON r.translation_id=t.id
+        WHERE t.unit_id=tu.id AND t.run_id=tu.run_id AND r.decision IN ('accept','replace'))""", (run_id,)
+    ).fetchone()[0]
+    blocking = connection.execute(
+        "SELECT COUNT(*) FROM validation_issue WHERE run_id=? AND severity='error' AND resolved_at IS NULL", (run_id,)
+    ).fetchone()[0]
+    batch_mismatches = connection.execute(
+        """SELECT COUNT(*) FROM batch b WHERE b.run_id=? AND b.unit_count !=
+        (SELECT COUNT(*) FROM batch_item bi WHERE bi.batch_id=b.id)""", (run_id,)
+    ).fetchone()[0]
+    return {
+        "run_id": run_id, "units": total, "accepted_units": accepted, "reviewed_units": reviewed,
+        "blocking_issues": blocking, "batch_membership_mismatches": batch_mismatches,
+        "release_ready": total > 0 and accepted == total and reviewed == total and blocking == 0 and batch_mismatches == 0,
+    }
+
+
+def execute(args: argparse.Namespace) -> Any:
+    config = Config.load(args.config)
+    if args.command == "init-db":
+        initialize(config.db_path)
+        return {"database": str(config.db_path), "initialized": True}
+    initialize(config.db_path)
+    connection = connect(config.db_path)
+    try:
+        if args.command == "acquire":
+            return {"files": [str(path) for path in acquire(config)]}
+        if args.command == "import-sources":
+            downloads = config.work_dir / "downloads"
+            paths = {kind: downloads / config.raw[kind]["filename"] for kind in ("jitendex", "kaishi")}
+            for kind, path in paths.items():
+                if not path.exists() or sha256_file(path) != config.raw[kind]["sha256"]:
+                    raise ValueError(f"missing or invalid pinned {kind} artifact; run acquire")
+            jitendex_id = _snapshot(connection, config, "jitendex", paths["jitendex"])
+            kaishi_id = _snapshot(connection, config, "kaishi", paths["kaishi"])
+            result = {"jitendex_articles_added": import_jitendex(connection, jitendex_id, paths["jitendex"]),
+                      "kaishi_notes_added": import_kaishi(connection, kaishi_id, paths["kaishi"])}
+            connection.commit()
+            return result
+        if args.command == "resolve-scope":
+            result = generate_candidates(connection)
+            connection.commit()
+            return result
+        if args.command == "make-resolution-batches":
+            result = make_resolution_batches(connection, config.work_dir / "selection-inbox", args.max_notes)
+            connection.commit()
+            return result
+        if args.command == "apply-resolutions":
+            result = {"resolutions_applied": apply_resolutions(connection, args.path, args.actor)}
+            connection.commit()
+            return result
+        if args.command == "report":
+            return _scope_report(connection) if args.topic == "scope" else _progress_report(connection)
+        if args.command == "extract-units":
+            run_id = args.run_id or _create_run(connection, config)
+            result = {"run_id": run_id, **extract_selected(connection, run_id)}
+            connection.commit()
+            return result
+        if args.command == "make-batches":
+            run_id = _active_run(connection, args.run_id)
+            limits = config.raw["batch"]
+            terminology = json.loads((config.root / "terminology/ru-v1.json").read_text(encoding="utf-8"))
+            result = make_batches(
+                connection, run_id, config.work_dir / "inbox", terminology,
+                args.max_articles or limits["max_articles"], args.max_bytes or limits["max_bytes"],
+                args.max_units or limits["max_units"], limits["singleton_article_bytes"],
+            )
+            connection.commit()
+            return result
+        if args.command == "claim":
+            return claim(connection, args.worker_id, config.work_dir / "outbox", batch_id=args.batch_id) or {"claimed": False}
+        if args.command == "ingest-response":
+            try:
+                result = ingest_response(connection, args.path.resolve())
+            except ValidationFailure:
+                connection.commit()
+                raise
+            connection.commit()
+            return result
+        if args.command == "validate":
+            return _validation_report(connection, _active_run(connection, args.run_id))
+        if args.command == "retry":
+            result = retry_or_split(connection, args.batch_id)
+            connection.commit()
+            return result
+        if args.command == "make-review-batches":
+            result = make_review_batches(connection, _active_run(connection, args.run_id), config.work_dir / "review-inbox")
+            connection.commit()
+            return result
+        if args.command == "ingest-review":
+            result = ingest_review(connection, args.path.resolve())
+            connection.commit()
+            return result
+        if args.command == "adjudicate-review":
+            result = apply_adjudication(connection, args.path.resolve(), args.actor)
+            connection.commit()
+            return result
+        if args.command == "build":
+            tag_notes = json.loads((config.root / "terminology/tag-bank-ru-v1.json").read_text(encoding="utf-8"))
+            result = build(connection, _active_run(connection, args.run_id), args.output.resolve(), tag_notes)
+            connection.commit()
+            return result
+        if args.command == "verify":
+            result = verify(connection, args.path.resolve())
+            result.update(validate_archive(args.path.resolve(), config.work_dir / "schemas" / "pinned-yomitan"))
+            connection.commit()
+            return result
+        if args.command == "record-yomitan-smoke":
+            result = record_yomitan_smoke(connection, args.path.resolve(), args.actor)
+            connection.commit()
+            return result
+        raise AssertionError(args.command)
+    finally:
+        connection.close()
+
+
+def main(argv: list[str] | None = None) -> int:
+    try:
+        result = execute(_parser().parse_args(argv))
+        _print(result)
+        return 0
+    except ValidationFailure as error:
+        _print({"error": str(error), "issues": error.issues})
+        return 2
+    except (OSError, ValueError, KeyError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
