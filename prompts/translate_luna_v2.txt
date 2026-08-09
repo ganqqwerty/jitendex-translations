@@ -7,28 +7,33 @@ Return a complete schema-version-2 Russian translation payload for every input u
 
 ARTICLE METHOD
 For each article:
-1. Understand the complete article, its Japanese senses, usage, examples, restrictions, register, domain, transitivity, and other grammatical information.
-2. Respect the preservation_inventory. The deterministic assembler, not you, preserves sense structure, Japanese text, examples, forms tables, ruby, links, media, cross-references, and attribution.
-3. Author concise, idiomatic Russian dictionary wording supported by the Japanese evidence.
+A1. Understand the complete article, its Japanese senses, usage, examples, restrictions, register, domain, transitivity, and other grammatical information.
+A2. Respect the preservation_inventory. The deterministic assembler, not you, preserves sense structure, Japanese text, examples, forms tables, ruby, links, media, cross-references, and attribution.
+A3. Author concise, idiomatic Russian dictionary wording supported by the Japanese evidence.
 
-TRANSLATION RULES
-- Keep separate Japanese senses separate. Within one glossary_set, do not preserve the number or order of English synonyms.
-- glossary_set target_text is an array of 1-12 distinct plain Russian definitions. Merge redundant English wording. Add an equivalent only when the Japanese term, example, or metadata supports it. Never invent a sense.
-- Every non-glossary_set target_text is one non-empty plain Russian string.
-- Use natural Russian lexicographic style. For verbs, choose correct aspect or an aspectual pair and correct government. Explain particles, counters, honorifics, constructions, and culture-specific concepts when a one-word equivalent would mislead.
-- Translate examples idiomatically from Japanese while preserving meaning, tense, aspect, polarity, modality, participants, and politeness. English is only a comprehension aid.
-- Preserve register, domain, restriction, transitivity, grammar, numbers, placeholders, and every protected token exactly.
-- In grammatical notes and construction labels, keep Japanese form names and endings in Japanese script. For example, write `-ます` and `-て`, never `-масу` or `-тэ`. Translate “after the -masu stem of a verb” as `после основы глагола на -ます` and “after the -te form of a verb” as `после формы глагола на -て`. Apply that convention to other grammatical notes and construction labels. This convention overrides the general Cyrillic expectation and does not lower confidence.
-- Every target must contain appropriate Russian Cyrillic wording except for protected Japanese, identifiers, URLs, proper names, Japanese grammatical form names or endings, and other tokens that must remain exact.
-- Translate example sentences from Japanese into natural, idiomatic Russian, not from their English translations.
-- Do not emit English-shaped paraphrases, repeated near-synonyms, romaji, unsupported explanations, markup, Markdown, tags, code fences, JSON fragments inside strings, or reasoning.
-- If Japanese and English evidence conflict, follow Japanese, set confidence to low, and state the conflict briefly in review_reason.
+ROLE AND SENSE RULES
+R1. Keep separate Japanese senses separate. Within one glossary_set, do not preserve the number or order of English synonyms.
+R2. A glossary_set target_text is an array of one or more distinct plain Russian definitions. Merge redundant English wording. Add an equivalent only when the Japanese term, example, or metadata supports it. Never invent a sense.
+R3. Every non-glossary_set target_text is one non-empty plain Russian string.
+
+LEXICOGRAPHIC RULES
+L1. Use natural Russian lexicographic style. For verbs, choose the correct aspect or an aspectual pair and correct government. Explain particles, counters, honorifics, constructions, and culture-specific concepts when a one-word equivalent would mislead.
+L2. Format every usage, domain, or subject restriction as a Russian dictionary qualifier rather than as part of the headword's grammatical government. Depending on context, use parentheses or a dash, for example `(о животном)`, `(о времени)`, `(о сайте)` or `— о ...`. Apply this rule to all restrictions, not only the examples listed. Never attach a bare qualifier such as `о ...` as though it were the verb's required complement.
+L3. Every element of a glossary_set must stand alone as a complete, grammatical Russian dictionary definition. Preserve all required objects, complements, prepositions, cases, transitivity, and logical relations within that element. Preserve every placeholder relationship, including but not limited to patterns such as `A` to `B`. Do not emit a dependent fragment, an isolated adjective when the sense requires a noun term, or wording whose meaning depends on another array element.
+L4. Translate examples from Japanese into natural, idiomatic Russian while preserving meaning, tense, aspect, polarity, modality, participants, and politeness. Do not translate from the English example; use it only as a comprehension aid.
+L5. Keep every Japanese grammatical form name, inflectional ending, stem label, conjugational base, auxiliary attachment form, and construction name in Japanese script wherever the source refers to it as Japanese grammar. Never replace any such Japanese grammatical label with a Cyrillic phonetic transcription. For example, write `-ます` and `-て`, never `-масу` or `-тэ`; translate “after the -masu stem of a verb” as `после основы глагола на -ます` and “after the -te form of a verb” as `после формы глагола на -て`. The examples are not an exhaustive list. This convention overrides the general Cyrillic expectation and does not lower confidence.
+L6. Every target must contain appropriate Russian Cyrillic wording except for protected Japanese, identifiers, URLs, proper names, Japanese grammatical form names or endings, and other tokens that must remain exact.
+L7. Do not emit English-shaped paraphrases, repeated near-synonyms, romaji, unsupported explanations, markup, Markdown, tags, code fences, JSON fragments inside strings, or reasoning.
+
+EVIDENCE AND PRESERVATION RULES
+E1. Preserve register, domain, restriction, transitivity, grammar, numbers, placeholders, and every protected token exactly.
+E2. If Japanese and English evidence conflict, follow Japanese, set confidence to low, and state the conflict briefly in review_reason.
 
 OUTPUT CONTRACT
-- Return exactly one translation for every input unit, in input order. No omissions, duplicates, additions, or reordering.
-- Copy batch_id, manifest_sha256, unit_id, and source_sha256 byte-for-byte.
-- confidence is high, medium, or low. Use review_reason = null for high. For medium or low, give one concise, non-empty quality warning.
-- Return strict JSON only, with no prose before or after it.
+O1. Return exactly one translation for every input unit, in input order. No omissions, duplicates, additions, or reordering.
+O2. Copy batch_id, manifest_sha256, unit_id, and source_sha256 byte-for-byte.
+O3. confidence is high, medium, or low. Use review_reason = null for high. For medium or low, give one concise, non-empty quality warning.
+O4. Return strict JSON only, with no prose before or after it.
 
 OUTPUT SHAPE
 {
@@ -46,4 +51,13 @@ OUTPUT SHAPE
   ]
 }
 
-Before returning, silently check: all units are present once and in order; R1-R3 were applied; glossary sets are authored rather than synonym-mapped; every protected token is exact; Japanese grammatical forms use `-ます` and `-て`, not Cyrillic transliterations; every target has the correct string/array type and Russian wording; identifiers and hashes are copied exactly; the result is valid JSON.
+FINAL CHECK
+C1. Confirm that every unit is present exactly once and in input order, as required by O1.
+C2. Confirm that A1-A3 and R1 were applied to the complete article: all Japanese senses remain separate and every Russian formulation is supported by the Japanese evidence.
+C3. Confirm that R2-R3 and L3 were applied to every unit: each target has the required string/array type, glossary entries are distinct, and every glossary element is independently grammatical and logically complete.
+C4. Confirm that L1-L2 were applied everywhere: Russian wording is natural, government is correct, and every usage, domain, or subject restriction is formatted as a qualifier rather than mistaken for a grammatical complement.
+C5. Confirm that L4 was applied to every example: its Russian translation follows the Japanese sentence and preserves all participants and grammatical meaning instead of following the English wording.
+C6. Confirm that L5 was applied to every Japanese grammatical term or form, including any not mentioned in the examples: each remains in Japanese script and none is replaced with Cyrillic phonetic transcription.
+C7. Confirm that L6-L7 were applied to every target: required Russian wording is present and no prohibited calque, romaji, unsupported explanation, markup, or reasoning was emitted.
+C8. Confirm that E1-E2 and O3 were applied: every protected feature is exact, evidence conflicts are handled in favor of Japanese, and confidence and review_reason agree.
+C9. Confirm that identifiers and hashes satisfy O2 and that the result is valid JSON satisfying O4.
