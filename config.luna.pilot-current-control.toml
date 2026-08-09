@@ -19,8 +19,8 @@ filename = "kaishi-1.5k-v2.4.1.apkg"
 extractor = "extractor-v2"
 terminology = "terminology-ru-v1"
 pipeline = "lexicographer-v2"
-translation_prompt = "translate-luna-v1"
-review_prompt = "review-terra-luna-blind-v1"
+translation_prompt = "translate-luna-v2"
+review_prompt = "review-terra-luna-blind-v2"
 
 [models.translation]
 id = "gpt-5.6-luna"
@@ -49,4 +49,3 @@ filename = "dictionary-index-schema.json"
 url = "https://raw.githubusercontent.com/yomidevs/yomitan/649cfb0bdfe7b156447202b151f049784e8468dc/ext/data/schemas/dictionary-term-bank-v3-schema.json"
 sha256 = "665904fcaac715a018a7df6b49d3ace08390d614a9da4f62222bce32c8030b87"
 filename = "dictionary-term-bank-v3-schema.json"
-

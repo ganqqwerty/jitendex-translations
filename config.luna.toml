@@ -19,8 +19,8 @@ filename = "kaishi-1.5k-v2.4.1.apkg"
 extractor = "extractor-v2"
 terminology = "terminology-ru-v1"
 pipeline = "lexicographer-v2"
-translation_prompt = "translate-luna-v1"
-review_prompt = "review-terra-luna-blind-v1"
+translation_prompt = "translate-luna-v2"
+review_prompt = "review-terra-luna-blind-v2"
 
 [models.translation]
 id = "gpt-5.6-luna"

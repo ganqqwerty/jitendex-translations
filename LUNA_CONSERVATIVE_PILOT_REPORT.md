@@ -19,6 +19,14 @@ eleven note replacements concern inconsistent handling of Japanese grammatical
 form labels such as `-ます` and `-て`; the remaining replacement concerns the
 Russian naming of a Japanese form.
 
+Post-pilot inspection found that the blind reviewers applied both directions:
+some replaced `-масу`/`-тэ` with `-ます`/`-て`, while others replaced Japanese
+script with Cyrillic transcription. The frozen v1 prompts did not define a
+canonical notation. Version 2 therefore standardizes Japanese script (`-ます`,
+`-て`) in both the translator and reviewer prompts. The historical v1 gate
+result remains recorded, but it should be interpreted as a terminology-policy
+failure rather than evidence of a general semantic weakness.
+
 ## Coverage and deterministic validation
 
 | Measure | Result |
