@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from typing import Any, Iterator
 
 from .db import audit
-from .util import canonical_json, json_pointer_escape, sha256_bytes, structural_fingerprint
+from .util import (
+    KEY_CHORD_RE, LANGUAGE_ORIGIN_RE, canonical_json, json_pointer_escape,
+    sha256_bytes, source_xref_taxa, structural_fingerprint,
+)
 
 
 ROLE_BY_SELECTOR = {
@@ -33,6 +36,16 @@ class ExtractedUnit:
     role: str
     source_text: str
     protected_tokens: tuple[str, ...]
+
+
+def protected_tokens(role: str, text: str) -> tuple[str, ...]:
+    tokens = list(PROTECTED_RE.findall(text))
+    tokens.extend(KEY_CHORD_RE.findall(text))
+    if role == "xref_gloss":
+        tokens.extend(source_xref_taxa(text))
+    if role == "note" and (match := LANGUAGE_ORIGIN_RE.fullmatch(text.strip())):
+        tokens.append(match.group(1))
+    return tuple(dict.fromkeys(tokens))
 
 
 def _flatten_text(node: Any, output: list[str]) -> None:
@@ -79,7 +92,8 @@ def _walk(node: Any, pointer: str = "", selectors: tuple[str, ...] = ()) -> Iter
             if key in {"content", "title"} and isinstance(value, str):
                 text = value.strip()
                 if role and text and re.search(r"[A-Za-z]", text):
-                    yield ExtractedUnit(child_pointer, "tooltip" if key == "title" else role, text, tuple(PROTECTED_RE.findall(text)))
+                    unit_role = "tooltip" if key == "title" else role
+                    yield ExtractedUnit(child_pointer, unit_role, text, protected_tokens(unit_role, text))
             else:
                 yield from _walk(value, child_pointer, active)
     elif isinstance(node, list):
@@ -89,7 +103,7 @@ def _walk(node: Any, pointer: str = "", selectors: tuple[str, ...] = ()) -> Iter
         role = next((ROLE_BY_SELECTOR[item] for item in reversed(selectors) if item in ROLE_BY_SELECTOR), None)
         text = node.strip()
         if role and text and re.search(r"[A-Za-z]", text):
-            yield ExtractedUnit(pointer, role, text, tuple(PROTECTED_RE.findall(text)))
+            yield ExtractedUnit(pointer, role, text, protected_tokens(role, text))
 
 
 def _walk_lexicographer(node: Any, pointer: str = "", selectors: tuple[str, ...] = ()) -> Iterator[ExtractedUnit]:
@@ -117,7 +131,8 @@ def _walk_lexicographer(node: Any, pointer: str = "", selectors: tuple[str, ...]
             if key in {"content", "title"} and isinstance(value, str):
                 text = value.strip()
                 if role and text and re.search(r"[A-Za-z]", text):
-                    yield ExtractedUnit(child_pointer, "tooltip" if key == "title" else role, text, tuple(PROTECTED_RE.findall(text)))
+                    unit_role = "tooltip" if key == "title" else role
+                    yield ExtractedUnit(child_pointer, unit_role, text, protected_tokens(unit_role, text))
             else:
                 yield from _walk_lexicographer(value, child_pointer, active)
     elif isinstance(node, list):
@@ -127,7 +142,7 @@ def _walk_lexicographer(node: Any, pointer: str = "", selectors: tuple[str, ...]
         role = next((ROLE_BY_SELECTOR[item] for item in reversed(selectors) if item in ROLE_BY_SELECTOR), None)
         text = node.strip()
         if role and text and re.search(r"[A-Za-z]", text):
-            yield ExtractedUnit(pointer, role, text, tuple(PROTECTED_RE.findall(text)))
+            yield ExtractedUnit(pointer, role, text, protected_tokens(role, text))
 
 
 def extract_article_units(row: list[Any], pipeline_version: str = "scalar-v1") -> list[ExtractedUnit]:

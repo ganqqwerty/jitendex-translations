@@ -38,13 +38,17 @@ def _write_member(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
 def _chunk(rows: list[list[Any]], max_bytes: int = 4 * 1024 * 1024) -> list[list[list[Any]]]:
     chunks: list[list[list[Any]]] = []
     current: list[list[Any]] = []
+    current_bytes = 2  # JSON array brackets.
     for row in rows:
-        candidate = current + [row]
-        if current and len(canonical_json(candidate)) > max_bytes:
+        row_bytes = len(canonical_json(row))
+        separator_bytes = 1 if current else 0
+        if current and current_bytes + separator_bytes + row_bytes > max_bytes:
             chunks.append(current)
             current = [row]
+            current_bytes = 2 + row_bytes
         else:
-            current = candidate
+            current.append(row)
+            current_bytes += separator_bytes + row_bytes
     if current:
         chunks.append(current)
     return chunks

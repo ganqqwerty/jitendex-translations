@@ -6,7 +6,10 @@ from pathlib import Path
 from typing import Any
 
 from .db import audit
-from .util import ASCII_WORD_RE, CONTROL_RE, CYRILLIC_RE, LATIN_TAXON_RE, TAG_RE, canonical_json, sha256_bytes
+from .util import (
+    ASCII_WORD_RE, CONTROL_RE, CYRILLIC_RE, KEY_CHORD_RE, LANGUAGE_ORIGIN_RE,
+    LATIN_TAXON_RE, TAG_RE, canonical_json, sha256_bytes, source_xref_taxa,
+)
 
 
 class ValidationFailure(ValueError):
@@ -124,9 +127,15 @@ def validate_worker_payload(connection: sqlite3.Connection, attempt: sqlite3.Row
                 ):
                     issues.append({"code": code, "unit_id": source["id"], "definition_index": index})
         else:
+            protected = [] if required_target is not None else json.loads(source["protected_tokens_json"])
+            protected = [*protected, *KEY_CHORD_RE.findall(source["source_text"])]
+            if source["role"] == "xref_gloss":
+                protected = [*protected, *source_xref_taxa(source["source_text"])]
+            if source["role"] == "note" and (match := LANGUAGE_ORIGIN_RE.fullmatch(source["source_text"].strip())):
+                protected = [*protected, match.group(1)]
             for code in _plain_text_issues(
                 target,
-                [] if required_target is not None else json.loads(source["protected_tokens_json"]),
+                protected,
                 allow_no_cyrillic=(
                     (required_target is not None and target == required_target)
                     or allows_japanese_grammar_label(source["role"], source["source_text"])

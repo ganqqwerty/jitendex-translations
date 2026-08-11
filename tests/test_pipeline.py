@@ -5,7 +5,7 @@ import pytest
 
 from jitendex_ru.batch import claim, make_batches
 from jitendex_ru.apply_translations import _compose_glossary, _localize_mixed_form_restrictions
-from jitendex_ru.build_dictionary import build, record_yomitan_smoke, verify
+from jitendex_ru.build_dictionary import _chunk, build, record_yomitan_smoke, verify
 from jitendex_ru.db import connect, initialize
 from jitendex_ru.extract_units import extract_selected
 from jitendex_ru.review import apply_adjudication, _review_manifest, _split_review_envelope, ingest_review, make_review_batches
@@ -72,6 +72,17 @@ def test_mixed_japanese_form_restrictions_are_localized():
     _localize_mixed_form_restrictions(article)
     assert article["content"][0] == {"tag": "span", "lang": "ru", "content": "только 始める"}
     assert article["content"][1] == {"tag": "span", "lang": "ja", "content": "始める"}
+
+
+def test_term_bank_chunking_uses_exact_serialized_byte_boundary():
+    rows = [["x" * size] for size in (5, 7, 9, 11, 13)]
+    max_bytes = len(canonical_json(rows[:2]))
+
+    chunks = _chunk(rows, max_bytes=max_bytes)
+
+    assert chunks[0] == rows[:2]
+    assert [row for chunk in chunks for row in chunk] == rows
+    assert all(len(canonical_json(chunk)) <= max_bytes or len(chunk) == 1 for chunk in chunks)
 
 
 def test_translation_review_and_reproducible_build(tmp_path):

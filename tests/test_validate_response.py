@@ -48,6 +48,104 @@ def test_allows_parenthesized_scientific_taxon(tmp_path):
     ]}
     assert validate_worker_payload(connection, attempt, payload) == []
 
+    payload["translations"][0]["target_text"] = "перилла (Perilla frutescens var. crispa)"
+    assert validate_worker_payload(connection, attempt, payload) == []
+
+    payload["translations"][0]["target_text"] = "японский волк (Canis lupus hodophilax; вымерший вид)"
+    assert validate_worker_payload(connection, attempt, payload) == []
+
+    payload["translations"][0]["target_text"] = "юдзу (Citrus ichangensis x C. reticulata)"
+    assert validate_worker_payload(connection, attempt, payload) == []
+    payload["translations"][0]["target_text"] = "юдзу (Citrus ichangensis × C. reticulata)"
+    assert validate_worker_payload(connection, attempt, payload) == []
+
+
+def test_allows_exact_language_origin_citation_but_still_protects_it(tmp_path):
+    connection, attempt = fixture_db(tmp_path)
+    connection.execute(
+        "UPDATE translation_unit SET role='note',source_text='Thai: \"khao man kai\"',protected_tokens_json='[]' WHERE id='u1'"
+    )
+    payload = {"schema_version": 1, "batch_id": "b1", "manifest_sha256": "f" * 64, "translations": [
+        {"unit_id": "u1", "source_sha256": "sh", "target_text": "тайск.: «khao man kai»", "confidence": "high", "review_reason": None}
+    ]}
+
+    assert validate_worker_payload(connection, attempt, payload) == []
+    payload["translations"][0]["target_text"] = "тайское происхождение"
+    assert "protected_token_missing" in {
+        issue["code"] for issue in validate_worker_payload(connection, attempt, payload)
+    }
+
+
+def test_allows_and_protects_keyboard_chord(tmp_path):
+    connection, attempt = fixture_db(tmp_path)
+    connection.execute(
+        "UPDATE translation_unit SET role='example',source_text='Push Ctrl+Alt+Del to log on',protected_tokens_json='[]' WHERE id='u1'"
+    )
+    payload = {"schema_version": 1, "batch_id": "b1", "manifest_sha256": "f" * 64, "translations": [
+        {"unit_id": "u1", "source_sha256": "sh", "target_text": "Нажмите Ctrl+Alt+Del, чтобы войти в систему.", "confidence": "high", "review_reason": None}
+    ]}
+
+    assert validate_worker_payload(connection, attempt, payload) == []
+    payload["translations"][0]["target_text"] = "Нажмите клавиши, чтобы войти в систему."
+    assert "protected_token_missing" in {
+        issue["code"] for issue in validate_worker_payload(connection, attempt, payload)
+    }
+
+
+def test_allows_and_protects_source_taxa_in_cross_reference(tmp_path):
+    connection, attempt = fixture_db(tmp_path)
+    connection.execute(
+        "UPDATE translation_unit SET role='xref_gloss',source_text='Hexacentrus japonicus; Hexacentrus unicolor',protected_tokens_json='[]' WHERE id='u1'"
+    )
+    payload = {"schema_version": 1, "batch_id": "b1", "manifest_sha256": "f" * 64, "translations": [
+        {"unit_id": "u1", "source_sha256": "sh", "target_text": "Hexacentrus japonicus (вид кузнечиков); Hexacentrus unicolor (вид кузнечиков)", "confidence": "high", "review_reason": None}
+    ]}
+
+    assert validate_worker_payload(connection, attempt, payload) == []
+    payload["translations"][0]["target_text"] = "Hexacentrus japonicus (вид кузнечиков)"
+    assert "protected_token_missing" in {
+        issue["code"] for issue in validate_worker_payload(connection, attempt, payload)
+    }
+
+    connection.execute(
+        "UPDATE translation_unit SET source_text='any turtle (esp. the Japanese pond turtle, Mauremys japonica)' WHERE id='u1'"
+    )
+    payload["translations"][0]["target_text"] = (
+        "любая черепаха рода Mauremys (особенно японская прудовая черепаха, Mauremys japonica)"
+    )
+    assert validate_worker_payload(connection, attempt, payload) == []
+
+    connection.execute(
+        "UPDATE translation_unit SET source_text='Japanese sea bass (Lateolabrax japonicus)' WHERE id='u1'"
+    )
+    payload["translations"][0]["target_text"] = "морской судак (Lateolabrax japonicus)"
+    assert validate_worker_payload(connection, attempt, payload) == []
+
+    connection.execute("UPDATE translation_unit SET source_text='See also' WHERE id='u1'")
+    payload["translations"][0]["target_text"] = "см. также"
+    assert validate_worker_payload(connection, attempt, payload) == []
+
+    connection.execute("UPDATE translation_unit SET source_text='Naruto wakame' WHERE id='u1'")
+    payload["translations"][0]["target_text"] = "вакамэ из Наруто"
+    assert validate_worker_payload(connection, attempt, payload) == []
+
+    for source, target in (
+        ("washi; Japanese paper", "васи; японская бумага"),
+        ("Morse code (esp. signalling)", "азбука Морзе (особенно сигналы)"),
+        ("Akihabara style; nerdy", "в стиле Акихабары; гиковский"),
+        (
+            "③ government office related to finances (Kamakura and Muromachi periods)",
+            "③ финансовое ведомство (периоды Камакура и Муромати)",
+        ),
+        (
+            "mix of peanuts and mochi chips in the shape of kaki (Japanese persimmon) seeds",
+            "смесь арахиса и рисовых крекеров в форме семян японской хурмы",
+        ),
+    ):
+        connection.execute("UPDATE translation_unit SET source_text=? WHERE id='u1'", (source,))
+        payload["translations"][0]["target_text"] = target
+        assert validate_worker_payload(connection, attempt, payload) == []
+
 
 def test_lexicographer_accepts_variable_length_glossary_but_rejects_duplicates(tmp_path):
     connection, attempt = fixture_db(tmp_path)

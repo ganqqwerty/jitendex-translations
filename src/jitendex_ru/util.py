@@ -13,8 +13,46 @@ CYRILLIC_RE = re.compile(r"[\u0400-\u04ff]")
 TAG_RE = re.compile(r"<\/?[A-Za-z][^>]*>|```|\[[^\]]+\]\([^)]+\)")
 CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 ASCII_WORD_RE = re.compile(r"\b[A-Za-z]{3,}\b")
-LATIN_TAXON_RE = re.compile(r"\([A-Z][a-z]+(?:\s+[a-z][a-z-]+){1,2}\)")
+LATIN_BINOMIAL_RE = re.compile(
+    r"(?P<prefix>^|[;(,]\s*)"
+    r"(?P<taxon>[A-Z][a-z]{2,}\s+[a-z][a-z-]{2,})\b"
+)
+LATIN_TAXON_RE = re.compile(
+    r"(?<=\()[A-Z][a-z]+(?:\s+[a-z][a-z-]+){1,2}"
+    r"(?:\s+(?:subsp|ssp|var|f)\.\s+[a-z][a-z-]+"
+    r"|\s+(?:x|×)\s+[A-Z]\.\s+[a-z][a-z-]+)?"
+    r"(?=\s*(?:[;,)]))"
+)
+LANGUAGE_ORIGIN_RE = re.compile(r'^[A-Za-z]+:\s*"([^"]+)"$')
+KEY_CHORD_RE = re.compile(r"\b[A-Za-z][A-Za-z0-9]*(?:\+[A-Za-z][A-Za-z0-9]*)+\b")
 JAPANESE_RE = re.compile(r"[\u3040-\u30ff\u3400-\u9fff]")
+
+NON_TAXON_EPITHETS = frozenset({
+    "a", "an", "and", "code", "coordinates", "dynasty", "heaven", "law",
+    "paper", "people", "period", "pilgrim", "pilgrimage", "school", "sea",
+    "style", "treat", "wheel",
+})
+NON_TAXON_GENERA = frozenset({
+    "akihabara", "cartesian", "chinese", "dalmatian", "dutch", "english",
+    "german", "islamic", "japanese", "kamakura", "korin", "morse", "muromachi",
+    "qin", "scythian", "shikoku", "tusita",
+})
+
+
+def source_xref_taxa(source_text: str) -> list[str]:
+    """Conservatively find Latin binomials that a cross-reference must retain."""
+    matches = list(LATIN_BINOMIAL_RE.finditer(source_text))
+    genera = [match.group("taxon").split()[0] for match in matches]
+    taxa: list[str] = []
+    for match in matches:
+        taxon = match.group("taxon")
+        genus, epithet = taxon.split()
+        if genus.lower() in NON_TAXON_GENERA or epithet.lower() in NON_TAXON_EPITHETS:
+            continue
+        prefix = match.group("prefix").strip()
+        if prefix in {"(", ","} or genera.count(genus) > 1:
+            taxa.append(taxon)
+    return list(dict.fromkeys(taxa))
 
 
 def canonical_json(value: Any) -> bytes:

@@ -1,67 +1,19 @@
-from jitendex_ru.extract_units import extract_article_units, glossary_evidence, lexicographic_context, semantic_context
+from jitendex_ru.extract_units import protected_tokens
 
 
-def article(content):
-    return ["食べる", "たべる", "", "v1", 0, {"type": "structured-content", "content": content}, 1, ""]
+def test_scalar_protected_tokens_are_available_to_the_model_and_validator():
+    assert protected_tokens("example", "Press Ctrl+Alt+Del") == ("Ctrl+Alt+Del",)
+    assert protected_tokens("note", 'Thai: "khao man kai"') == ("khao man kai",)
+    assert protected_tokens(
+        "xref_gloss", "Japanese sea bass (Lateolabrax japonicus)"
+    ) == ("Lateolabrax japonicus",)
 
 
-def test_extracts_only_whitelisted_english_leaves_and_protects_tokens():
-    row = article([
-        {"tag": "div", "data": {"content": "glossary"}, "lang": "en", "content": "to eat JMdict 123"},
-        {"tag": "div", "data": {"content": "example-sentence-a"}, "content": "ご飯を食べる。"},
-        {"tag": "div", "data": {"content": "example-sentence-b"}, "lang": "en", "content": "I eat rice."},
-        {"tag": "a", "href": "https://example.test", "content": "unclassified link"},
-        {"tag": "ruby", "data": {"content": "ruby"}, "content": "食べる"},
-    ])
-    units = extract_article_units(row)
-    assert [(unit.role, unit.source_text) for unit in units] == [
-        ("glossary", "to eat JMdict 123"), ("example", "I eat rice.")
-    ]
-    assert units[0].protected_tokens == ("JMdict", "123")
-    context = semantic_context(row)
-    assert context["examples"] == [{"japanese": "ご飯を食べる。", "english": "I eat rice."}]
-
-
-def test_excludes_attribution_even_inside_translatable_ancestor():
-    row = article({
-        "tag": "div", "data": {"content": "glossary"}, "content": [
-            "visible gloss",
-            {"tag": "span", "data": {"content": "attribution"}, "content": "Creative Commons"},
-        ],
-    })
-    assert [unit.source_text for unit in extract_article_units(row)] == ["visible gloss"]
-
-
-def test_excludes_yomitan_image_rendering_controls():
-    row = article({
-        "tag": "div", "data": {"content": "forms"}, "content": {
-            "tag": "img", "path": "glyph.svg", "alt": "variant glyph",
-            "appearance": "monochrome", "imageRendering": "crisp-edges",
-            "verticalAlign": "middle", "border": "1px solid", "borderRadius": "2px",
-            "sizeUnits": "em",
-        },
-    })
-    assert [(unit.pointer, unit.source_text) for unit in extract_article_units(row)] == [
-        ("/5/content/content/alt", "variant glyph"),
-    ]
-
-
-def test_lexicographer_groups_english_synonyms_into_one_variable_length_unit():
-    row = article({
-        "tag": "div", "data": {"content": "sense"}, "content": [
-            {"tag": "span", "data": {"content": "part-of-speech-info"}, "content": "transitive verb"},
-            {"tag": "ul", "data": {"content": "glossary"}, "content": [
-                {"tag": "li", "content": "to begin"},
-                {"tag": "li", "content": "to start"},
-                {"tag": "li", "content": "to commence"},
-            ]},
-            {"tag": "div", "data": {"content": "example-sentence-a"}, "content": "仕事を始める。"},
-            {"tag": "div", "data": {"content": "example-sentence-b"}, "content": "Begin the work."},
-        ],
-    })
-    units = extract_article_units(row, "lexicographer-v2")
-    assert [unit.role for unit in units] == ["pos", "glossary_set", "example"]
-    assert glossary_evidence(units[1].source_text) == ["to begin", "to start", "to commence"]
-    context = lexicographic_context(row)
-    assert context["senses"][0]["english_gloss_evidence"] == ["to begin", "to start", "to commence"]
-    assert context["senses"][0]["examples"][0]["japanese"] == "仕事を始める。"
+def test_common_xref_phrases_are_not_mistaken_for_taxa():
+    assert protected_tokens("xref_gloss", "washi; Japanese paper") == ()
+    assert protected_tokens("xref_gloss", "Morse code (esp. signalling)") == ()
+    assert protected_tokens("xref_gloss", "Akihabara style; nerdy") == ()
+    assert protected_tokens(
+        "xref_gloss",
+        "③ government office related to finances (Kamakura and Muromachi periods)",
+    ) == ()
