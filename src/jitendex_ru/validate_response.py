@@ -15,7 +15,14 @@ class ValidationFailure(ValueError):
         self.issues = issues
 
 
-def _plain_text_issues(target: Any, protected: list[str]) -> list[str]:
+def allows_japanese_grammar_label(role: str, source_text: str) -> bool:
+    """Allow Japanese-only output when the source is itself a grammar label."""
+    return role == "pos" and source_text.strip().lower() in {"suru"}
+
+
+def _plain_text_issues(
+    target: Any, protected: list[str], *, allow_no_cyrillic: bool = False,
+) -> list[str]:
     issues: list[str] = []
     if not isinstance(target, str) or not target.strip():
         return ["empty_or_non_string"]
@@ -27,7 +34,7 @@ def _plain_text_issues(target: Any, protected: list[str]) -> list[str]:
         if token not in target:
             issues.append("protected_token_missing")
             break
-    if not CYRILLIC_RE.search(target):
+    if not allow_no_cyrillic and not CYRILLIC_RE.search(target):
         issues.append("no_cyrillic")
     unprotected = target
     for token in protected:
@@ -67,6 +74,15 @@ def validate_worker_payload(connection: sqlite3.Connection, attempt: sqlite3.Row
         """SELECT tu.* FROM batch_item bi JOIN translation_unit tu ON tu.id=bi.unit_id
         WHERE bi.batch_id=? ORDER BY bi.ordinal""", (batch["id"],)
     ).fetchall()
+    required_targets: dict[str, str] = {}
+    manifest_path = Path(batch["manifest_path"])
+    if manifest_path.is_file():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for article in manifest.get("articles", []):
+            for unit in article.get("units", []):
+                required = unit.get("required_terminology")
+                if isinstance(required, dict) and isinstance(required.get("target_text"), str):
+                    required_targets[unit["unit_id"]] = required["target_text"]
     translations = payload.get("translations")
     if not isinstance(translations, list):
         return issues + [{"code": "translations_not_array"}]
@@ -85,6 +101,11 @@ def validate_worker_payload(connection: sqlite3.Connection, attempt: sqlite3.Row
         if item.get("confidence") != "high" and not item.get("review_reason"):
             issues.append({"code": "missing_review_reason", "unit_id": source["id"]})
         target = item.get("target_text")
+        required_target = required_targets.get(source["id"])
+        # Approved whole-leaf terminology is strong generation guidance, but
+        # an intermediate JPDB batch is not rejected solely for varying from
+        # it. One deterministic pass canonicalizes these leaves and structured
+        # tags in the final cumulative run before the definitive export.
         if source["role"] == "glossary_set":
             if not isinstance(target, list) or not 1 <= len(target) <= 12:
                 issues.append({"code": "invalid_glossary_set", "unit_id": source["id"]})
@@ -97,10 +118,20 @@ def validate_worker_payload(connection: sqlite3.Connection, attempt: sqlite3.Row
             if missing:
                 issues.append({"code": "protected_token_missing", "unit_id": source["id"], "tokens": missing})
             for index, definition in enumerate(target):
-                for code in _plain_text_issues(definition, []):
+                for code in _plain_text_issues(
+                    definition, [],
+                    allow_no_cyrillic=allows_japanese_grammar_label(source["role"], source["source_text"]),
+                ):
                     issues.append({"code": code, "unit_id": source["id"], "definition_index": index})
         else:
-            for code in _plain_text_issues(target, json.loads(source["protected_tokens_json"])):
+            for code in _plain_text_issues(
+                target,
+                [] if required_target is not None else json.loads(source["protected_tokens_json"]),
+                allow_no_cyrillic=(
+                    (required_target is not None and target == required_target)
+                    or allows_japanese_grammar_label(source["role"], source["source_text"])
+                ),
+            ):
                 issues.append({"code": code, "unit_id": source["id"]})
     return issues
 

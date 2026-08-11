@@ -14,7 +14,11 @@ from .config import Config
 from .db import audit, connect, initialize
 from .extract_units import extract_selected
 from .import_jitendex import import_jitendex
+from .jitendex_tags import import_jitendex_tags
 from .import_kaishi import import_kaishi
+from .jpdb_scope import (
+    accept_deterministic_translations, coverage_report, reuse_accepted_translations, select_top_terms,
+)
 from .pilot import build_pilot_selection, load_pilot_selection, verify_pilot_batches, write_pilot_selection
 from .openai_requests import audit_run_input_tokens, write_token_audit
 from .resolve_selection import apply_resolutions, generate_candidates, make_resolution_batches, selection_manifest_hash, unresolved_report
@@ -33,6 +37,16 @@ def _parser() -> argparse.ArgumentParser:
     commands.add_parser("acquire")
     commands.add_parser("import-sources")
     commands.add_parser("resolve-scope")
+    jpdb_scope = commands.add_parser("select-jpdb-scope")
+    jpdb_scope.add_argument("path", type=Path)
+    jpdb_scope.add_argument("--limit", type=int, default=5000)
+    coverage = commands.add_parser("report-jpdb-coverage")
+    coverage.add_argument("--run-id", type=int, required=True)
+    reuse = commands.add_parser("reuse-translations")
+    reuse.add_argument("--source-run-id", type=int, required=True)
+    reuse.add_argument("--target-run-id", type=int, required=True)
+    accept = commands.add_parser("accept-translations")
+    accept.add_argument("--run-id", type=int, required=True)
     resolution_batches = commands.add_parser("make-resolution-batches")
     resolution_batches.add_argument("--max-notes", type=int, default=10)
     resolution = commands.add_parser("apply-resolutions")
@@ -244,11 +258,26 @@ def execute(args: argparse.Namespace) -> Any:
             jitendex_id = _snapshot(connection, config, "jitendex", paths["jitendex"])
             kaishi_id = _snapshot(connection, config, "kaishi", paths["kaishi"])
             result = {"jitendex_articles_added": import_jitendex(connection, jitendex_id, paths["jitendex"]),
-                      "kaishi_notes_added": import_kaishi(connection, kaishi_id, paths["kaishi"])}
+                      "kaishi_notes_added": import_kaishi(connection, kaishi_id, paths["kaishi"]),
+                      **import_jitendex_tags(connection, jitendex_id, paths["jitendex"])}
             connection.commit()
             return result
         if args.command == "resolve-scope":
             result = generate_candidates(connection)
+            connection.commit()
+            return result
+        if args.command == "select-jpdb-scope":
+            result = select_top_terms(connection, args.path.resolve(), args.limit)
+            connection.commit()
+            return result
+        if args.command == "report-jpdb-coverage":
+            return coverage_report(connection, args.run_id)
+        if args.command == "reuse-translations":
+            result = reuse_accepted_translations(connection, args.source_run_id, args.target_run_id)
+            connection.commit()
+            return result
+        if args.command == "accept-translations":
+            result = accept_deterministic_translations(connection, args.run_id)
             connection.commit()
             return result
         if args.command == "make-resolution-batches":

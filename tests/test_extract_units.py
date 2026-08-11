@@ -32,6 +32,20 @@ def test_excludes_attribution_even_inside_translatable_ancestor():
     assert [unit.source_text for unit in extract_article_units(row)] == ["visible gloss"]
 
 
+def test_excludes_yomitan_image_rendering_controls():
+    row = article({
+        "tag": "div", "data": {"content": "forms"}, "content": {
+            "tag": "img", "path": "glyph.svg", "alt": "variant glyph",
+            "appearance": "monochrome", "imageRendering": "crisp-edges",
+            "verticalAlign": "middle", "border": "1px solid", "borderRadius": "2px",
+            "sizeUnits": "em",
+        },
+    })
+    assert [(unit.pointer, unit.source_text) for unit in extract_article_units(row)] == [
+        ("/5/content/content/alt", "variant glyph"),
+    ]
+
+
 def test_lexicographer_groups_english_synonyms_into_one_variable_length_unit():
     row = article({
         "tag": "div", "data": {"content": "sense"}, "content": [

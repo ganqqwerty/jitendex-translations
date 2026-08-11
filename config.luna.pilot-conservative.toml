@@ -19,8 +19,8 @@ filename = "kaishi-1.5k-v2.4.1.apkg"
 extractor = "extractor-v2"
 terminology = "terminology-ru-v1"
 pipeline = "lexicographer-v2"
-translation_prompt = "translate-luna-v2"
-review_prompt = "review-terra-luna-blind-v2"
+translation_prompt = "translate-luna-v4"
+review_prompt = "review-terra-luna-blind-v4"
 
 [models.translation]
 id = "gpt-5.6-luna"
@@ -39,6 +39,7 @@ soft_max_units = 100
 singleton_threshold_bytes = 16384
 hard_max_article_bytes = 49152
 hard_max_article_units = 200
+structured_output_contract = "per-manifest-v3"
 
 [schemas.index]
 url = "https://raw.githubusercontent.com/yomidevs/yomitan/649cfb0bdfe7b156447202b151f049784e8468dc/ext/data/schemas/dictionary-index-schema.json"

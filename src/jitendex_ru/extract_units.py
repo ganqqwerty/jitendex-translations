@@ -19,6 +19,11 @@ ROLE_BY_SELECTOR = {
 EXCLUDED_SELECTORS = {
     "example-sentence-a", "attribution", "attribution-footnote", "redirect", "ruby", "rt",
 }
+NON_TRANSLATABLE_KEYS = {
+    "data", "href", "path", "src", "lang", "style", "tag",
+    # Yomitan image rendering controls. These are schema values/CSS, not copy.
+    "imageRendering", "appearance", "verticalAlign", "border", "borderRadius", "sizeUnits",
+}
 PROTECTED_RE = re.compile(r"https?://\S+|\b(?:JMdict|Tatoeba)\b|[\u3040-\u30ff\u3400-\u9fff]+|\{[^{}]+\}|\b\d+(?:\.\d+)*\b")
 
 
@@ -69,7 +74,7 @@ def _walk(node: Any, pointer: str = "", selectors: tuple[str, ...] = ()) -> Iter
         role = next((ROLE_BY_SELECTOR[item] for item in reversed(active) if item in ROLE_BY_SELECTOR), None)
         for key, value in node.items():
             child_pointer = f"{pointer}/{json_pointer_escape(key)}"
-            if key in {"data", "href", "path", "src", "lang", "style", "tag"}:
+            if key in NON_TRANSLATABLE_KEYS:
                 continue
             if key in {"content", "title"} and isinstance(value, str):
                 text = value.strip()
@@ -107,7 +112,7 @@ def _walk_lexicographer(node: Any, pointer: str = "", selectors: tuple[str, ...]
         role = next((ROLE_BY_SELECTOR[item] for item in reversed(active) if item in ROLE_BY_SELECTOR), None)
         for key, value in node.items():
             child_pointer = f"{pointer}/{json_pointer_escape(key)}"
-            if key in {"data", "href", "path", "src", "lang", "style", "tag"}:
+            if key in NON_TRANSLATABLE_KEYS:
                 continue
             if key in {"content", "title"} and isinstance(value, str):
                 text = value.strip()

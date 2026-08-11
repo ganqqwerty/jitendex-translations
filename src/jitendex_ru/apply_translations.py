@@ -6,6 +6,7 @@ import re
 import sqlite3
 from typing import Any
 
+from .extract_units import NON_TRANSLATABLE_KEYS
 from .util import JAPANESE_RE, json_pointer_get, json_pointer_set, sha256_bytes, structural_fingerprint
 
 
@@ -111,6 +112,11 @@ def apply_article(connection: sqlite3.Connection, run_id: int, article: sqlite3.
         expected_source = json.loads(row["source_text"]) if row["role"] == "glossary_set" else row["source_text"]
         if current != expected_source:
             raise ValueError(f"source text changed at {row['json_pointer']}")
+        # Compatibility for runs extracted before rendering controls were
+        # classified as structural: validate their provenance but preserve
+        # the source value so the Yomitan schema remains valid.
+        if row["json_pointer"].rsplit("/", 1)[-1] in NON_TRANSLATABLE_KEYS:
+            continue
         target = _compose_glossary(current, row["target_text"], row["json_pointer"]) if row["role"] == "glossary_set" else row["target_text"]
         json_pointer_set(output, row["json_pointer"], target)
         _set_language_for_leaf(output, row["json_pointer"])

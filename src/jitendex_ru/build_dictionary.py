@@ -69,7 +69,8 @@ def build(
     if source_row is None:
         raise ValueError("no Jitendex source snapshot")
     articles = connection.execute(
-        "SELECT * FROM article WHERE selected=1 ORDER BY bank_number,entry_ordinal"
+        """SELECT a.* FROM run_article ra JOIN article a ON a.id=ra.article_id
+        WHERE ra.run_id=? ORDER BY a.bank_number,a.entry_ordinal""", (run_id,)
     ).fetchall()
     rows = [apply_article(connection, run_id, article) for article in articles]
     if not rows:
@@ -78,11 +79,20 @@ def build(
     files: dict[str, bytes] = {}
     with zipfile.ZipFile(source_row["local_path"]) as source:
         index = json.loads(source.read("index.json"))
-        index["title"] = "Jitendex Kaishi 1.5k — русский"
-        suffix = "kaishi-ru-lexicographer-v2" if run["pipeline_version"] == "lexicographer-v2" else "kaishi-ru-v1"
+        frequency_scope = connection.execute(
+            """SELECT 1 FROM frequency_article fa JOIN run_article ra ON ra.article_id=fa.article_id
+            WHERE ra.run_id=? LIMIT 1""", (run_id,),
+        ).fetchone()
+        index["title"] = "Jitendex JPDB 5k — русский" if frequency_scope else "Jitendex Kaishi 1.5k — русский"
+        suffix = "jpdb-5k-ru" if frequency_scope else (
+            "kaishi-ru-lexicographer-v2" if run["pipeline_version"] == "lexicographer-v2" else "kaishi-ru-v1"
+        )
         index["revision"] = f"{index.get('revision', '')}-{suffix}"
         index["targetLanguage"] = "ru"
         index["description"] = (
+            "Производный русскоязычный словарь на основе Jitendex; выбор статей соответствует верхним 5000 строкам JPDB. "
+            "Атрибуция Jitendex/JMdict/Tatoeba и условия CC BY-SA 4.0 сохранены."
+            if frequency_scope else
             "Производный русскоязычный словарь на основе Jitendex; выбор статей ограничен лексикой Kaishi 1.5k. "
             "Jitendex/JMdict/Tatoeba attribution and CC BY-SA 4.0 terms are retained. No affiliation with Kaishi."
         )
@@ -147,7 +157,13 @@ def verify(connection: sqlite3.Connection, path: Path) -> dict[str, Any]:
                 missing_media.update(path for path in _paths(row) if path not in names)
         if missing_media:
             raise ValueError(f"missing media: {sorted(missing_media)}")
-    expected = connection.execute("SELECT COUNT(*) FROM article WHERE selected=1").fetchone()[0]
+    export = connection.execute(
+        "SELECT run_id FROM export WHERE output_path=? AND zip_sha256=? ORDER BY id DESC LIMIT 1",
+        (str(path), sha256_file(path)),
+    ).fetchone()
+    if export is None:
+        raise ValueError("archive has no matching export record")
+    expected = connection.execute("SELECT COUNT(*) FROM run_article WHERE run_id=?", (export["run_id"],)).fetchone()[0]
     if article_count != expected:
         raise ValueError(f"expected {expected} articles, found {article_count}")
     zip_hash = sha256_file(path)

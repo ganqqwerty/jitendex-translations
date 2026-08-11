@@ -1,6 +1,6 @@
 import pytest
 
-from jitendex_ru.batch import _manifest, _pack_envelopes
+from jitendex_ru.batch import _manifest, _pack_envelopes, _required_tag_terminology
 
 
 def _article(article_id: str, sources: list[str]) -> dict:
@@ -47,6 +47,31 @@ def _pack(envelopes: list[dict], **overrides: int) -> list[list[dict]]:
     }
     limits.update(overrides)
     return _pack_envelopes(envelopes, {}, **limits)
+
+
+def test_approved_tag_terminology_selects_compact_label_and_full_tooltip():
+    source = [None, None, None, None, None, [{
+        "data": {"class": "tag", "content": "part-of-speech-info", "code": "v5b"},
+        "content": "5-dan -bu", "title": "Godan verb with 'bu' ending",
+    }]]
+    catalog = {("part-of-speech-info", "v5b"): {
+        "label_ru": "гл. годан на ぶ", "description_ru": "Глагол годан с окончанием на «ぶ».",
+    }}
+
+    label = _required_tag_terminology(source, "/5/0/content", catalog)
+    tooltip = _required_tag_terminology(source, "/5/0/title", catalog)
+
+    assert label["target_text"] == "гл. годан на ぶ"
+    assert tooltip["target_text"] == "Глагол годан с окончанием на «ぶ»."
+
+
+def test_tag_without_approved_terminology_does_not_stop_intermediate_batch():
+    source = [None, None, None, None, None, [{
+        "data": {"class": "tag", "content": "part-of-speech-info", "code": "v5b"},
+        "content": "5-dan -bu",
+    }]]
+
+    assert _required_tag_terminology(source, "/5/0/content", {}) is None
 
 
 def test_article_over_soft_byte_cap_is_valid_ordered_singleton():

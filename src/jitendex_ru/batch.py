@@ -6,11 +6,61 @@ import secrets
 import sqlite3
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from .db import audit, transaction
 from .extract_units import glossary_evidence, lexicographic_context, semantic_context
-from .util import atomic_write, canonical_json, sha256_bytes
+from .util import atomic_write, canonical_json, json_pointer_get, sha256_bytes
+
+
+TagCatalog = Mapping[tuple[str, str], Mapping[str, str]]
+
+
+def _approved_tag_catalog(connection: sqlite3.Connection, snapshot_id: int) -> dict[tuple[str, str], dict[str, str]]:
+    rows = connection.execute(
+        """SELECT category,code,label_ru,description_ru FROM jitendex_tag
+        WHERE snapshot_id=? AND source_kind='embedded_tooltip'
+          AND translation_source='approved_workbook'
+        ORDER BY id""",
+        (snapshot_id,),
+    ).fetchall()
+    catalog: dict[tuple[str, str], dict[str, str]] = {}
+    for row in rows:
+        key = (row["category"], row["code"])
+        if key in catalog:
+            raise ValueError(f"duplicate approved Jitendex tag terminology for {key}")
+        if not row["label_ru"] or not row["description_ru"]:
+            raise ValueError(f"incomplete approved Jitendex tag terminology for {key}")
+        catalog[key] = {"label_ru": row["label_ru"], "description_ru": row["description_ru"]}
+    return catalog
+
+
+def _required_tag_terminology(source: Any, pointer: str, catalog: TagCatalog) -> dict[str, str] | None:
+    parent_pointer, separator, field = pointer.rpartition("/")
+    if not separator or field not in {"content", "title"}:
+        return None
+    parent = json_pointer_get(source, parent_pointer)
+    if not isinstance(parent, dict):
+        return None
+    data = parent.get("data")
+    if not isinstance(data, dict) or data.get("class") != "tag":
+        return None
+    category = data.get("content")
+    code = data.get("code", "")
+    if not isinstance(category, str) or not isinstance(code, str):
+        raise ValueError(f"invalid Jitendex tag metadata at {parent_pointer}")
+    approved = catalog.get((category, code))
+    if approved is None:
+        # Unknown tags must not stop an intermediate JPDB batch. The final
+        # cumulative run receives a deterministic catalog-driven cleanup
+        # before export, after the approved catalog has been completed.
+        return None
+    return {
+        "source": "approved_jitendex_tag_catalog",
+        "category": category,
+        "code": code,
+        "target_text": approved["label_ru" if field == "content" else "description_ru"],
+    }
 
 
 def _evidence(connection: sqlite3.Connection, article_id: int) -> list[dict[str, str]]:
@@ -24,7 +74,10 @@ def _evidence(connection: sqlite3.Connection, article_id: int) -> list[dict[str,
     return [dict(row) for row in rows]
 
 
-def _article_envelope(connection: sqlite3.Connection, article: sqlite3.Row, units: list[sqlite3.Row]) -> dict[str, Any]:
+def _article_envelope(
+    connection: sqlite3.Connection, article: sqlite3.Row, units: list[sqlite3.Row],
+    tag_catalog: TagCatalog | None = None,
+) -> dict[str, Any]:
     source = json.loads(article["raw_json"])
     lexicographer = any(unit["role"] == "glossary_set" for unit in units)
     prepared_units = []
@@ -38,6 +91,10 @@ def _article_envelope(connection: sqlite3.Connection, article: sqlite3.Row, unit
             prepared["instruction"] = "author one variable-length list of Russian dictionary definitions"
         else:
             prepared["source_text"] = unit["source_text"]
+        if tag_catalog is not None:
+            required = _required_tag_terminology(source, unit["json_pointer"], tag_catalog)
+            if required is not None:
+                prepared["required_terminology"] = required
         prepared_units.append(prepared)
     return {
         "article_id": f"a-{article['id']}", "source_sha256": article["source_sha256"],
@@ -114,6 +171,10 @@ def make_batches(
     hard_max_article_bytes: int | None = None, hard_max_article_units: int | None = None,
     article_ids: set[int] | None = None,
 ) -> dict[str, int]:
+    run = connection.execute("SELECT jitendex_snapshot_id FROM run WHERE id=?", (run_id,)).fetchone()
+    if run is None:
+        raise ValueError(f"unknown run: {run_id}")
+    tag_catalog = _approved_tag_catalog(connection, run["jitendex_snapshot_id"])
     grouped: dict[int, list[sqlite3.Row]] = defaultdict(list)
     for unit in connection.execute(
         """SELECT tu.* FROM translation_unit tu WHERE tu.run_id=? AND tu.status='ready'
@@ -124,7 +185,10 @@ def make_batches(
         if article_ids is None or unit["article_id"] in article_ids:
             grouped[unit["article_id"]].append(unit)
     articles = {row["id"]: row for row in connection.execute("SELECT * FROM article WHERE selected=1")}
-    envelopes = [_article_envelope(connection, articles[article_id], units) for article_id, units in sorted(grouped.items())]
+    envelopes = [
+        _article_envelope(connection, articles[article_id], units, tag_catalog)
+        for article_id, units in sorted(grouped.items())
+    ]
     batches = _pack_envelopes(
         envelopes, terminology,
         soft_max_articles, soft_max_bytes, soft_max_units, singleton_threshold_bytes,

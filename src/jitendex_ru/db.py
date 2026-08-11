@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Iterator, Mapping
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 6
 
 SCHEMA = r"""
 CREATE TABLE IF NOT EXISTS schema_meta(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -33,6 +33,62 @@ CREATE TABLE IF NOT EXISTS article(
 );
 CREATE INDEX IF NOT EXISTS article_lookup ON article(expression, reading);
 CREATE INDEX IF NOT EXISTS article_sequence ON article(sequence);
+CREATE TABLE IF NOT EXISTS jitendex_tag(
+  id INTEGER PRIMARY KEY,
+  snapshot_id INTEGER NOT NULL REFERENCES source_snapshot(id),
+  source_kind TEXT NOT NULL CHECK(source_kind IN ('embedded_tooltip','tag_bank')),
+  source_key TEXT NOT NULL,
+  code TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL,
+  label_en TEXT NOT NULL,
+  description_en TEXT NOT NULL,
+  source_sha256 TEXT NOT NULL,
+  occurrence_count INTEGER NOT NULL CHECK(occurrence_count >= 0),
+  source_metadata_json TEXT NOT NULL DEFAULT '{}',
+  label_ru TEXT,
+  description_ru TEXT,
+  confidence TEXT CHECK(confidence IS NULL OR confidence IN ('high','medium','low')),
+  review_reason TEXT,
+  translation_model TEXT,
+  reasoning_effort TEXT,
+  prompt_sha256 TEXT,
+  translation_source TEXT,
+  translation_source_sha256 TEXT,
+  translation_source_path TEXT,
+  approved_at TEXT,
+  translated_at TEXT,
+  UNIQUE(snapshot_id,source_kind,source_key)
+);
+CREATE INDEX IF NOT EXISTS jitendex_tag_category ON jitendex_tag(snapshot_id,category,code);
+CREATE TABLE IF NOT EXISTS jitendex_tag_translation_history(
+  id INTEGER PRIMARY KEY,
+  tag_id INTEGER NOT NULL REFERENCES jitendex_tag(id),
+  label_ru TEXT,
+  description_ru TEXT,
+  confidence TEXT,
+  review_reason TEXT,
+  translation_model TEXT,
+  reasoning_effort TEXT,
+  prompt_sha256 TEXT,
+  translation_source TEXT,
+  translation_source_sha256 TEXT,
+  translation_source_path TEXT,
+  translated_at TEXT,
+  archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  replacement_source_sha256 TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS frequency_term(
+  source TEXT NOT NULL, source_sha256 TEXT NOT NULL, rank INTEGER NOT NULL,
+  term TEXT NOT NULL, matched INTEGER NOT NULL DEFAULT 0 CHECK(matched IN (0,1)),
+  PRIMARY KEY(source, source_sha256, rank), UNIQUE(source, source_sha256, term)
+);
+CREATE TABLE IF NOT EXISTS frequency_article(
+  source TEXT NOT NULL, source_sha256 TEXT NOT NULL, rank INTEGER NOT NULL,
+  article_id INTEGER NOT NULL REFERENCES article(id),
+  match_kind TEXT NOT NULL CHECK(match_kind IN ('expression','reading')),
+  PRIMARY KEY(source, source_sha256, rank, article_id),
+  FOREIGN KEY(source, source_sha256, rank) REFERENCES frequency_term(source, source_sha256, rank)
+);
 CREATE TABLE IF NOT EXISTS selection_candidate(
   id INTEGER PRIMARY KEY, note_id INTEGER NOT NULL REFERENCES kaishi_note(id),
   article_id INTEGER NOT NULL REFERENCES article(id), sequence INTEGER NOT NULL,
@@ -180,6 +236,16 @@ def initialize(path: Path) -> None:
         for name, declaration in audit_columns.items():
             if name not in attempt_columns:
                 connection.execute(f"ALTER TABLE attempt ADD COLUMN {name} {declaration}")
+        tag_columns = {row["name"] for row in connection.execute("PRAGMA table_info(jitendex_tag)")}
+        tag_provenance_columns = {
+            "translation_source": "TEXT",
+            "translation_source_sha256": "TEXT",
+            "translation_source_path": "TEXT",
+            "approved_at": "TEXT",
+        }
+        for name, declaration in tag_provenance_columns.items():
+            if name not in tag_columns:
+                connection.execute(f"ALTER TABLE jitendex_tag ADD COLUMN {name} {declaration}")
         connection.execute(
             """INSERT OR IGNORE INTO run_article(run_id,article_id,structural_fingerprint)
             SELECT DISTINCT tu.run_id,tu.article_id,a.structural_fingerprint

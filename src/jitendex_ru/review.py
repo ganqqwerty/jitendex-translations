@@ -10,7 +10,7 @@ from typing import Any
 from .batch import _article_envelope
 from .db import audit
 from .util import CYRILLIC_RE, TAG_RE, atomic_write, canonical_json, sha256_bytes
-from .validate_response import _plain_text_issues, target_storage
+from .validate_response import _plain_text_issues, allows_japanese_grammar_label, target_storage
 
 
 def _review_manifest(batch_id: str, articles: list[dict[str, Any]]) -> tuple[dict[str, Any], bytes]:
@@ -164,7 +164,13 @@ def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
             except ValueError as error:
                 raise ValueError(f"invalid review replacement for {source['id']}: {error}") from error
             values = replacement if source["role"] == "glossary_set" else [replacement]
-            if not 1 <= len(values) <= 12 or any(_plain_text_issues(value, []) for value in values):
+            if not 1 <= len(values) <= 12 or any(
+                _plain_text_issues(
+                    value, [],
+                    allow_no_cyrillic=allows_japanese_grammar_label(source["role"], source["source_text"]),
+                )
+                for value in values
+            ):
                 raise ValueError(f"invalid review replacement for {source['id']}")
         if decision == "replace":
             for token in json.loads(source["protected_tokens_json"]):

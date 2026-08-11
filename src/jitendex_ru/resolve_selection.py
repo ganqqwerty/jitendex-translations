@@ -114,12 +114,19 @@ def apply_resolutions(connection: sqlite3.Connection, path: Path, actor: str) ->
 
 
 def selection_manifest_hash(connection: sqlite3.Connection) -> str:
-    rows = connection.execute(
+    decisions = connection.execute(
         """SELECT kn.note_id,sd.sequence,sd.decision,sd.actor,sd.reason,sd.review_status
         FROM selection_decision sd JOIN kaishi_note kn ON kn.id=sd.note_id
         ORDER BY kn.note_id,sd.created_at,sd.id"""
     ).fetchall()
-    return sha256_bytes(canonical_json([dict(row) for row in rows]))
+    selected_articles = connection.execute(
+        "SELECT id,source_sha256 FROM article WHERE selected=1 ORDER BY id"
+    ).fetchall()
+    payload = {
+        "decisions": [dict(row) for row in decisions],
+        "selected_articles": [dict(row) for row in selected_articles],
+    }
+    return sha256_bytes(canonical_json(payload))
 
 
 def unresolved_report(connection: sqlite3.Connection) -> list[dict[str, object]]:

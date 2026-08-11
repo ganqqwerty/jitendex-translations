@@ -19,15 +19,16 @@ def test_luna_config_selects_blind_models_and_prompts():
         "id": "gpt-5.6-terra",
         "reasoning_effort": "medium",
     }
-    assert config.raw["versions"]["translation_prompt"] == "translate-luna-v2"
-    assert config.raw["versions"]["review_prompt"] == "review-terra-luna-blind-v2"
+    assert config.raw["versions"]["translation_prompt"] == "translate-luna-v4"
+    assert config.raw["versions"]["review_prompt"] == "review-terra-luna-blind-v4"
     assert config.raw["batch"]["soft_max_bytes"] == 24576
     assert config.raw["batch"]["hard_max_article_bytes"] == 49152
+    assert config.raw["batch"]["structured_output_contract"] == "per-manifest-v3"
 
 
-def test_luna_v2_prompts_fix_japanese_grammar_form_notation():
-    translator = (ROOT / "prompts/translate_luna_v2.txt").read_text(encoding="utf-8")
-    reviewer = (ROOT / "prompts/review_terra_luna_blind_v2.txt").read_text(encoding="utf-8")
+def test_luna_v4_prompts_fix_japanese_grammar_form_notation_and_compact_labels():
+    translator = (ROOT / "prompts/translate_luna_v4.txt").read_text(encoding="utf-8")
+    reviewer = (ROOT / "prompts/review_terra_luna_blind_v4.txt").read_text(encoding="utf-8")
 
     for prompt in (translator, reviewer):
         assert "-ます" in prompt
@@ -36,6 +37,16 @@ def test_luna_v2_prompts_fix_japanese_grammar_form_notation():
         assert "-тэ" in prompt
     assert "never `-масу` or `-тэ`" in translator
     assert "Do not reverse this convention" in reviewer
+    for prompt in (translator, reviewer):
+        assert "`1-dan`" in prompt
+        assert "`1-дан`" in prompt
+        assert "`5-dan`" in prompt
+        assert "`5-дан`" in prompt
+        assert "`noun taking する`" in prompt
+        assert "`существительное с する`" in prompt
+        assert "`kana`" in prompt
+        assert "`кана`" in prompt
+    assert "1-12 distinct plain Russian definitions" in translator
 
 
 def test_model_kind_must_be_explicit():
