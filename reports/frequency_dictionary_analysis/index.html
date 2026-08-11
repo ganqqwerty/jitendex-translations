@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frequency dictionary coverage</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17222d;
+      --muted: #64717d;
+      --paper: #f6f3eb;
+      --panel: #fffdf8;
+      --line: #d9d4c8;
+      --translated: #29786b;
+      --untranslated: #d27b32;
+      --absent: #8a5968;
+      --accent: #1f5977;
+      --shadow: 0 12px 32px rgba(34, 45, 53, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 8% -2%, rgba(227, 183, 95, .24), transparent 31rem),
+        var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 72px; }
+    header { display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: end; margin-bottom: 32px; }
+    .eyebrow { color: var(--accent); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
+    h1 { max-width: 760px; margin: 8px 0 10px; font-family: Georgia, serif; font-size: clamp(38px, 6vw, 68px); line-height: .96; letter-spacing: -.045em; }
+    .lede { max-width: 760px; margin: 0; color: var(--muted); font-size: 16px; line-height: 1.6; }
+    .stamp { border-left: 1px solid var(--line); padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.7; white-space: nowrap; }
+    .toolbar, .panel { background: rgba(255, 253, 248, .86); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 14px; margin-bottom: 18px; }
+    .toolbar-label { color: var(--muted); font-size: 12px; font-weight: 800; margin-right: 3px; text-transform: uppercase; letter-spacing: .08em; }
+    .dict-toggle, .status-toggle { position: relative; display: inline-flex; }
+    .dict-toggle input, .status-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .dict-toggle span, .status-toggle span {
+      cursor: pointer; border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px;
+      font-size: 12px; font-weight: 750; background: var(--panel); transition: .15s ease;
+    }
+    .dict-toggle input:checked + span { color: white; background: var(--accent); border-color: var(--accent); }
+    .status-toggle input:checked + span { color: white; border-color: transparent; }
+    .status-toggle[data-status="translated"] input:checked + span { background: var(--translated); }
+    .status-toggle[data-status="untranslated"] input:checked + span { background: var(--untranslated); }
+    .status-toggle[data-status="absent"] input:checked + span { background: var(--absent); }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+    .panel { padding: 22px; min-width: 0; }
+    .summary { grid-column: span 3; min-height: 150px; }
+    .summary-label { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+    .summary-value { margin: 14px 0 4px; font-family: Georgia, serif; font-size: 42px; line-height: 1; }
+    .summary-note { color: var(--muted); font-size: 12px; }
+    .wide { grid-column: span 8; }
+    .narrow { grid-column: span 4; }
+    .full { grid-column: 1 / -1; }
+    h2 { margin: 0 0 5px; font-family: Georgia, serif; font-size: 24px; }
+    .subhead { margin: 0 0 20px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { color: var(--muted); text-align: right; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+    th:first-child, td:first-child { text-align: left; }
+    td, th { border-bottom: 1px solid var(--line); padding: 11px 8px; text-align: right; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .coverage-bar { display: flex; width: 100%; min-width: 170px; height: 10px; overflow: hidden; background: #e7e2d7; }
+    .coverage-bar span { display: block; height: 100%; }
+    .translated { background: var(--translated); }
+    .untranslated { background: var(--untranslated); }
+    .absent { background: var(--absent); }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; color: var(--muted); font-size: 12px; }
+    .legend i { width: 9px; height: 9px; display: inline-block; margin-right: 5px; }
+    .histogram { display: grid; gap: 12px; margin-top: 24px; }
+    .hist-row { display: grid; grid-template-columns: 72px 1fr 70px; gap: 10px; align-items: center; font-size: 12px; }
+    .hist-track { height: 18px; background: #e7e2d7; }
+    .hist-fill { height: 100%; background: var(--accent); min-width: 1px; }
+    .hist-value { text-align: right; font-variant-numeric: tabular-nums; }
+    .venn-layout { display: grid; grid-template-columns: minmax(220px, 310px) 1fr; gap: 28px; align-items: center; }
+    .venn-controls { display: grid; gap: 10px; }
+    .venn-controls label { display: grid; gap: 5px; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+    .venn-controls select { width: 100%; text-transform: none; letter-spacing: normal; font-weight: 500; }
+    .venn-figure { min-width: 0; }
+    .venn-figure svg { display: block; width: min(100%, 650px); height: auto; margin: 0 auto; overflow: visible; }
+    .venn-circle { stroke-width: 2.5; fill-opacity: .27; transition: cx .25s ease, cy .25s ease, r .25s ease; }
+    .venn-circle-a { fill: #26779a; stroke: #185b78; }
+    .venn-circle-b { fill: #d68b36; stroke: #a86822; }
+    .venn-circle-c { fill: #4c9475; stroke: #347258; }
+    .venn-count { fill: var(--ink); font-size: 19px; font-weight: 850; text-anchor: middle; paint-order: stroke; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
+    .venn-key { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .venn-key b { color: var(--ink); }
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 14px 0; }
+    input[type="search"], select, button {
+      font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 9px 11px;
+    }
+    input[type="search"] { min-width: 230px; flex: 1; }
+    button { cursor: pointer; font-weight: 750; }
+    button:hover { border-color: var(--accent); }
+    .word { font-size: 16px; font-weight: 700; }
+    .rank-list { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+    .rank { border: 1px solid var(--line); padding: 3px 5px; font-size: 11px; white-space: nowrap; }
+    .status-mark { display: inline-block; width: 8px; height: 8px; margin-right: 6px; }
+    .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; color: var(--muted); font-size: 12px; }
+    .pagination div { display: flex; gap: 8px; }
+    .method { margin-top: 18px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    code { color: var(--ink); overflow-wrap: anywhere; word-break: break-all; }
+    @media (max-width: 900px) {
+      header { grid-template-columns: 1fr; }
+      .stamp { border-left: 0; padding-left: 0; }
+      .summary { grid-column: span 6; }
+      .wide, .narrow { grid-column: 1 / -1; }
+      .venn-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      main { width: min(100% - 20px, 1180px); padding-top: 28px; }
+      .summary { grid-column: 1 / -1; }
+      .panel { padding: 16px; }
+      .table-wrap { overflow-x: auto; }
+      h1 { font-size: 42px; }
+      .hist-row { grid-template-columns: 62px 1fr 58px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <div class="eyebrow">Jitendex Russian coverage</div>
+        <h1 id="FREQ-TITLE">Six frequency dictionaries, one coverage map</h1>
+        <p class="lede" id="FREQ-INTRO">Explore exact headword coverage inside each dictionary’s rank ≤ 20,000 set. Change the selected dictionaries to recalculate their union.</p>
+      </div>
+      <div class="stamp" id="baselineStamp"></div>
+    </header>
+
+    <section class="toolbar" id="FREQ-SELECT" aria-label="Dictionary selection">
+      <span class="toolbar-label">Union includes</span>
+      <div id="dictionaryToggles"></div>
+    </section>
+
+    <section class="grid" aria-live="polite">
+      <article class="panel summary">
+        <div class="summary-label">Union headwords</div>
+        <div class="summary-value" id="unionTotal">—</div>
+        <div class="summary-note" id="unionScope">Unique exact strings</div>
+      </article>
+      <article class="panel summary">
+        <div class="summary-label">Already Russian</div>
+        <div class="summary-value" id="translatedTotal">—</div>
+        <div class="summary-note" id="translatedShare">—</div>
+      </article>
+      <article class="panel summary">
+        <div class="summary-label">Needs translation</div>
+        <div class="summary-value" id="untranslatedTotal">—</div>
+        <div class="summary-note">In source Jitendex, absent from Russian export</div>
+      </article>
+      <article class="panel summary">
+        <div class="summary-label">Not in Jitendex</div>
+        <div class="summary-value" id="absentTotal">—</div>
+        <div class="summary-note">Cannot be translated without adding entries</div>
+      </article>
+
+      <article class="panel wide">
+        <h2 id="FREQ-COVERAGE">Coverage by dictionary</h2>
+        <p class="subhead" id="FREQ-COVERAGE-P">Counts use unique headword strings with recorded rank ≤ 20,000. Tied ranks can produce more than 20,000 strings.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dictionary</th><th>Top set</th><th>Full dictionary</th><th>Russian</th><th>Needs translation</th><th>Not in Jitendex</th><th>Composition</th></tr></thead>
+            <tbody id="coverageRows"></tbody>
+          </table>
+        </div>
+        <div class="legend">
+          <span><i class="translated"></i>Already Russian</span>
+          <span><i class="untranslated"></i>Needs translation</span>
+          <span><i class="absent"></i>Not in Jitendex</span>
+        </div>
+      </article>
+
+      <article class="panel narrow">
+        <h2 id="FREQ-OVERLAP">Overlap depth</h2>
+        <p class="subhead" id="FREQ-OVERLAP-P">How many selected dictionaries contain each union headword.</p>
+        <div class="histogram" id="overlapHistogram"></div>
+      </article>
+
+      <article class="panel full">
+        <h2 id="FREQ-VENN">Three-dictionary Venn diagram</h2>
+        <p class="subhead" id="FREQ-VENN-P">Circle areas scale to set totals and circle positions fit the observed intersections. Every displayed number is an exact exclusive-region count.</p>
+        <div class="venn-layout">
+          <div class="venn-controls">
+            <label>Set A<select id="vennA" aria-label="Venn set A"></select></label>
+            <label>Set B<select id="vennB" aria-label="Venn set B"></select></label>
+            <label>Set C<select id="vennC" aria-label="Venn set C"></select></label>
+            <label>Coverage status
+              <select id="vennStatus" aria-label="Venn coverage status">
+                <option value="all">All headwords</option>
+                <option value="translated">Already Russian</option>
+                <option value="untranslated">Needs translation</option>
+                <option value="absent">Not in Jitendex</option>
+              </select>
+            </label>
+          </div>
+          <div class="venn-figure">
+            <svg viewBox="0 0 520 430" role="img" aria-labelledby="vennSvgTitle vennSvgDescription">
+              <title id="vennSvgTitle">Headword overlap Venn diagram</title>
+              <desc id="vennSvgDescription">Exclusive headword counts for three selected frequency dictionaries.</desc>
+              <circle class="venn-circle venn-circle-a" id="vennCircleA" cx="190" cy="175" r="140"></circle>
+              <circle class="venn-circle venn-circle-b" id="vennCircleB" cx="330" cy="175" r="140"></circle>
+              <circle class="venn-circle venn-circle-c" id="vennCircleC" cx="260" cy="285" r="140"></circle>
+              <text class="venn-count" id="vennOnlyA" x="105" y="145">—</text>
+              <text class="venn-count" id="vennOnlyB" x="415" y="145">—</text>
+              <text class="venn-count" id="vennOnlyC" x="260" y="375">—</text>
+              <text class="venn-count" id="vennAB" x="260" y="100">—</text>
+              <text class="venn-count" id="vennAC" x="165" y="270">—</text>
+              <text class="venn-count" id="vennBC" x="355" y="270">—</text>
+              <text class="venn-count" id="vennABC" x="260" y="215">—</text>
+            </svg>
+            <div class="venn-key" id="vennKey"></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel full">
+        <h2 id="FREQ-WORDS">Headword explorer</h2>
+        <p class="subhead" id="FREQ-WORDS-P">Filter the selected union by coverage status, search Japanese text, and inspect the best rank in every source.</p>
+        <div class="controls">
+          <div id="statusToggles"></div>
+          <input type="search" id="wordSearch" placeholder="Search headwords…" aria-label="Search headwords">
+          <select id="sortOrder" aria-label="Sort words">
+            <option value="rank">Best rank</option>
+            <option value="coverage">Most dictionaries</option>
+            <option value="word">Headword</option>
+          </select>
+          <button type="button" id="downloadCsv">Download filtered CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Headword</th><th>Status</th><th>Sources and ranks</th></tr></thead>
+            <tbody id="wordRows"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="resultCount"></span>
+          <div><button type="button" id="previousPage">Previous</button><button type="button" id="nextPage">Next</button></div>
+        </div>
+      </article>
+    </section>
+
+    <p class="method" id="FREQ-METHOD"></p>
+  </main>
+  <script src="data.js"></script>
+  <script>
+    (() => {
+      const data = window.FREQUENCY_ANALYSIS;
+      const byId = Object.fromEntries(data.dictionaries.map(d => [d.id, d]));
+      const labels = Object.fromEntries(data.dictionaries.map(d => [d.id, d.label]));
+      const format = new Intl.NumberFormat('en-US');
+      const state = {
+        selected: new Set(data.dictionaries.map(d => d.id)),
+        statuses: new Set(['untranslated']),
+        query: '', sort: 'rank', page: 0, pageSize: 50
+      };
+
+      const el = id => document.getElementById(id);
+      const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const selectedRanks = word => Object.entries(word.r).filter(([id]) => state.selected.has(id));
+      const selectedWords = () => data.words.filter(word => selectedRanks(word).length);
+
+      function makeToggles() {
+        el('dictionaryToggles').innerHTML = data.dictionaries.map(d =>
+          `<label class="dict-toggle"><input type="checkbox" value="${d.id}" checked><span>${escapeHtml(d.label)}</span></label>`
+        ).join(' ');
+        el('dictionaryToggles').addEventListener('change', event => {
+          const input = event.target.closest('input');
+          if (!input) return;
+          input.checked ? state.selected.add(input.value) : state.selected.delete(input.value);
+          if (!state.selected.size) { input.checked = true; state.selected.add(input.value); }
+          state.page = 0;
+          render();
+        });
+        const statuses = [
+          ['translated', 'Already Russian'], ['untranslated', 'Needs translation'], ['absent', 'Not in Jitendex']
+        ];
+        el('statusToggles').innerHTML = statuses.map(([id, label]) =>
+          `<label class="status-toggle" data-status="${id}"><input type="checkbox" value="${id}" ${id === 'untranslated' ? 'checked' : ''}><span>${label}</span></label>`
+        ).join(' ');
+        el('statusToggles').addEventListener('change', event => {
+          const input = event.target.closest('input');
+          if (!input) return;
+          input.checked ? state.statuses.add(input.value) : state.statuses.delete(input.value);
+          if (!state.statuses.size) { input.checked = true; state.statuses.add(input.value); }
+          state.page = 0;
+          renderWords();
+        });
+      }
+
+      function makeVennControls() {
+        const options = data.dictionaries.map(d => `<option value="${d.id}">${escapeHtml(d.label)}</option>`).join('');
+        ['vennA', 'vennB', 'vennC'].forEach(id => { el(id).innerHTML = options; });
+        el('vennA').value = data.dictionaries[0].id;
+        el('vennB').value = data.dictionaries[1].id;
+        el('vennC').value = data.dictionaries[2].id;
+        ['vennA', 'vennB', 'vennC', 'vennStatus'].forEach(id => el(id).addEventListener('change', event => {
+          const selects = [el('vennA'), el('vennB'), el('vennC')];
+          const changed = selects.indexOf(event.target);
+          if (changed >= 0) {
+            const duplicate = selects.findIndex((select, index) => index !== changed && select.value === event.target.value);
+            if (duplicate >= 0) {
+              const used = new Set(selects.map(select => select.value));
+              selects[duplicate].value = data.dictionaries.find(d => !used.has(d.id)).id;
+            }
+          }
+          renderVenn();
+        }));
+      }
+
+      function renderVenn() {
+        const ids = [el('vennA').value, el('vennB').value, el('vennC').value];
+        const status = el('vennStatus').value;
+        const counts = Array(8).fill(0);
+        data.words.forEach(word => {
+          if (status !== 'all' && word.s !== status) return;
+          const mask = ids.reduce((value, id, index) => value | (word.r[id] ? 1 << index : 0), 0);
+          if (mask) counts[mask]++;
+        });
+        const totals = [
+          counts[1] + counts[3] + counts[5] + counts[7],
+          counts[2] + counts[3] + counts[6] + counts[7],
+          counts[4] + counts[5] + counts[6] + counts[7]
+        ];
+        const intersections = [counts[3] + counts[7], counts[5] + counts[7], counts[6] + counts[7]];
+        const maxTotal = Math.max(...totals, 1);
+        const radii = totals.map(total => 145 * Math.sqrt(total / maxTotal));
+
+        function overlapArea(r1, r2, distance) {
+          if (distance >= r1 + r2) return 0;
+          if (distance <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) ** 2;
+          const a1 = 2 * Math.acos((distance ** 2 + r1 ** 2 - r2 ** 2) / (2 * distance * r1));
+          const a2 = 2 * Math.acos((distance ** 2 + r2 ** 2 - r1 ** 2) / (2 * distance * r2));
+          return .5 * r1 ** 2 * (a1 - Math.sin(a1)) + .5 * r2 ** 2 * (a2 - Math.sin(a2));
+        }
+
+        function distanceForOverlap(r1, r2, target) {
+          if (target <= 0) return r1 + r2;
+          const contained = Math.PI * Math.min(r1, r2) ** 2;
+          if (target >= contained) return Math.abs(r1 - r2);
+          let low = Math.abs(r1 - r2), high = r1 + r2;
+          for (let index = 0; index < 60; index++) {
+            const middle = (low + high) / 2;
+            if (overlapArea(r1, r2, middle) > target) low = middle;
+            else high = middle;
+          }
+          return (low + high) / 2;
+        }
+
+        const areaScale = Math.PI * 145 ** 2 / maxTotal;
+        const distances = [
+          distanceForOverlap(radii[0], radii[1], intersections[0] * areaScale),
+          distanceForOverlap(radii[0], radii[2], intersections[1] * areaScale),
+          distanceForOverlap(radii[1], radii[2], intersections[2] * areaScale)
+        ];
+        const raw = [{x: 0, y: 0}, {x: distances[0], y: 0}, {x: 0, y: 0}];
+        if (distances[0] > .001) {
+          raw[2].x = (distances[1] ** 2 + distances[0] ** 2 - distances[2] ** 2) / (2 * distances[0]);
+          raw[2].x = Math.max(-distances[1], Math.min(distances[0] + distances[2], raw[2].x));
+          raw[2].y = Math.sqrt(Math.max(0, distances[1] ** 2 - raw[2].x ** 2));
+        }
+        if (raw[2].y < Math.min(...radii) * .16) raw[2].y = Math.min(...radii) * .16;
+
+        const minX = Math.min(...raw.map((point, index) => point.x - radii[index]));
+        const maxX = Math.max(...raw.map((point, index) => point.x + radii[index]));
+        const minY = Math.min(...raw.map((point, index) => point.y - radii[index]));
+        const maxY = Math.max(...raw.map((point, index) => point.y + radii[index]));
+        const scale = Math.min(450 / Math.max(maxX - minX, 1), 355 / Math.max(maxY - minY, 1));
+        const offsetX = (520 - (maxX - minX) * scale) / 2 - minX * scale;
+        const offsetY = (430 - (maxY - minY) * scale) / 2 - minY * scale;
+        const points = raw.map(point => ({x: offsetX + point.x * scale, y: offsetY + point.y * scale}));
+        const scaledRadii = radii.map(radius => radius * scale);
+        ['vennCircleA', 'vennCircleB', 'vennCircleC'].forEach((id, index) => {
+          el(id).setAttribute('cx', points[index].x);
+          el(id).setAttribute('cy', points[index].y);
+          el(id).setAttribute('r', scaledRadii[index]);
+        });
+
+        function awayPoint(index, others) {
+          const center = points[index];
+          const other = {
+            x: others.reduce((sum, item) => sum + points[item].x, 0) / others.length,
+            y: others.reduce((sum, item) => sum + points[item].y, 0) / others.length
+          };
+          const dx = center.x - other.x, dy = center.y - other.y;
+          const length = Math.hypot(dx, dy) || 1;
+          return {x: center.x + dx / length * scaledRadii[index] * .45, y: center.y + dy / length * scaledRadii[index] * .45};
+        }
+
+        function pairPoint(first, second, awayFrom) {
+          const a = points[first], b = points[second];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const distance = Math.hypot(dx, dy) || 1;
+          const along = (distance ** 2 + scaledRadii[first] ** 2 - scaledRadii[second] ** 2) / (2 * distance);
+          let x = a.x + dx / distance * along, y = a.y + dy / distance * along;
+          const ax = x - points[awayFrom].x, ay = y - points[awayFrom].y;
+          const length = Math.hypot(ax, ay) || 1;
+          const shift = Math.min(scaledRadii[first], scaledRadii[second]) * .18;
+          return {x: x + ax / length * shift, y: y + ay / length * shift};
+        }
+
+        const labelPoints = {
+          vennOnlyA: awayPoint(0, [1, 2]), vennOnlyB: awayPoint(1, [0, 2]), vennOnlyC: awayPoint(2, [0, 1]),
+          vennAB: pairPoint(0, 1, 2), vennAC: pairPoint(0, 2, 1), vennBC: pairPoint(1, 2, 0),
+          vennABC: {x: (points[0].x + points[1].x + points[2].x) / 3, y: (points[0].y + points[1].y + points[2].y) / 3}
+        };
+        const nodes = {vennOnlyA: 1, vennOnlyB: 2, vennOnlyC: 4, vennAB: 3, vennAC: 5, vennBC: 6, vennABC: 7};
+        Object.entries(nodes).forEach(([id, mask]) => {
+          el(id).textContent = format.format(counts[mask]);
+          el(id).setAttribute('x', labelPoints[id].x);
+          el(id).setAttribute('y', labelPoints[id].y);
+        });
+        el('vennKey').innerHTML = ids.map((id, index) => `<span><b>${String.fromCharCode(65 + index)}</b> · ${escapeHtml(labels[id])} · ${format.format(totals[index])}</span>`).join('');
+        el('vennSvgDescription').textContent = `Exclusive ${status === 'all' ? 'headword' : status} counts for ${ids.map(id => labels[id]).join(', ')}.`;
+      }
+
+      function renderSummary(words) {
+        const counts = {translated: 0, untranslated: 0, absent: 0};
+        words.forEach(word => counts[word.s]++);
+        el('unionTotal').textContent = format.format(words.length);
+        el('unionScope').textContent = state.selected.size === data.dictionaries.length
+          ? `Rank ≤ 20,000 union · full dictionary union ${format.format(data.union.allUniqueHeadwords)}`
+          : 'Rank ≤ 20,000 union for selected dictionaries';
+        el('translatedTotal').textContent = format.format(counts.translated);
+        el('untranslatedTotal').textContent = format.format(counts.untranslated);
+        el('absentTotal').textContent = format.format(counts.absent);
+        el('translatedShare').textContent = `${words.length ? (100 * counts.translated / words.length).toFixed(1) : '0.0'}% of selected union`;
+      }
+
+      function renderCoverage() {
+        el('coverageRows').innerHTML = data.dictionaries.map(d => {
+          const total = d.uniqueHeadwords;
+          const opacity = state.selected.has(d.id) ? 1 : .35;
+          return `<tr style="opacity:${opacity}"><td><strong>${escapeHtml(d.label)}</strong></td><td>${format.format(total)}</td><td>${format.format(d.allUniqueHeadwords)}</td>` +
+            `<td>${format.format(d.translated)}</td><td>${format.format(d.untranslated)}</td><td>${format.format(d.absent)}</td>` +
+            `<td><div class="coverage-bar" aria-label="${d.translated} Russian, ${d.untranslated} untranslated, ${d.absent} absent">` +
+            `<span class="translated" style="width:${100*d.translated/total}%"></span>` +
+            `<span class="untranslated" style="width:${100*d.untranslated/total}%"></span>` +
+            `<span class="absent" style="width:${100*d.absent/total}%"></span></div></td></tr>`;
+        }).join('');
+      }
+
+      function renderOverlap(words) {
+        const counts = new Map();
+        words.forEach(word => {
+          const count = selectedRanks(word).length;
+          counts.set(count, (counts.get(count) || 0) + 1);
+        });
+        const max = Math.max(...counts.values(), 1);
+        el('overlapHistogram').innerHTML = Array.from({length: state.selected.size}, (_, index) => index + 1).map(count => {
+          const value = counts.get(count) || 0;
+          return `<div class="hist-row"><span>${count} source${count === 1 ? '' : 's'}</span>` +
+            `<div class="hist-track"><div class="hist-fill" style="width:${100*value/max}%"></div></div>` +
+            `<span class="hist-value">${format.format(value)}</span></div>`;
+        }).join('');
+      }
+
+      function filteredWords() {
+        const query = state.query.trim().toLocaleLowerCase('ja');
+        const words = data.words.filter(word =>
+          state.statuses.has(word.s) && selectedRanks(word).length && (!query || word.w.toLocaleLowerCase('ja').includes(query))
+        );
+        words.sort((a, b) => {
+          const ar = selectedRanks(a), br = selectedRanks(b);
+          if (state.sort === 'coverage') return br.length - ar.length || Math.min(...ar.map(x => x[1])) - Math.min(...br.map(x => x[1])) || a.w.localeCompare(b.w, 'ja');
+          if (state.sort === 'word') return a.w.localeCompare(b.w, 'ja');
+          return Math.min(...ar.map(x => x[1])) - Math.min(...br.map(x => x[1])) || br.length - ar.length || a.w.localeCompare(b.w, 'ja');
+        });
+        return words;
+      }
+
+      function renderWords() {
+        const words = filteredWords();
+        const pages = Math.max(1, Math.ceil(words.length / state.pageSize));
+        state.page = Math.min(state.page, pages - 1);
+        const slice = words.slice(state.page * state.pageSize, (state.page + 1) * state.pageSize);
+        const statusLabels = {translated: 'Already Russian', untranslated: 'Needs translation', absent: 'Not in Jitendex'};
+        el('wordRows').innerHTML = slice.map(word => {
+          const ranks = selectedRanks(word).sort((a, b) => a[1] - b[1]);
+          return `<tr><td class="word">${escapeHtml(word.w)}</td>` +
+            `<td><span class="status-mark ${word.s}"></span>${statusLabels[word.s]}</td>` +
+            `<td><div class="rank-list">${ranks.map(([id, rank]) => `<span class="rank">${escapeHtml(labels[id])} · ${format.format(rank)}</span>`).join('')}</div></td></tr>`;
+        }).join('') || '<tr><td colspan="3">No matching headwords.</td></tr>';
+        el('resultCount').textContent = `${format.format(words.length)} results · page ${state.page + 1} of ${pages}`;
+        el('previousPage').disabled = state.page === 0;
+        el('nextPage').disabled = state.page >= pages - 1;
+      }
+
+      function downloadCsv() {
+        const rows = [['headword', 'status', ...data.dictionaries.filter(d => state.selected.has(d.id)).map(d => `${d.label} rank`)]];
+        filteredWords().forEach(word => rows.push([
+          word.w, word.s, ...data.dictionaries.filter(d => state.selected.has(d.id)).map(d => word.r[d.id] || '')
+        ]));
+        const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\n');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8'}));
+        link.download = 'frequency-coverage-filtered.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+
+      function render() {
+        const words = selectedWords();
+        renderSummary(words);
+        renderCoverage();
+        renderOverlap(words);
+        renderWords();
+      }
+
+      el('baselineStamp').innerHTML = `Source Jitendex · ${format.format(data.baselines.source.headwords)} headwords<br>` +
+        `Russian export · ${format.format(data.baselines.russian.headwords)} headwords<br>Rank ceiling · ${format.format(data.method.rankLimit)}`;
+      el('FREQ-METHOD').innerHTML = `Method: exact headword-string matching. “Needs translation” means present in source Jitendex but absent from the Russian export; “Not in Jitendex” is kept separate. Source SHA-256: <code>${data.baselines.source.sha256}</code>. Russian export SHA-256: <code>${data.baselines.russian.sha256}</code>.`;
+      makeToggles();
+      makeVennControls();
+      el('wordSearch').addEventListener('input', event => { state.query = event.target.value; state.page = 0; renderWords(); });
+      el('sortOrder').addEventListener('change', event => { state.sort = event.target.value; state.page = 0; renderWords(); });
+      el('previousPage').addEventListener('click', () => { state.page--; renderWords(); });
+      el('nextPage').addEventListener('click', () => { state.page++; renderWords(); });
+      el('downloadCsv').addEventListener('click', downloadCsv);
+      render();
+      renderVenn();
+    })();
+  </script>
+</body>
+</html>
