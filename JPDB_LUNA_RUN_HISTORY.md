@@ -1412,3 +1412,49 @@ HIST-EXPORT-LIMIT-2 — The top-10k through top-190k archives contain the correc
 HIST-EXPORT-LIMIT-3 — Schema version 7 added explicit `frequency_source` metadata and term-keyed frequency provenance. The exporter now derives labels from active frequency sources that map into the frozen run. This resolves the limitation for new exports without changing historical ZIP files or hashes.
 
 HIST-EXPORT-LIMIT-4 — Historical top-10k through top-190k archives keep their original internal metadata. Their recorded hashes remain authoritative and must not be rewritten.
+
+## HIST-FREQ40K — One-off six-list top-40k supplement
+
+HIST-FREQ40K-1 — Run 25 kept the verified JPDB top-190k scope from run 24 and added every Jitendex article matched by the top-40k scope of Aozora Bunko, BCCWJ, CC100, Monodicts 206k, Wikipedia v2, or 国語辞典. This was a one-off combined export and did not advance the normal JPDB stopping point.
+
+~~~text
+six-list union terms:             103,536
+combined union terms:             200,059
+combined matched terms:           162,815
+combined skipped terms:            37,244
+selected articles:                173,253
+translation units:              1,199,359
+reused run-24 units:            1,126,413
+new Luna units:                    72,946
+initial batches:                    1,766
+articles without units:            14,287
+~~~
+
+HIST-FREQ40K-2 — The pinned source SHA-256 values were:
+
+~~~text
+JPDB:           5bda39a9e3b443b02199435ea723aa0555c891d1ce2c92ea7680163b72b07a0e
+Aozora Bunko:   116009c3034d97a16b257fda10f2138067815986c954bffbb5c93aad60faa867
+BCCWJ:          4a0f79b88b3934d2cfca6ec1018c0658c7af6e27bf5eaa371db554e0cb3c1693
+CC100:          64f2a7d79e42dc842a30697e36f8b4f77dbcb3c6ff7fd1feec756b1fe65396e0
+Monodicts 206k: 932a65a0661c1c040b471a03aa9e11eb20a2ab6f42b62ffbf1dab568db7d8b39
+Wikipedia v2:   d85bb5bb4cdb3277dd862d662ec5e8e87971457ac53a87c2f25b41446c57d6c8
+国語辞典:        ac267dd5756363fd2b9d0bfd64f89d86d2b9c90f833f3273375173791080c32c
+~~~
+
+HIST-FREQ40K-3 — Per-source unique, matched, and skipped term counts were Aozora Bunko 40,156 / 34,536 / 5,620; BCCWJ 38,898 / 28,720 / 10,178; CC100 39,319 / 36,999 / 2,320; Monodicts 206k 40,000 / 37,045 / 2,955; Wikipedia v2 40,000 / 29,068 / 10,932; 国語辞典 40,000 / 36,833 / 3,167; and JPDB 163,558 / 150,697 / 12,861.
+
+HIST-FREQ40K-4 — Four Luna-medium CLI pools ran at concurrency 20. One pool exited after a transient SQLite lock with five active claims covering 138 tail units. Process absence was verified, those exact attempts were marked interrupted, the five batches were requeued with `recover_interrupted_worker` audit events, and a replacement pool completed them through normal validation and recursive splitting.
+
+HIST-FREQ40K-5 — All 72,946 new units were accepted. The final audit found 1,199,359 units with exactly one accepted translation, zero missing run-24 articles or units, zero missing mapped articles, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. Combined coverage was complete for all 162,815 matched terms and all 173,253 selected articles. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                263
+schema-validated banks:      70
+archive articles:       173,253
+SHA-256: e895ac97b81a46a1350b7e5dc346538b6305b33e301065d4bd19dfcf218cc83b
+~~~
+
+HIST-FREQ40K-6 — Export 31 was verified with the title `Jitendex JPDB 190k + frequency-six top40k — русский` and revision `2026.07.09.0-jpdb-190k-freq6-40k-ru`. The archive is `dist/jitendex-jpdb-190k-plus-freq6-top40k-ru-luna-v4.zip`.
+
+HIST-FREQ40K-7 — Normal JPDB progression resumes from run 24 at top 200k. Run 24 remains the primary reuse and containment source. Run 25 may be used only as a second reuse source for overlay translations that enter JPDB top 200k; overlay-only articles must not enter that export.
