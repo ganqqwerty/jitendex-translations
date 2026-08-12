@@ -1397,9 +1397,9 @@ SHA-256: 73c13b9df09a24dd2af35763ff40aa29d515003131723208030e1ac972d91007
 
 HIST-140K-4 — Run 19 is the stopping point recorded in the operational [JPDB_LUNA_ORCHESTRATION_RUNBOOK.md](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md). The next cumulative target is top 150k.
 
-## HIST-EXPORT-LIMIT — Known exporter limitation
+## HIST-EXPORT-LIMIT — Historical exporter metadata limitation
 
-HIST-EXPORT-LIMIT-1 — src/jitendex_ru/build_dictionary.py currently hardcodes these values for every frequency-scoped run:
+HIST-EXPORT-LIMIT-1 — Through run 24, `src/jitendex_ru/build_dictionary.py` hardcoded these values for every frequency-scoped run:
 
 ~~~text
 title:       Jitendex JPDB 5k — русский
@@ -1407,6 +1407,8 @@ revision:    ...-jpdb-5k-ru
 description: ...верхним 5000 строкам JPDB...
 ~~~
 
-HIST-EXPORT-LIMIT-2 — The top-10k through top-100k archives contain the correct cumulative articles and pass coverage/schema verification, but their internal titles and descriptions still say 5k.
+HIST-EXPORT-LIMIT-2 — The top-10k through top-190k archives contain the correct cumulative articles and pass coverage/schema verification, but their internal titles and descriptions still say 5k.
 
-HIST-EXPORT-LIMIT-3 — Do not treat metadata as scope-size-aware until frequency-scope identity is frozen per run and the exporter derives the label from that frozen identity rather than a hardcoded string or the mutable live frequency_term table.
+HIST-EXPORT-LIMIT-3 — Schema version 7 added explicit `frequency_source` metadata and term-keyed frequency provenance. The exporter now derives labels from active frequency sources that map into the frozen run. This resolves the limitation for new exports without changing historical ZIP files or hashes.
+
+HIST-EXPORT-LIMIT-4 — Historical top-10k through top-190k archives keep their original internal metadata. Their recorded hashes remain authoritative and must not be rewritten.

@@ -134,15 +134,21 @@ shasum -a 256 work/downloads/Freq.JPDB_2022-05-10T03_27_02.930Z.zip
 
 RUN-DB-4 — Do not proceed unless the JPDB hash matches the pinned value.
 
+RUN-DB-5 — The current database schema is version 7. Initialization upgrades the old frequency tables in place. The upgrade preserves every term and mapping, adds `frequency_source`, and changes frequency identity from rank-based to term-based so tied ranks are safe.
+
+RUN-DB-6 — `frequency_source` records one active snapshot per stable source key, including its SHA-256, rank limit, local path, parser version, and source metadata. `frequency_term` uses `(source, source_sha256, term)` as its primary key. Rank is data and may repeat. `frequency_article` uses `(source, source_sha256, term, article_id)` as its primary key and references the exact term row.
+
+RUN-DB-7 — Before a production upgrade, make an online SQLite backup and run `PRAGMA quick_check`. After the upgrade, require schema version 7, zero rows from `PRAGMA foreign_key_check`, and unchanged counts for the preceding frozen run.
+
 ## RUN-PROV — Provenance: how JPDB words and translations are marked
 
 RUN-PROV-1 — Always use `select-jpdb-scope`; never mark `article.selected` or populate provenance tables manually.
 
-RUN-PROV-2 — The selector records:
+RUN-PROV-2 — The selector records the active source hash, rank limit, local path, parser version, and metadata in `frequency_source`.
 
 RUN-PROV-3 — every deduplicated JPDB spelling in `frequency_term` with `source='jpdb'`, the JPDB ZIP SHA-256, earliest rank, exact term, and `matched` flag;
 
-RUN-PROV-4 — every Jitendex match in `frequency_article` with the same source/hash/rank identity, `article_id`, and `match_kind` (`expression` or `reading`);
+RUN-PROV-4 — every Jitendex match in `frequency_article` with the same source/hash/term identity, retained rank, `article_id`, and `match_kind` (`expression` or `reading`);
 
 RUN-PROV-5 — the selected Jitendex articles for unit extraction.
 
@@ -362,7 +368,7 @@ PYTHONPATH=src .venv/bin/translationctl \
 
 RUN-BATCH-S12-1 — Verification checks index placement, duplicate members, target language, media, frozen article count, recorded export hash, and every pinned Yomitan term-bank schema.
 
-RUN-BATCH-S12-2 — Known limitation: `build_dictionary.py` still hardcodes `5k` in the internal JPDB title/revision/description even when the archive contents cover a larger scope. The archive contents and verification are authoritative, but this metadata must be made scope-aware before the definitive top-300k release.
+RUN-BATCH-S12-2 — Export metadata is scope-aware. `build_dictionary.py` derives the JPDB or combined-frequency title, revision, and description from the active `frequency_source` rows that map into the frozen run. Inspect `index.json` after every build and require the label to match the intended scope.
 
 ### RUN-BATCH-S13 — 13. Validate, test, and audit
 
