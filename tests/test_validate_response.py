@@ -31,6 +31,22 @@ def test_valid_response(tmp_path):
     assert validate_worker_payload(connection, attempt, payload) == []
 
 
+def test_source_acronyms_are_required_but_not_counted_as_english(tmp_path):
+    connection, attempt = fixture_db(tmp_path)
+    connection.execute(
+        "UPDATE translation_unit SET role='xref_gloss',source_text='sentence structures (SV, SVC, SVO, SVOO, SVOC)',protected_tokens_json='[]' WHERE id='u1'"
+    )
+    payload = {"schema_version": 1, "batch_id": "b1", "manifest_sha256": "f" * 64, "translations": [
+        {"unit_id": "u1", "source_sha256": "sh", "target_text": "структуры предложения (SV, SVC, SVO, SVOO, SVOC)", "confidence": "high", "review_reason": None}
+    ]}
+
+    assert validate_worker_payload(connection, attempt, payload) == []
+    payload["translations"][0]["target_text"] = "структуры предложения"
+    assert "protected_token_missing" in {
+        issue["code"] for issue in validate_worker_payload(connection, attempt, payload)
+    }
+
+
 def test_rejects_order_markup_and_lost_token(tmp_path):
     connection, attempt = fixture_db(tmp_path)
     payload = {"schema_version": 1, "batch_id": "b1", "manifest_sha256": "f" * 64, "translations": [
@@ -157,6 +173,41 @@ def test_lexicographer_accepts_variable_length_glossary_but_rejects_duplicates(t
     assert validate_worker_payload(connection, attempt, payload) == []
     payload["translations"][0]["target_text"] = ["начинать", "начинать"]
     assert "duplicate_glossary_definition" in {issue["code"] for issue in validate_worker_payload(connection, attempt, payload)}
+
+
+def test_glossary_accepts_exact_source_acronym_alongside_russian_definition(tmp_path):
+    connection, attempt = fixture_db(tmp_path)
+    connection.execute("UPDATE run SET pipeline_version='lexicographer-v2' WHERE id=1")
+    connection.execute(
+        "UPDATE translation_unit SET role='glossary_set',source_text=?,protected_tokens_json='[]' WHERE id='u1'",
+        ('[{"content":"ETD"},{"content":"estimated time of departure"}]',),
+    )
+    payload = {"schema_version": 2, "batch_id": "b1", "manifest_sha256": "f" * 64, "translations": [
+        {"unit_id": "u1", "source_sha256": "sh", "target_text": ["ETD", "расчётное время отправления"], "confidence": "high", "review_reason": None}
+    ]}
+
+    assert validate_worker_payload(connection, attempt, payload) == []
+    payload["translations"][0]["target_text"] = ["ETD"]
+    assert "no_cyrillic" in {
+        issue["code"] for issue in validate_worker_payload(connection, attempt, payload)
+    }
+
+
+def test_example_allows_source_english_grammar_tokens_but_not_prose(tmp_path):
+    connection, attempt = fixture_db(tmp_path)
+    connection.execute(
+        "UPDATE translation_unit SET role='example',source_text=?,protected_tokens_json='[]' WHERE id='u1'",
+        ("When the antecedent is this, that, these or those it is usual to use 'which'.",),
+    )
+    payload = {"schema_version": 1, "batch_id": "b1", "manifest_sha256": "f" * 64, "translations": [
+        {"unit_id": "u1", "source_sha256": "sh", "target_text": "Если антецедент — this, that, these или those, обычно употребляют which.", "confidence": "high", "review_reason": None}
+    ]}
+
+    assert validate_worker_payload(connection, attempt, payload) == []
+    payload["translations"][0]["target_text"] = "Это a very bad translation of source."
+    assert "too_much_english" in {
+        issue["code"] for issue in validate_worker_payload(connection, attempt, payload)
+    }
 
 
 def test_japanese_suru_pos_label_is_a_narrow_cyrillic_exception():

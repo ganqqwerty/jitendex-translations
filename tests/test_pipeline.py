@@ -85,6 +85,15 @@ def test_term_bank_chunking_uses_exact_serialized_byte_boundary():
     assert all(len(canonical_json(chunk)) <= max_bytes or len(chunk) == 1 for chunk in chunks)
 
 
+def test_scalar_application_preserves_source_whitespace():
+    from jitendex_ru.apply_translations import _scalar_source_and_target
+
+    original, translated = _scalar_source_and_target(" as in 牡 ", "as in 牡", "как в 牡")
+
+    assert original == " as in 牡 "
+    assert translated == " как в 牡 "
+
+
 def test_translation_review_and_reproducible_build(tmp_path):
     source_zip = tmp_path / "source.zip"
     source_article = [

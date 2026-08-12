@@ -13,6 +13,15 @@ from .util import JAPANESE_RE, json_pointer_get, json_pointer_set, sha256_bytes,
 FORM_ONLY_RE = re.compile(r"^(.+?) only$")
 
 
+def _scalar_source_and_target(current: Any, expected: str, target: str) -> tuple[str, str]:
+    """Validate a stripped scalar unit and preserve its source whitespace."""
+    if not isinstance(current, str) or current.strip() != expected:
+        raise ValueError("scalar source text changed")
+    leading = current[:len(current) - len(current.lstrip())]
+    trailing = current[len(current.rstrip()):]
+    return current, f"{leading}{target}{trailing}"
+
+
 def _localize_mixed_form_restrictions(node: Any) -> None:
     """Localize Jitendex's mixed Japanese/English ``<form> only`` labels."""
     if isinstance(node, dict):
@@ -110,20 +119,30 @@ def apply_article(connection: sqlite3.Connection, run_id: int, article: sqlite3.
             raise ValueError(f"accepted target hash changed at {row['json_pointer']}")
         current = json_pointer_get(output, row["json_pointer"])
         expected_source = json.loads(row["source_text"]) if row["role"] == "glossary_set" else row["source_text"]
-        if current != expected_source:
-            raise ValueError(f"source text changed at {row['json_pointer']}")
+        if row["role"] == "glossary_set":
+            if current != expected_source:
+                raise ValueError(f"source text changed at {row['json_pointer']}")
+            original = expected_source
+            translated = _compose_glossary(current, row["target_text"], row["json_pointer"])
+        else:
+            try:
+                original, translated = _scalar_source_and_target(
+                    current, expected_source, row["target_text"],
+                )
+            except ValueError as error:
+                raise ValueError(f"source text changed at {row['json_pointer']}") from error
         # Compatibility for runs extracted before rendering controls were
         # classified as structural: validate their provenance but preserve
         # the source value so the Yomitan schema remains valid.
         if row["json_pointer"].rsplit("/", 1)[-1] in NON_TRANSLATABLE_KEYS:
             continue
-        target = _compose_glossary(current, row["target_text"], row["json_pointer"]) if row["role"] == "glossary_set" else row["target_text"]
-        json_pointer_set(output, row["json_pointer"], target)
+        json_pointer_set(output, row["json_pointer"], translated)
         _set_language_for_leaf(output, row["json_pointer"])
     # Language edits are the only structural exception, checked by reverting them.
     comparison = copy.deepcopy(output)
     for row in rows:
-        original = json.loads(row["source_text"]) if row["role"] == "glossary_set" else row["source_text"]
+        current_source = json_pointer_get(source, row["json_pointer"])
+        original = json.loads(row["source_text"]) if row["role"] == "glossary_set" else current_source
         json_pointer_set(comparison, row["json_pointer"], original)
         segments = row["json_pointer"].removeprefix("/").split("/")
         parent_pointer = "/" + "/".join(segments[:-1]) if len(segments) > 1 else ""

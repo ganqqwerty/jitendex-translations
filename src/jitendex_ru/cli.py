@@ -8,8 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from .acquire import acquire
+from .all_article_scope import select_all_article_scope
 from .batch import claim, make_batches, retry_or_split
 from .build_dictionary import build, record_yomitan_smoke, verify
+from .canonicalize import canonicalize_final_run
 from .config import Config
 from .combined_frequency_scope import combined_coverage_report, select_combined_scope
 from .db import audit, connect, initialize
@@ -43,6 +45,9 @@ def _parser() -> argparse.ArgumentParser:
     jpdb_scope.add_argument("--limit", type=int, default=5000)
     coverage = commands.add_parser("report-jpdb-coverage")
     coverage.add_argument("--run-id", type=int, required=True)
+    all_scope = commands.add_parser("select-all-article-scope")
+    all_scope.add_argument("--source-run-id", type=int, required=True)
+    all_scope.add_argument("--add-articles", type=int, default=10_000)
     combined_scope = commands.add_parser("select-combined-frequency-scope")
     combined_scope.add_argument("--jpdb", type=Path, required=True)
     combined_scope.add_argument("--jpdb-limit", type=int, required=True)
@@ -60,6 +65,8 @@ def _parser() -> argparse.ArgumentParser:
     reuse.add_argument("--target-run-id", type=int, required=True)
     accept = commands.add_parser("accept-translations")
     accept.add_argument("--run-id", type=int, required=True)
+    canonicalize = commands.add_parser("canonicalize-final-run")
+    canonicalize.add_argument("--run-id", type=int, required=True)
     resolution_batches = commands.add_parser("make-resolution-batches")
     resolution_batches.add_argument("--max-notes", type=int, default=10)
     resolution = commands.add_parser("apply-resolutions")
@@ -285,6 +292,10 @@ def execute(args: argparse.Namespace) -> Any:
             return result
         if args.command == "report-jpdb-coverage":
             return coverage_report(connection, args.run_id)
+        if args.command == "select-all-article-scope":
+            result = select_all_article_scope(connection, args.source_run_id, args.add_articles)
+            connection.commit()
+            return result
         if args.command == "select-combined-frequency-scope":
             result = select_combined_scope(
                 connection,
@@ -310,6 +321,10 @@ def execute(args: argparse.Namespace) -> Any:
             return result
         if args.command == "accept-translations":
             result = accept_deterministic_translations(connection, args.run_id)
+            connection.commit()
+            return result
+        if args.command == "canonicalize-final-run":
+            result = canonicalize_final_run(connection, args.run_id)
             connection.commit()
             return result
         if args.command == "make-resolution-batches":

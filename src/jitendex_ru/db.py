@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Iterator, Mapping
 
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 SCHEMA = r"""
 CREATE TABLE IF NOT EXISTS schema_meta(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -177,6 +177,29 @@ CREATE TABLE IF NOT EXISTS translation(
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(unit_id, attempt_id)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS one_accepted_translation ON translation(run_id, unit_id) WHERE accepted=1;
+CREATE TABLE IF NOT EXISTS translation_canonicalization_history(
+  id INTEGER PRIMARY KEY,
+  run_id INTEGER NOT NULL REFERENCES run(id),
+  unit_id TEXT NOT NULL REFERENCES translation_unit(id),
+  translation_id INTEGER NOT NULL REFERENCES translation(id),
+  previous_target_text TEXT NOT NULL,
+  previous_target_sha256 TEXT NOT NULL,
+  canonical_target_text TEXT NOT NULL,
+  canonical_target_sha256 TEXT NOT NULL,
+  mapping_source TEXT NOT NULL,
+  mapping_identity_json TEXT NOT NULL,
+  canonicalizer_version TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(run_id,unit_id,canonical_target_sha256,canonicalizer_version)
+);
+CREATE TRIGGER IF NOT EXISTS translation_canonicalization_history_no_update
+BEFORE UPDATE ON translation_canonicalization_history BEGIN
+  SELECT RAISE(ABORT, 'translation canonicalization history is immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS translation_canonicalization_history_no_delete
+BEFORE DELETE ON translation_canonicalization_history BEGIN
+  SELECT RAISE(ABORT, 'translation canonicalization history is immutable');
+END;
 CREATE TABLE IF NOT EXISTS review(
   id INTEGER PRIMARY KEY, translation_id INTEGER NOT NULL REFERENCES translation(id), attempt_id TEXT REFERENCES attempt(id),
   decision TEXT NOT NULL CHECK(decision IN ('accept','replace','needs_adjudication')),
@@ -207,16 +230,18 @@ CREATE TABLE IF NOT EXISTS export_file(
 
 def connect(path: Path) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path, timeout=10)
+    connection = sqlite3.connect(path, timeout=30)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
-    connection.execute("PRAGMA journal_mode = WAL")
-    connection.execute("PRAGMA busy_timeout = 10000")
+    connection.execute("PRAGMA busy_timeout = 30000")
     return connection
 
 
 def initialize(path: Path) -> None:
     with connect(path) as connection:
+        # Journal mode is persistent. Set it once during initialization rather
+        # than on every worker connection, where it can contend with writers.
+        connection.execute("PRAGMA journal_mode = WAL")
         connection.executescript(SCHEMA)
         frequency_article_columns = {
             row["name"] for row in connection.execute("PRAGMA table_info(frequency_article)")

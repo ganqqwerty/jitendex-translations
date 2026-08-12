@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,13 @@ class ValidationFailure(ValueError):
         self.issues = issues
 
 
+ACRONYM_DEFINITION_RE = re.compile(r"^[A-Z][A-Z0-9.+/-]{1,11}$")
+SOURCE_ACRONYM_RE = re.compile(r"\b[A-Z][A-Z0-9.+/-]{1,11}\b")
+ENGLISH_GRAMMAR_TOKEN_RE = re.compile(
+    r"\b(?:this|that|these|those|which|who|whom|whose)\b", re.IGNORECASE,
+)
+
+
 def allows_japanese_grammar_label(role: str, source_text: str) -> bool:
     """Allow Japanese-only output when the source is itself a grammar label."""
     return role == "pos" and source_text.strip().lower() in {"suru"}
@@ -25,6 +33,7 @@ def allows_japanese_grammar_label(role: str, source_text: str) -> bool:
 
 def _plain_text_issues(
     target: Any, protected: list[str], *, allow_no_cyrillic: bool = False,
+    allowed_english: list[str] | None = None,
 ) -> list[str]:
     issues: list[str] = []
     if not isinstance(target, str) or not target.strip():
@@ -42,6 +51,8 @@ def _plain_text_issues(
     unprotected = target
     for token in protected:
         unprotected = unprotected.replace(token, "")
+    for token in allowed_english or []:
+        unprotected = re.sub(rf"\b{re.escape(token)}\b", "", unprotected, flags=re.IGNORECASE)
     unprotected = LATIN_TAXON_RE.sub("", unprotected)
     if len(ASCII_WORD_RE.findall(unprotected)) > 2:
         issues.append("too_much_english")
@@ -115,24 +126,44 @@ def validate_worker_payload(connection: sqlite3.Connection, attempt: sqlite3.Row
                 continue
             if len(set(target)) != len(target):
                 issues.append({"code": "duplicate_glossary_definition", "unit_id": source["id"]})
-            protected = json.loads(source["protected_tokens_json"])
+            protected = [
+                *json.loads(source["protected_tokens_json"]),
+                *SOURCE_ACRONYM_RE.findall(source["source_text"]),
+            ]
             combined = " ".join(item for item in target if isinstance(item, str))
             missing = [token for token in protected if token not in combined]
             if missing:
                 issues.append({"code": "protected_token_missing", "unit_id": source["id"], "tokens": missing})
             for index, definition in enumerate(target):
+                definition_acronyms = [
+                    token for token in SOURCE_ACRONYM_RE.findall(source["source_text"])
+                    if isinstance(definition, str) and token in definition
+                ]
+                exact_source_acronym = (
+                    isinstance(definition, str)
+                    and ACRONYM_DEFINITION_RE.fullmatch(definition) is not None
+                    and definition in source["source_text"]
+                    and CYRILLIC_RE.search(combined) is not None
+                )
                 for code in _plain_text_issues(
-                    definition, [],
-                    allow_no_cyrillic=allows_japanese_grammar_label(source["role"], source["source_text"]),
+                    definition, definition_acronyms,
+                    allow_no_cyrillic=(
+                        exact_source_acronym
+                        or allows_japanese_grammar_label(source["role"], source["source_text"])
+                    ),
                 ):
                     issues.append({"code": code, "unit_id": source["id"], "definition_index": index})
         else:
             protected = [] if required_target is not None else json.loads(source["protected_tokens_json"])
             protected = [*protected, *KEY_CHORD_RE.findall(source["source_text"])]
+            protected = [*protected, *SOURCE_ACRONYM_RE.findall(source["source_text"])]
             if source["role"] == "xref_gloss":
                 protected = [*protected, *source_xref_taxa(source["source_text"])]
             if source["role"] == "note" and (match := LANGUAGE_ORIGIN_RE.fullmatch(source["source_text"].strip())):
                 protected = [*protected, match.group(1)]
+            allowed_english = []
+            if source["role"] == "example" and "antecedent" in source["source_text"].lower():
+                allowed_english = ENGLISH_GRAMMAR_TOKEN_RE.findall(source["source_text"])
             for code in _plain_text_issues(
                 target,
                 protected,
@@ -140,6 +171,7 @@ def validate_worker_payload(connection: sqlite3.Connection, attempt: sqlite3.Row
                     (required_target is not None and target == required_target)
                     or allows_japanese_grammar_label(source["role"], source["source_text"])
                 ),
+                allowed_english=allowed_english,
             ):
                 issues.append({"code": code, "unit_id": source["id"]})
     return issues

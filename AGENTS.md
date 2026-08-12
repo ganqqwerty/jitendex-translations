@@ -10,7 +10,7 @@ AG-FOCUS-3 — Follow the [JPDB Luna orchestration runbook](JPDB_LUNA_ORCHESTRAT
 
 AG-FOCUS-4 — Use [JPDB Luna run history](JPDB_LUNA_RUN_HISTORY.md) only for completed-run results, prior incidents, and verified archive hashes.
 
-AG-FOCUS-5 — Use the [Luna clean v1 translation prompt](prompts/translate_luna_clean_v1.txt) for Luna translation batches.
+AG-FOCUS-5 — Use the [Luna v4 translation prompt](prompts/translate_luna_v4.txt) with `config.luna.toml` for Luna translation batches.
 
 ## AG-SITES — Dictionary demo sites
 
@@ -38,4 +38,4 @@ AG-DOC-7 Use simple langauge. Be short.
 
 ## IDX Index of important files
 
-[README](README.md), [Luna runbook](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md), [Luna run history](JPDB_LUNA_RUN_HISTORY.md), [Luna prompt](prompts/translate_luna_clean_v1.txt), [tag replacement plan](JITENDEX_TAG_REPLACEMENT_PLAN.md), and [Luna run 3 preflight](reports/luna_run3_preflight.md).
+[README](README.md), [Luna runbook](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md), [Luna run history](JPDB_LUNA_RUN_HISTORY.md), [Luna v4 prompt](prompts/translate_luna_v4.txt), [tag replacement plan](JITENDEX_TAG_REPLACEMENT_PLAN.md), and [Luna run 3 preflight](reports/luna_run3_preflight.md).

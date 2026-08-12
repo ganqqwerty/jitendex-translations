@@ -1395,7 +1395,135 @@ schema-validated banks:      55
 SHA-256: 73c13b9df09a24dd2af35763ff40aa29d515003131723208030e1ac972d91007
 ~~~
 
-HIST-140K-4 — Run 19 is the stopping point recorded in the operational [JPDB_LUNA_ORCHESTRATION_RUNBOOK.md](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md). The next cumulative target is top 150k.
+HIST-140K-4 — At completion, run 19 became the recorded stopping point and top 150k became the next target.
+
+## HIST-150K — Top-150k v4 continuation results
+
+HIST-150K-1 — The top-150k expansion used source run 19 and target run 20. It started the Luna v4 sequence with `config.luna.toml`, `gpt-5.6-luna`, medium effort, the bundled CLI transport, and prompt SHA-256 `fbd0e0c92914b4654b8ae8aaa7063b893d7d02eb8caf6b10cb015c72beb0c9b5`.
+
+~~~text
+requested rows:          150,000
+unique JPDB terms:       131,626
+matched terms:           122,365
+skipped terms:             9,261
+selected articles:       134,250
+translation units:       974,564
+reused run-19 units:     932,516
+new Luna units:           42,048
+~~~
+
+HIST-150K-2 — All 42,048 new units were accepted. Coverage was complete and the archive passed schema and member verification.
+
+~~~text
+ZIP members:                217
+schema-validated banks:      57
+SHA-256: beda96a529678131ff4159313670d90be8ff4986d35742d7c363ea02427e5bfa
+~~~
+
+## HIST-160K — Top-160k v4 continuation results
+
+HIST-160K-1 — The top-160k expansion used source run 20 and target run 21.
+
+~~~text
+requested rows:          160,000
+unique JPDB terms:       139,734
+matched terms:           129,629
+skipped terms:            10,105
+selected articles:       141,450
+translation units:     1,015,516
+reused run-20 units:     974,564
+new Luna units:           40,952
+~~~
+
+HIST-160K-2 — All 40,952 new units were accepted. Coverage was complete and the archive passed schema and member verification.
+
+~~~text
+ZIP members:                230
+schema-validated banks:      60
+SHA-256: 498ece41deafb92ff329e344d4d85b1061d7ac8ef92ae72dc46ec5b6fc34b20e
+~~~
+
+HIST-160K-3 — `build_dictionary.py` was changed from repeated whole-chunk serialization to exact incremental byte accounting. The resulting chunk boundaries remained exact, while cumulative build time dropped from tens of minutes to about one minute.
+
+## HIST-170K — Top-170k v4 continuation results
+
+HIST-170K-1 — The top-170k expansion used source run 21 and target run 22.
+
+~~~text
+requested rows:          170,000
+unique JPDB terms:       147,740
+matched terms:           136,755
+skipped terms:            10,985
+selected articles:       148,145
+translation units:     1,054,088
+reused run-21 units:   1,015,516
+new Luna units:           38,572
+~~~
+
+HIST-170K-2 — All 38,572 new units were accepted. Coverage was complete and the archive passed schema and member verification.
+
+~~~text
+ZIP members:                234
+schema-validated banks:      62
+SHA-256: 9c348da6579f28fa6dcef8b39852e5e827e5095a0d561ce0622ac221cc8b9c24
+~~~
+
+## HIST-180K — Top-180k v4 continuation results
+
+HIST-180K-1 — The top-180k expansion used source run 22 and target run 23.
+
+~~~text
+requested rows:          180,000
+unique JPDB terms:       155,696
+matched terms:           143,796
+skipped terms:            11,900
+selected articles:       154,675
+translation units:     1,091,168
+reused run-22 units:   1,054,088
+new Luna units:           37,080
+~~~
+
+HIST-180K-2 — A scientific-name detector incorrectly protected ordinary phrases such as `Japanese paper`, `Morse code`, and `Kamakura and`. The detector was narrowed to conservative parenthesized/comma taxa and repeated genera. Thirty-six already valid Luna singleton responses were revalidated under the corrected deterministic rule with explicit audit records.
+
+HIST-180K-3 — One language-origin note needed the exact citation `Vienna waltz`. A one-unit child manifest exposed that citation as a protected token to Luna. Extraction now places keyboard chords, language-origin citations, and conservative cross-reference taxa in model-visible protected tokens as well as validator checks.
+
+HIST-180K-4 — All 37,080 new units were accepted, all 143,796 matched headwords were covered, and the archive passed schema and member verification.
+
+~~~text
+ZIP members:                243
+schema-validated banks:      64
+SHA-256: 696af0c8d5e8a7086d8e70f9e3605da31e7eba2cbb4ac4556e22a3c1bdb19940
+~~~
+
+## HIST-190K — Top-190k v4 continuation results
+
+HIST-190K-1 — The top-190k expansion used source run 23 and target run 24. The subset gate proved that all 1,091,168 source units had exact target identities before reuse.
+
+~~~text
+requested rows:          190,000
+unique JPDB terms:       163,558
+matched terms:           150,697
+skipped terms:            12,861
+selected articles:       160,870
+translation units:     1,126,413
+reused run-23 units:   1,091,168
+new Luna units:           35,245
+initial batches:              959
+~~~
+
+HIST-190K-2 — Four CLI pools ran at concurrency 20. One runner exited after a transient SQLite lock while claiming more work. Process absence was verified, its 18 claims were marked interrupted, and 699 units were requeued with audit events. A fresh recovery pool accepted all 18 batches.
+
+HIST-190K-3 — Retry-tail regressions now allow an exact source acronym such as `ETD` when the same glossary set also contains Russian wording. They also allow a narrow set of English grammar tokens such as `this`, `that`, and `which` inside an otherwise Russian translated example. Tests reject an English prose fragment that merely adds a Cyrillic word.
+
+HIST-190K-4 — All 35,245 new units were accepted. Coverage was complete for all 150,697 matched headwords and 160,870 articles. The 12,861 absent JPDB terms were correctly skipped. The final audit found 1,126,413 accepted units, zero membership mismatches, zero blocking issues, zero unresolved errors, and only `codex-agent` Luna-medium attempts. All 61 tests passed.
+
+~~~text
+ZIP members:                247
+schema-validated banks:      65
+SHA-256: 8d632ea386915467eb6813b9c3aeba6bd665dbb6af2142ff247a2c607f6ae2e0
+~~~
+
+HIST-190K-5 — Run 24 is the stopping point recorded in the operational [JPDB_LUNA_ORCHESTRATION_RUNBOOK.md](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md). The next cumulative target is top 200k.
 
 ## HIST-EXPORT-LIMIT — Historical exporter metadata limitation
 
@@ -1458,3 +1586,495 @@ SHA-256: e895ac97b81a46a1350b7e5dc346538b6305b33e301065d4bd19dfcf218cc83b
 HIST-FREQ40K-6 — Export 31 was verified with the title `Jitendex JPDB 190k + frequency-six top40k — русский` and revision `2026.07.09.0-jpdb-190k-freq6-40k-ru`. The archive is `dist/jitendex-jpdb-190k-plus-freq6-top40k-ru-luna-v4.zip`.
 
 HIST-FREQ40K-7 — Normal JPDB progression resumes from run 24 at top 200k. Run 24 remains the primary reuse and containment source. Run 25 may be used only as a second reuse source for overlay translations that enter JPDB top 200k; overlay-only articles must not enter that export.
+
+## HIST-200K — Top-200k v4 continuation results
+
+HIST-200K-1 — The top-200k expansion used source run 24 and target run 26. The subset gate found zero source units missing from the target. Run 25 then supplied 5,365 additional exact reusable translations only for articles that independently entered JPDB top 200k.
+
+~~~text
+requested rows:          200,000
+unique JPDB terms:       171,362
+matched terms:           157,505
+skipped terms:            13,857
+selected articles:       166,665
+translation units:     1,159,255
+reused run-24 units:   1,126,413
+reused run-25 units:       5,365
+new Luna units:           27,477
+initial batches:              760
+~~~
+
+HIST-200K-2 — Four Luna-medium CLI pools ran at concurrency 20. Automatic retries and recursive splits drained all but one singleton. That singleton translated `hepatica (Hepatica nobilis var. japonica f. variegata); liverleaf` correctly but copied too many unprotected Latin taxon qualifiers. An audited targeted repair preserved the protected `Hepatica nobilis` binomial and rendered the qualifiers in Russian through normal claim and ingestion provenance.
+
+HIST-200K-3 — All 27,477 new units were accepted. Coverage was complete for all 157,505 matched headwords and 166,665 articles. The final audit found 1,159,255 units with exactly one accepted translation, zero missing mapped articles, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                255
+schema-validated banks:      67
+archive articles:       166,665
+SHA-256: 1fe24f33db2b27d6c7b5f1125018763a1db297d78620963d8ea218bbf2a87ba0
+~~~
+
+HIST-200K-4 — Export 32 was verified with the title `Jitendex JPDB 200k — русский` and revision `2026.07.09.0-jpdb-200k-ru`. Run 26 is the new stopping point and top 210k is the next cumulative target.
+
+## HIST-210K — Top-210k v4 continuation results
+
+HIST-210K-1 — The top-210k expansion used source run 26 and target run 27. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          210,000
+unique JPDB terms:       179,076
+matched terms:           164,189
+skipped terms:            14,887
+selected articles:       172,303
+translation units:     1,191,493
+reused run-26 units:   1,159,255
+new Luna units:           32,238
+initial batches:              881
+~~~
+
+HIST-210K-2 — Automatic retries and recursive splits drained all but two singleton leaves. One moth glossary retained unprotected Latin taxonomy, and one hepatica cross-reference copied unprotected Latin qualifiers. Audited targeted repairs rendered those unprotected parts in Russian, preserved the required protected binomial, and passed normal claim and ingestion provenance.
+
+HIST-210K-3 — All 32,238 new units were accepted. Coverage was complete for all 164,189 matched headwords and 172,303 articles. The final audit found 1,191,493 units with exactly one accepted translation, zero missing mapped articles, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+HIST-210K-4 — The selector requested rows 1–210,000. The maximum retained deduplicated term rank was 209,999 because row 210,000 repeated an earlier spelling.
+
+~~~text
+ZIP members:                261
+schema-validated banks:      69
+archive articles:       172,303
+SHA-256: 7f51c79783c7c2fc5a2038eef3c74c75bf80e45448003f3318da9cf28b1d1c7a
+~~~
+
+HIST-210K-5 — Export 33 was verified with the title `Jitendex JPDB 210k — русский` and revision `2026.07.09.0-jpdb-210k-ru`. Run 27 is the new stopping point and top 220k is the next cumulative target.
+
+## HIST-220K — Top-220k v4 continuation results
+
+HIST-220K-1 — The top-220k expansion used source run 27 and target run 28. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          220,000
+unique JPDB terms:       186,762
+matched terms:           170,865
+skipped terms:            15,897
+selected articles:       178,001
+translation units:     1,223,419
+reused run-27 units:   1,191,493
+new Luna units:           31,926
+initial batches:              881
+~~~
+
+HIST-220K-2 — One pool exited after a transient failure. Process absence was verified, its exact 15 claims were marked interrupted, requeued, and audited, and a replacement pool completed them. Automatic retries and recursive splits drained all but one singleton. That Java-man cross-reference retained an unprotected Latin taxon; an audited targeted repair rendered the taxon in Russian through normal claim and ingestion provenance.
+
+HIST-220K-3 — All 31,926 new units were accepted. Coverage was complete for all 170,865 matched headwords and 178,001 articles. The final audit found 1,223,419 units with exactly one accepted translation, zero missing mapped articles, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+HIST-220K-4 — The selector requested rows 1–220,000. The maximum retained deduplicated term rank was 219,999 because row 220,000 repeated an earlier spelling.
+
+~~~text
+ZIP members:                265
+schema-validated banks:      71
+archive articles:       178,001
+SHA-256: 8245e88c24cba5e7eb0e8671b3be1089cd4ff654fa9f76f2d5168640affbd54e
+~~~
+
+HIST-220K-5 — Export 34 was verified with the title `Jitendex JPDB 220k — русский` and revision `2026.07.09.0-jpdb-220k-ru`. Run 28 is the new stopping point and top 230k is the next cumulative target.
+
+## HIST-230K — Top-230k v4 continuation results
+
+HIST-230K-1 — The top-230k expansion used source run 28 and target run 29. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          230,000
+unique JPDB terms:       196,418
+matched terms:           180,195
+skipped terms:            16,223
+selected articles:       186,233
+translation units:     1,267,553
+reused run-28 units:   1,223,419
+new Luna units:           44,134
+initial batches:            1,309
+~~~
+
+HIST-230K-2 — Automatic retries and recursive splits drained all but two singleton leaves. A language-origin note retained multiple unprotected ASCII forms, and a Shift-JIS glossary retained multiple unprotected encoding-name words. Audited targeted repairs transliterated those unprotected forms in Russian, preserved the required `0208` token, and passed normal claim and ingestion provenance.
+
+HIST-230K-3 — All 44,134 new units were accepted. Coverage was complete for all 180,195 matched headwords and 186,233 articles. The final audit found 1,267,553 units with exactly one accepted translation, zero missing mapped articles, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                268
+schema-validated banks:      73
+archive articles:       186,233
+SHA-256: 889d11740c7e2c985a644d59f4ea72420a8c618bdb65e736e7f45813b8f36f33
+~~~
+
+HIST-230K-4 — Export 35 was verified with the title `Jitendex JPDB 230k — русский` and revision `2026.07.09.0-jpdb-230k-ru`. Run 29 is the new stopping point and top 240k is the next cumulative target.
+
+## HIST-240K — Top-240k v4 continuation results
+
+HIST-240K-1 — The top-240k expansion used source run 29 and target run 30. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          240,000
+unique JPDB terms:       205,884
+matched terms:           189,546
+skipped terms:            16,338
+selected articles:       190,184
+translation units:     1,286,891
+reused run-29 units:   1,267,553
+new Luna units:           19,338
+initial batches:              605
+~~~
+
+HIST-240K-2 — One pool exited after a SQLite lock. Process absence was verified, its exact 19 claims covering 651 units were marked interrupted, requeued, and audited, and a replacement pool completed them. Automatic retries and recursive splits drained every unit without targeted repair.
+
+HIST-240K-3 — All 19,338 new units were accepted. Coverage was complete for all 189,546 matched headwords and 190,184 articles. The final audit found 1,286,891 units with exactly one accepted translation, zero missing mapped articles, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                271
+schema-validated banks:      74
+archive articles:       190,184
+SHA-256: 92f7703efd152c7ae156bef96fdf61b9ecf8c21e8ce54ab0fc10ebf2ec09f4d3
+~~~
+
+HIST-240K-4 — Export 36 was verified with the title `Jitendex JPDB 240k — русский` and revision `2026.07.09.0-jpdb-240k-ru`. Run 30 is the new stopping point and top 250k is the next cumulative target.
+
+## HIST-250K — Top-250k v4 continuation results
+
+HIST-250K-1 — The top-250k expansion used source run 30 and target run 31. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          250,000
+unique JPDB terms:       215,398
+matched terms:           198,900
+skipped terms:            16,498
+selected articles:       193,874
+translation units:     1,305,309
+reused run-30 units:   1,286,891
+new Luna units:           18,418
+initial batches:              568
+~~~
+
+HIST-250K-2 — Automatic retries and recursive splits drained all but one singleton leaf. Its glossary described ASCII transfer with XON-XOFF flow control, and repeated Luna responses retained excessive unprotected English abbreviations. An audited targeted repair transliterated the abbreviations into Russian and passed normal claim and ingestion provenance.
+
+HIST-250K-3 — All 18,418 new units were accepted. Coverage was complete for all 198,900 matched headwords and 193,874 articles. The final audit found 1,305,309 units with exactly one accepted translation, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                273
+schema-validated banks:      75
+archive articles:       193,874
+SHA-256: 42de9a154ba6bd5b2fb85d40d6e0d77499d723411d5ed3de8eed08b75c45edba
+~~~
+
+HIST-250K-4 — Export 37 was verified with the title `Jitendex JPDB 250k — русский` and revision `2026.07.09.0-jpdb-250k-ru`. Run 31 is the new stopping point and top 260k is the next cumulative target.
+
+## HIST-260K — Top-260k v4 continuation results
+
+HIST-260K-1 — The top-260k expansion used source run 31 and target run 32. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          260,000
+unique JPDB terms:       224,572
+matched terms:           207,928
+skipped terms:            16,644
+selected articles:       197,965
+translation units:     1,329,154
+reused run-31 units:   1,305,309
+new Luna units:           23,845
+initial batches:              626
+~~~
+
+HIST-260K-2 — One pool exited after a SQLite lock. Process absence was verified, its exact 19 claims covering 731 units were marked interrupted, requeued, and audited, and a replacement pool completed them. Automatic retries and recursive splits then drained all but two singleton language-origin notes. Audited targeted repairs transliterated the Spanish, Portuguese, and English source forms into Russian and passed normal claim and ingestion provenance.
+
+HIST-260K-3 — All 23,845 new units were accepted. Coverage was complete for all 207,928 matched headwords and 197,965 articles. The final audit found 1,329,154 units with exactly one accepted translation, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                274
+schema-validated banks:      76
+archive articles:       197,965
+SHA-256: f394eea111e952eb1d7d05131672249618633e9080f8efaa14badd990cbf70ad
+~~~
+
+HIST-260K-4 — Export 38 was verified with the title `Jitendex JPDB 260k — русский` and revision `2026.07.09.0-jpdb-260k-ru`. Run 32 is the new stopping point and top 270k is the next cumulative target.
+
+## HIST-270K — Top-270k v4 continuation results
+
+HIST-270K-1 — The top-270k expansion used source run 32 and target run 33. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          270,000
+unique JPDB terms:       234,290
+matched terms:           217,572
+skipped terms:            16,718
+selected articles:       202,324
+translation units:     1,350,884
+reused run-32 units:   1,329,154
+new Luna units:           21,730
+initial batches:              660
+~~~
+
+HIST-270K-2 — Automatic retries and recursive splits drained every unit without targeted repair. The retry tail isolated Cyrillic and English-density failures into smaller children, which Luna then translated validly.
+
+HIST-270K-3 — All 21,730 new units were accepted. Coverage was complete for all 217,572 matched headwords and 202,324 articles. The final audit found 1,350,884 units with exactly one accepted translation, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                278
+schema-validated banks:      77
+archive articles:       202,324
+SHA-256: 5206d936ef4aa01f36e3841f0174888a81e755bdecd135aade0c424af2332769
+~~~
+
+HIST-270K-4 — Export 39 was verified with the title `Jitendex JPDB 270k — русский` and revision `2026.07.09.0-jpdb-270k-ru`. Run 33 is the new stopping point and top 280k is the next cumulative target.
+
+## HIST-280K — Top-280k v4 continuation results
+
+HIST-280K-1 — The top-280k expansion used source run 33 and target run 34. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          280,000
+unique JPDB terms:       244,046
+matched terms:           227,114
+skipped terms:            16,932
+selected articles:       206,485
+translation units:     1,371,763
+reused run-33 units:   1,350,884
+new Luna units:           20,879
+initial batches:              643
+~~~
+
+HIST-280K-2 — One 56-unit Luna subprocess remained silent after repeated bounded waits. Its owning pool was stopped, the exact claim was marked interrupted and audited, and a replacement worker resumed it. Recursive splitting validated all but two identical language-origin notes. Audited targeted repairs transliterated the French and English source forms into Russian and passed normal claim and ingestion provenance.
+
+HIST-280K-3 — All 20,879 new units were accepted. Coverage was complete for all 227,114 matched headwords and 206,485 articles. The final audit found 1,371,763 units with exactly one accepted translation, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                279
+schema-validated banks:      78
+archive articles:       206,485
+SHA-256: 5666b39dc51a9b5593a7373062033255521e60fa93a1a3b586fd7a8ee89a6b96
+~~~
+
+HIST-280K-4 — Export 40 was verified with the title `Jitendex JPDB 280k — русский` and revision `2026.07.09.0-jpdb-280k-ru`. Run 34 is the new stopping point and top 290k is the next cumulative target.
+
+## HIST-290K — Top-290k v4 continuation results
+
+HIST-290K-1 — The top-290k expansion used source run 34 and target run 35. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          290,000
+unique JPDB terms:       253,819
+matched terms:           236,719
+skipped terms:            17,100
+selected articles:       211,292
+translation units:     1,393,585
+reused run-34 units:   1,371,763
+new Luna units:           21,822
+initial batches:              728
+~~~
+
+HIST-290K-2 — One pool exited after a SQLite lock. Process absence was verified, its exact 19 claims covering 524 units were marked interrupted, requeued, and audited, and a replacement pool completed them. Automatic retries and recursive splits drained every unit without targeted repair.
+
+HIST-290K-3 — All 21,822 new units were accepted. Coverage was complete for all 236,719 matched headwords and 211,292 articles. The final audit found 1,393,585 units with exactly one accepted translation, zero active batches, zero terminal blocked leaves, zero unresolved errors, zero blocking issues, and zero batch-membership mismatches. All 64 tests passed and SQLite `quick_check` returned `ok`.
+
+~~~text
+ZIP members:                281
+schema-validated banks:      80
+archive articles:       211,292
+SHA-256: e9bf1a8f25e34cf6724b83152463b8457523f4a115f87e46815bb8568733326a
+~~~
+
+HIST-290K-4 — Export 41 was verified with the title `Jitendex JPDB 290k — русский` and revision `2026.07.09.0-jpdb-290k-ru`. Run 35 is the new stopping point and top 300k is the next cumulative target.
+
+## HIST-300K — Top-300k v4 final planned JPDB results
+
+HIST-300K-1 — The top-300k expansion used source run 35 and target run 36. The subset gate found zero source units missing from the target.
+
+~~~text
+requested rows:          300,000
+unique JPDB terms:       263,571
+matched terms:           246,264
+skipped terms:            17,307
+selected articles:       216,368
+translation units:     1,421,789
+reused run-35 units:   1,393,585
+new Luna units:           28,204
+initial batches:              774
+~~~
+
+HIST-300K-2 — Automatic retries and recursive splits drained all but one singleton example. An audited targeted repair transliterated the product and company names into Russian and passed normal claim and ingestion provenance.
+
+HIST-300K-3 — The final deterministic canonicalizer was implemented and tested before export. It resolved 880,676 structured tag leaves by stable `(category, code, field)` identity, changed 333,092 final-run values, recorded immutable per-unit provenance, and found 547,584 values already exact. A second run changed zero values. Missing mappings, conflicting requirements, non-scalar targets, and acceptance gaps fail closed. All 67 tests passed.
+
+HIST-300K-4 — All 28,204 new units were accepted. Coverage was complete for all 246,264 matched JPDB headwords and 216,368 selected articles. The final validation found 1,421,789 accepted units, zero blocking issues, zero membership mismatches, and zero bad target hashes.
+
+~~~text
+ZIP members:                282
+schema-validated banks:      81
+archive articles:       216,368
+SHA-256: 8d8944228ff3c2f64b4630a3bf85474151755b5c84e9eaa8688182de54e977b3
+~~~
+
+HIST-300K-5 — Export 42 was verified with the title `Jitendex JPDB 300k — русский` and revision `2026.07.09.0-jpdb-300k-ru`.
+
+HIST-300K-6 — The full-snapshot audit proved top 300k is not full Jitendex coverage. The snapshot has 433,885 articles and 431,545 distinct expression-reading headwords. Run 36 covers 216,368 articles and 214,990 distinct headwords, leaving 217,517 articles and 216,555 headwords. Work therefore continues beyond JPDB ranks in cumulative 10,000-article increments.
+
+## HIST-ALL-226368 — 226,368-article continuation results
+
+HIST-ALL-226368-1 — The first all-article expansion used source run 36 and target run 37. It retained every source article and added the next 10,000 articles in stable source-bank order. The subset gate found zero source units missing from the target.
+
+~~~text
+selected articles:         226,368
+distinct headwords done:   224,971
+headwords remaining:       206,574
+translation units:       1,443,831
+reused run-36 units:     1,421,789
+new Luna units:             22,042
+initial batches:               479
+~~~
+
+HIST-ALL-226368-2 — Four pools of 20 workers completed all initial batches. Capacity, protected-token, unit-order, and Cyrillic validation failures succeeded through normal automatic retries. No manual repair or interrupted-lease recovery was required.
+
+HIST-ALL-226368-3 — All 22,042 new units were accepted. Coverage was complete for all 226,368 selected articles. The final audit found 1,443,831 units with exactly one accepted translation, zero unresolved errors, zero blocking issues, and zero acceptance gaps. Canonicalization changed 96 new structured values; its idempotence pass changed zero. All 69 tests passed.
+
+~~~text
+ZIP members:                284
+schema-validated banks:      83
+archive articles:       226,368
+SHA-256: 75fe600adc4790363ac28da54a4547a42196a15e7ea4a274af4b8b62d5e6cfaa
+~~~
+
+HIST-ALL-226368-4 — Export 43 was verified with the title `Jitendex 226 368 статей — русский` and revision `2026.07.09.0-articles-226368-ru`. Run 37 is the new stopping point; 236,368 articles is the next cumulative target.
+
+## HIST-ALL-236368 — 236,368-article continuation results
+
+HIST-ALL-236368-1 — The expansion used source run 37 and target run 38. It retained every source article, added the next 10,000 articles in stable source-bank order, and had zero source-unit containment gaps.
+
+~~~text
+selected articles:         236,368
+distinct headwords done:   234,928
+headwords remaining:       196,617
+translation units:       1,448,980
+reused run-37 units:     1,443,831
+new Luna units:              5,149
+initial batches:               105
+~~~
+
+HIST-ALL-236368-2 — Two launchers exited on SQLite claim contention after taking five claims. A sixth Luna subprocess remained silent after repeated bounded waits. Process absence was proved, the exact six claims covering 330 units were marked interrupted, requeued, and audited, and a six-worker recovery pool validated all six. Automatic retries resolved three Cyrillic-validation failures without manual repair.
+
+HIST-ALL-236368-3 — All 5,149 new units were accepted. Coverage was complete for all 236,368 selected articles. The final audit found 1,448,980 units with exactly one accepted translation, zero unresolved errors, zero blocking issues, and zero acceptance gaps. Canonicalization changed 42 new structured values; its idempotence pass changed zero. All 69 tests passed.
+
+~~~text
+ZIP members:                286
+schema-validated banks:      85
+archive articles:       236,368
+SHA-256: 2a4e194ca6074a65ba3ac24cbfe89ff156f49900e7054d10421f135952fce796
+~~~
+
+HIST-ALL-236368-4 — Export 44 was verified with the title `Jitendex 236 368 статей — русский` and revision `2026.07.09.0-articles-236368-ru`. Run 38 is the new stopping point; 246,368 articles is the next cumulative target.
+
+## HIST-ALL-246368 — 246,368-article continuation results
+
+HIST-ALL-246368-1 — The expansion used source run 38 and target run 39. It retained every source article, added the next 10,000 articles in stable source-bank order, and had zero source-unit containment gaps.
+
+~~~text
+selected articles:         246,368
+distinct headwords done:   244,854
+headwords remaining:       186,691
+translation units:       1,456,150
+reused run-38 units:     1,448,980
+new Luna units:              7,170
+initial batches:               141
+~~~
+
+HIST-ALL-246368-2 — Automatic retries and recursive splits isolated repeated English and Cyrillic validation failures. All child leaves validated without manual repair or interrupted-lease recovery.
+
+HIST-ALL-246368-3 — All 7,170 new units were accepted. Coverage was complete for all 246,368 selected articles. The final audit found 1,456,150 units with exactly one accepted translation, zero unresolved errors, zero blocking issues, and zero acceptance gaps. Canonicalization changed 62 new structured values; its idempotence pass changed zero. All 69 tests passed.
+
+~~~text
+ZIP members:                287
+schema-validated banks:      86
+archive articles:       246,368
+SHA-256: df78d515eaa31922e1b2bf9768ecbdf1e2d2905824c88903869a1a89c3b78e4c
+~~~
+
+HIST-ALL-246368-4 — Export 45 was verified with the title `Jitendex 246 368 статей — русский` and revision `2026.07.09.0-articles-246368-ru`. Run 39 is the new stopping point; 256,368 articles is the next cumulative target.
+
+## HIST-ALL-256368 — 256,368-article continuation results
+
+HIST-ALL-256368-1 — Run 40 retained run 39, added 10,000 source-ordered articles, reused 1,456,150 units, and translated 7,630 new units in 156 initial batches. It finished with 254,799 distinct headwords done and 176,746 remaining.
+
+HIST-ALL-256368-2 — A temporary Luna capacity and WebSocket 403 disruption affected all pools. HTTPS fallback and normal retries recovered without stale claims or manual repairs. Recursive splits resolved the remaining Cyrillic failures.
+
+HIST-ALL-256368-3 — All 1,463,780 units were accepted with zero gaps, unresolved errors, or blocking issues. Canonicalization changed 52 values and its idempotence pass changed zero. All 69 tests passed.
+
+~~~text
+ZIP members:                289
+schema-validated banks:      88
+archive articles:       256,368
+SHA-256: 1d03ffd1f2a3aec8ec6d7e12bae75f4e3b2470586e8f0d9e7a4a203384e0b584
+~~~
+
+HIST-ALL-256368-4 — Export 46 was verified. Run 40 is the stopping point; 266,368 articles is next.
+
+## HIST-ALL-266368 — 266,368-article continuation results
+
+HIST-ALL-266368-1 — Run 41 retained run 40, added 10,000 source-ordered articles, reused 1,463,780 units, and translated 6,430 new units in 142 batches. It finished with 264,763 distinct headwords done and 166,782 remaining.
+
+HIST-ALL-266368-2 — Intermittent capacity and WebSocket failures recovered through normal retries. All 1,470,210 units were accepted with zero gaps, unresolved errors, or blocking issues. Canonicalization changed 57 values and its idempotence pass changed zero. All 69 tests passed.
+
+~~~text
+ZIP members:                291
+schema-validated banks:      90
+archive articles:       266,368
+SHA-256: fa3d69575df08863d15922c56426edeb892b13a526a7291441072f1ad32a5874
+~~~
+
+HIST-ALL-266368-3 — Export 47 was verified. Run 41 is the stopping point; 276,368 articles is next.
+
+## HIST-ALL-276368 — 276,368-article continuation results
+
+HIST-ALL-276368-1 — Run 42 retained run 41, added 10,000 source-ordered articles, reused 1,470,210 units, and translated 10,316 new units in 212 initial batches. It finished with 274,732 distinct headwords done and 156,813 remaining.
+
+HIST-ALL-276368-2 — Two launchers stopped after SQLite claim contention and one Luna subprocess remained silent. Process absence was proved. The exact 20 stale claims covering 904 units were marked interrupted, requeued, and audited. A recovery pool validated every requeued unit. Two response-order mismatches passed normal retries.
+
+HIST-ALL-276368-3 — All 1,480,526 units were accepted with zero gaps, unresolved errors, or blocking leaf issues. Canonicalization changed 107 values and its idempotence pass changed zero. All 69 tests passed.
+
+~~~text
+ZIP members:                293
+schema-validated banks:      92
+archive articles:       276,368
+SHA-256: 9e00391edb33b54b3611ccb18054f3a3c619e0c4be9a5340afb7274950637046
+~~~
+
+HIST-ALL-276368-4 — Export 49 was verified after canonicalization. Run 42 is the stopping point; 286,368 articles is next.
+
+## HIST-ALL-286368 — 286,368-article continuation results
+
+HIST-ALL-286368-1 — Run 43 retained run 42, added 10,000 source-ordered articles, reused 1,480,526 units, and translated 24,829 new units in 573 initial batches. It finished with 284,680 distinct headwords done and 146,865 remaining.
+
+HIST-ALL-286368-2 — Reuse and initial batch creation accidentally overlapped, producing unclaimed manifests for reused units. Before any model attempt, those Run 43-only batch records were removed, the repair was audited, and 573 correct batches were regenerated from exactly the 24,829 ready units. Normal retries and recursive splits resolved English, Cyrillic, and protected-token validation failures.
+
+HIST-ALL-286368-3 — All 1,505,355 units were accepted with zero gaps, unresolved errors, or blocking leaf issues. Canonicalization changed 145 values and its idempotence pass changed zero. The build gate exposed one scalar whose source contained leading whitespace stripped during extraction. Application now verifies stripped scalar provenance while preserving exact source whitespace around the Russian replacement. All 70 tests passed.
+
+~~~text
+ZIP members:                297
+schema-validated banks:      94
+archive articles:       286,368
+SHA-256: cabdb40310e6599b7c39638865cf2afbb5201bd1c17f6c549cd4496b32fb1fee
+~~~
+
+HIST-ALL-286368-4 — Export 50 was verified. Run 43 is the stopping point; 296,368 articles is next.
+
+## HIST-ALL-296368 — 296,368-article continuation results
+
+HIST-ALL-296368-1 — Run 44 retained run 43, added 10,000 source-ordered articles, reused 1,505,355 units, and translated 35,712 new units in 880 initial batches. It finished with 294,630 distinct headwords done and 136,915 remaining.
+
+HIST-ALL-296368-2 — Several pool launchers exited on SQLite contention. After all live workers drained, exact stale claims were proved process-absent, marked interrupted, audited, and requeued. A recovery pool validated 847 requeued units. Eight final singleton leaves from four related articles repeatedly failed because required source acronyms `SV`, `SVC`, `SVO`, `SVOO`, and `SVOC` were counted as untranslated English. The validator now requires source acronyms but excludes them from its English quota. All eight leaves then validated without changing their Russian translations.
+
+HIST-ALL-296368-3 — All 1,541,067 units were accepted with zero gaps, unresolved errors, or blocking leaf issues. Canonicalization changed 102 values and its idempotence pass changed zero. All 71 tests passed.
+
+~~~text
+ZIP members:                301
+schema-validated banks:      96
+archive articles:       296,368
+SHA-256: fa30ecf36ca420c90168b8cd7028364405cbb153564dfacfabdb19f4e81c7861
+~~~
+
+HIST-ALL-296368-4 — Export 51 was verified. Run 44 is the stopping point; 306,368 articles is next.

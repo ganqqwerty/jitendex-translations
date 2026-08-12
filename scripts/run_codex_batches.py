@@ -10,8 +10,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import random
+import signal
+import sqlite3
 import subprocess
 import tempfile
+import threading
 import time
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
@@ -26,6 +31,9 @@ from jitendex_ru.validate_response import ValidationFailure, ingest_response
 
 
 CODEX = Path("/Applications/ChatGPT.app/Contents/Resources/codex")
+STOP_REQUESTED = threading.Event()
+CHILDREN_LOCK = threading.Lock()
+CHILDREN: dict[str, subprocess.Popen[str]] = {}
 
 
 @dataclass(frozen=True)
@@ -37,6 +45,118 @@ class DispatchResult:
     thread_id: str | None
     usage: dict[str, int] | None
     latency_ms: int
+    interrupted: bool = False
+
+
+def sqlite_retry(operation, *, attempts: int = 6, base_delay: float = 0.2):
+    """Retry only transient SQLite busy/locked failures."""
+    for number in range(attempts):
+        try:
+            return operation()
+        except sqlite3.OperationalError as error:
+            if not any(word in str(error).lower() for word in ("locked", "busy")) or number + 1 == attempts:
+                raise
+            delay = min(base_delay * (2 ** number), 2.0)
+            time.sleep(delay + random.uniform(0, delay / 4))
+    raise AssertionError("unreachable")
+
+
+def request_stop(*_args: object) -> None:
+    """Stop new claims and terminate every bundled Codex child process."""
+    STOP_REQUESTED.set()
+    with CHILDREN_LOCK:
+        children = list(CHILDREN.values())
+    for process in children:
+        if process.poll() is None:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+
+def interrupt_claim(config: Config, item: dict[str, str]) -> bool:
+    """Requeue one exact claim if it is still owned by this interrupted worker."""
+    connection = connect(config.db_path)
+    try:
+        with transaction(connection, immediate=True):
+            updated = connection.execute(
+                """UPDATE attempt SET outcome='interrupted',
+                error_json='{"reason":"runner interrupted"}',completed_at=CURRENT_TIMESTAMP
+                WHERE id=? AND batch_id=? AND lease_token=? AND outcome='claimed'""",
+                (item["attempt_id"], item["batch_id"], item["lease_token"]),
+            ).rowcount
+            if not updated:
+                return False
+            connection.execute(
+                """UPDATE batch SET state='ready',lease_token=NULL,lease_expires_at=NULL
+                WHERE id=? AND state='leased' AND lease_token=?""",
+                (item["batch_id"], item["lease_token"]),
+            )
+            audit(connection, "interrupt", "attempt", item["attempt_id"], {
+                "batch_id": item["batch_id"], "reason": "runner interrupted",
+            })
+        return True
+    finally:
+        connection.close()
+
+
+def live_headword_progress(config: Config, run_id: int) -> tuple[int, int]:
+    """Return fully translated headwords and the complete source-headword total."""
+    connection = connect(config.db_path)
+    try:
+        row = connection.execute(
+            """WITH selected_run AS (
+              SELECT id AS run_id,jitendex_snapshot_id FROM run WHERE id=?
+            ), source_articles AS (
+              SELECT a.id,a.expression,a.reading,sr.run_id
+              FROM selected_run sr JOIN article a
+                ON a.snapshot_id=sr.jitendex_snapshot_id
+            ), all_headwords AS (
+              SELECT expression,reading FROM source_articles GROUP BY expression,reading
+            ), incomplete_headwords AS (
+              SELECT a.expression,a.reading FROM source_articles a
+              LEFT JOIN run_article ra
+                ON ra.article_id=a.id AND ra.run_id=a.run_id
+              WHERE ra.article_id IS NULL
+              UNION
+              SELECT a.expression,a.reading FROM source_articles a
+              JOIN run_article ra ON ra.article_id=a.id AND ra.run_id=a.run_id
+              JOIN translation_unit tu
+                ON tu.run_id=ra.run_id AND tu.article_id=ra.article_id
+              WHERE NOT EXISTS (
+                SELECT 1 FROM translation t
+                WHERE t.run_id=tu.run_id AND t.unit_id=tu.id AND t.accepted=1
+              ) AND NOT EXISTS (
+                SELECT 1 FROM batch_item bi JOIN batch b ON b.id=bi.batch_id
+                WHERE bi.unit_id=tu.id AND b.run_id=tu.run_id
+                  AND b.state='deterministic_validated'
+              )
+            )
+            SELECT (SELECT COUNT(*) FROM all_headwords)
+                     -(SELECT COUNT(*) FROM incomplete_headwords),
+                   (SELECT COUNT(*) FROM all_headwords)""",
+            (run_id,),
+        ).fetchone()
+        return row[0], row[1]
+    finally:
+        connection.close()
+
+
+@dataclass
+class ProgressTracker:
+    done: int
+    sampled_at: float
+
+    def sample(self, current_done: int, total: int, sampled_at: float) -> dict[str, Any]:
+        elapsed = sampled_at - self.sampled_at
+        speed = (current_done - self.done) * 60 / elapsed if elapsed > 0 else 0.0
+        self.done = current_done
+        self.sampled_at = sampled_at
+        return {
+            "event": "progress", "headwords_done": current_done,
+            "headwords_remaining": total - current_done,
+            "headwords_per_minute": round(speed, 1),
+        }
 
 
 def parse_events(stdout: str) -> tuple[str | None, dict[str, int] | None]:
@@ -125,15 +245,35 @@ def dispatch_one(item: dict[str, str], prompt: str, kind: str) -> DispatchResult
         "--output-schema", str(schema_path), "--json", "-o", item["response_path"], "-",
     ]
     started = time.monotonic()
+    if STOP_REQUESTED.is_set():
+        schema_path.unlink(missing_ok=True)
+        return DispatchResult(
+            claim=item, returncode=130, stdout="", stderr="runner interrupted",
+            thread_id=None, usage=None, latency_ms=0, interrupted=True,
+        )
     try:
-        completed = subprocess.run(command, input=model_input, text=True, capture_output=True, check=False)
+        process = subprocess.Popen(
+            command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, start_new_session=True,
+        )
+        with CHILDREN_LOCK:
+            CHILDREN[item["attempt_id"]] = process
+        if STOP_REQUESTED.is_set() and process.poll() is None:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+        stdout, stderr = process.communicate(model_input)
     finally:
+        with CHILDREN_LOCK:
+            CHILDREN.pop(item["attempt_id"], None)
         schema_path.unlink(missing_ok=True)
     latency_ms = round((time.monotonic() - started) * 1000)
-    thread_id, usage = parse_events(completed.stdout)
+    thread_id, usage = parse_events(stdout)
     return DispatchResult(
-        claim=item, returncode=completed.returncode, stdout=completed.stdout,
-        stderr=completed.stderr, thread_id=thread_id, usage=usage, latency_ms=latency_ms,
+        claim=item, returncode=process.returncode, stdout=stdout,
+        stderr=stderr, thread_id=thread_id, usage=usage, latency_ms=latency_ms,
+        interrupted=STOP_REQUESTED.is_set() and process.returncode != 0,
     )
 
 
@@ -204,6 +344,12 @@ def ingest(config: Config, kind: str, result: DispatchResult) -> tuple[bool, str
         retry_or_split(connection, result.claim["batch_id"])
         connection.commit()
         return False, json.dumps(error.issues, ensure_ascii=False)
+    except sqlite3.OperationalError as error:
+        connection.rollback()
+        if any(word in str(error).lower() for word in ("locked", "busy")):
+            raise
+        reject_transport(config, kind, result, str(error))
+        return False, str(error)
     except Exception as error:
         connection.rollback()
         reject_transport(config, kind, result, str(error))
@@ -233,52 +379,107 @@ def main() -> int:
     parser.add_argument("--concurrency", type=int, default=3)
     parser.add_argument("--worker-prefix", required=True)
     parser.add_argument("--max-submissions", type=int)
+    parser.add_argument("--progress-interval", type=float, default=60.0)
     args = parser.parse_args()
     if args.concurrency < 1:
         parser.error("--concurrency must be positive")
+    if args.progress_interval <= 0:
+        parser.error("--progress-interval must be positive")
     if not CODEX.is_file():
         parser.error(f"bundled Codex CLI not found: {CODEX}")
 
     config = Config.load(args.config)
+    STOP_REQUESTED.clear()
+    previous_handlers = {
+        signum: signal.signal(signum, request_stop)
+        for signum in (signal.SIGINT, signal.SIGTERM)
+    }
     prompt_key = "translation_prompt" if args.kind == "translation" else "review_prompt"
     prompt_name = config.raw["versions"][prompt_key].replace("-", "_")
     prompt = (config.root / "prompts" / f"{prompt_name}.txt").read_text(encoding="utf-8")
     submitted = completed = failed = 0
-    active: dict[Future[DispatchResult], str] = {}
+    active: dict[Future[DispatchResult], dict[str, str]] = {}
+    initial_done, total_headwords = sqlite_retry(
+        lambda: live_headword_progress(config, args.run_id),
+    )
+    progress = ProgressTracker(initial_done, time.monotonic())
+    next_progress = time.monotonic() + args.progress_interval
+    print(json.dumps({
+        "event": "progress", "headwords_done": initial_done,
+        "headwords_remaining": total_headwords - initial_done,
+        "headwords_per_minute": 0.0,
+    }), flush=True)
 
-    with ThreadPoolExecutor(max_workers=args.concurrency) as executor:
+    executor = ThreadPoolExecutor(max_workers=args.concurrency)
+    try:
         while True:
-            while len(active) < args.concurrency:
+            while not STOP_REQUESTED.is_set() and len(active) < args.concurrency:
                 if args.max_submissions is not None and submitted >= args.max_submissions:
                     break
                 submitted += 1
-                item = next_claim(
+                item = sqlite_retry(lambda: next_claim(
                     config, args.run_id, args.kind, f"{args.worker_prefix}-{submitted:04d}",
-                )
+                ))
                 if item is None:
                     submitted -= 1
                     break
-                active[executor.submit(dispatch_one, item, prompt, args.kind)] = item["batch_id"]
+                active[executor.submit(dispatch_one, item, prompt, args.kind)] = item
                 print(json.dumps({"event": "submitted", "number": submitted, "batch_id": item["batch_id"]}), flush=True)
             if not active:
                 break
-            done, _ = wait(active, return_when=FIRST_COMPLETED)
+            timeout = max(0.0, next_progress - time.monotonic())
+            done, _ = wait(active, timeout=timeout, return_when=FIRST_COMPLETED)
+            if time.monotonic() >= next_progress:
+                current_done, total_headwords = sqlite_retry(
+                    lambda: live_headword_progress(config, args.run_id),
+                )
+                now = time.monotonic()
+                report = progress.sample(current_done, total_headwords, now)
+                report["workers_active"] = len(active)
+                print(json.dumps(report), flush=True)
+                next_progress = now + args.progress_interval
             for future in done:
-                batch_id = active.pop(future)
+                item = active[future]
+                batch_id = item["batch_id"]
                 try:
                     result = future.result()
-                    ok, detail = ingest(config, args.kind, result)
+                    if result.interrupted:
+                        requeued = sqlite_retry(lambda: interrupt_claim(config, result.claim))
+                        ok, detail = False, "interrupted and requeued" if requeued else "interrupted after completion"
+                    else:
+                        ok, detail = sqlite_retry(lambda: ingest(config, args.kind, result))
                 except Exception as error:
-                    ok, detail = False, str(error)
+                    if STOP_REQUESTED.is_set():
+                        requeued = sqlite_retry(lambda: interrupt_claim(config, item))
+                        detail = "interrupted and requeued" if requeued else "interrupted after completion"
+                    else:
+                        requeued = sqlite_retry(lambda: interrupt_claim(config, item))
+                        detail = f"dispatch failed and claim requeued: {error}" if requeued else str(error)
+                    ok = False
+                active.pop(future)
                 completed += 1
                 failed += int(not ok)
                 print(json.dumps({
                     "event": "completed", "batch_id": batch_id, "ok": ok,
                     "detail": detail, "completed": completed, "failed": failed,
                 }, ensure_ascii=False), flush=True)
+    finally:
+        if STOP_REQUESTED.is_set() or active:
+            request_stop()
+        executor.shutdown(wait=True, cancel_futures=True)
+        for item in active.values():
+            sqlite_retry(lambda item=item: interrupt_claim(config, item))
+        for signum, handler in previous_handlers.items():
+            signal.signal(signum, handler)
 
+    final_done, total_headwords = sqlite_retry(
+        lambda: live_headword_progress(config, args.run_id),
+    )
+    report = progress.sample(final_done, total_headwords, time.monotonic())
+    report["workers_active"] = 0
+    print(json.dumps(report), flush=True)
     print(json.dumps({"submitted": submitted, "completed": completed, "failed_attempts": failed}), flush=True)
-    return 0
+    return 130 if STOP_REQUESTED.is_set() else 0
 
 
 if __name__ == "__main__":

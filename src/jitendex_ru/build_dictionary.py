@@ -21,6 +21,31 @@ def _rank_label(limit: int) -> str:
 
 
 def _frequency_metadata(connection: sqlite3.Connection, run_id: int) -> tuple[str, str, str] | None:
+    run_articles = connection.execute(
+        "SELECT COUNT(*) FROM run_article WHERE run_id=?", (run_id,),
+    ).fetchone()[0]
+    mapped_articles = connection.execute(
+        """SELECT COUNT(DISTINCT fa.article_id) FROM frequency_article fa
+        JOIN run_article ra ON ra.article_id=fa.article_id AND ra.run_id=?""", (run_id,),
+    ).fetchone()[0]
+    if run_articles > mapped_articles:
+        total_articles = connection.execute(
+            """SELECT COUNT(*) FROM article WHERE snapshot_id=(
+              SELECT jitendex_snapshot_id FROM run WHERE id=?)""", (run_id,),
+        ).fetchone()[0]
+        complete = run_articles == total_articles
+        label = "полный" if complete else f"{run_articles:,} статей".replace(",", " ")
+        suffix = "full-ru" if complete else f"articles-{run_articles}-ru"
+        description = (
+            "Полный производный русскоязычный словарь на основе Jitendex. "
+            if complete else
+            f"Производный русскоязычный словарь на основе Jitendex; кумулятивная выборка содержит {run_articles:,} статей. "
+        )
+        return (
+            f"Jitendex {label} — русский",
+            suffix,
+            description + "Атрибуция Jitendex/JMdict/Tatoeba и условия CC BY-SA 4.0 сохранены.",
+        )
     mapped = connection.execute(
         """SELECT DISTINCT fs.source,fs.rank_limit FROM frequency_source fs
         JOIN frequency_article fa ON fa.source=fs.source AND fa.source_sha256=fs.source_sha256
