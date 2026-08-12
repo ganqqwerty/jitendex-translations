@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:17-bookworm
+    container_name: jitendex-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jitendex
+      POSTGRES_USER: jitendex
+      POSTGRES_PASSWORD: jitendex-local-dev
+      POSTGRES_INITDB_ARGS: --data-checksums --encoding=UTF8
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - jitendex-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jitendex -d jitendex"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    shm_size: 1gb
+
+volumes:
+  jitendex-postgres-data:
+    name: jitendex-postgres-data
