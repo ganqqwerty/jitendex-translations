@@ -11,6 +11,7 @@ from .acquire import acquire
 from .batch import claim, make_batches, retry_or_split
 from .build_dictionary import build, record_yomitan_smoke, verify
 from .config import Config
+from .combined_frequency_scope import combined_coverage_report, select_combined_scope
 from .db import audit, connect, initialize
 from .extract_units import extract_selected
 from .import_jitendex import import_jitendex
@@ -42,6 +43,18 @@ def _parser() -> argparse.ArgumentParser:
     jpdb_scope.add_argument("--limit", type=int, default=5000)
     coverage = commands.add_parser("report-jpdb-coverage")
     coverage.add_argument("--run-id", type=int, required=True)
+    combined_scope = commands.add_parser("select-combined-frequency-scope")
+    combined_scope.add_argument("--jpdb", type=Path, required=True)
+    combined_scope.add_argument("--jpdb-limit", type=int, required=True)
+    combined_scope.add_argument("--frequency-limit", type=int, required=True)
+    combined_scope.add_argument("--aozora", type=Path, required=True)
+    combined_scope.add_argument("--bccwj", type=Path, required=True)
+    combined_scope.add_argument("--cc100", type=Path, required=True)
+    combined_scope.add_argument("--monodicts", type=Path, required=True)
+    combined_scope.add_argument("--wikipedia", type=Path, required=True)
+    combined_scope.add_argument("--kokugo", type=Path, required=True)
+    combined_coverage = commands.add_parser("report-combined-frequency-coverage")
+    combined_coverage.add_argument("--run-id", type=int, required=True)
     reuse = commands.add_parser("reuse-translations")
     reuse.add_argument("--source-run-id", type=int, required=True)
     reuse.add_argument("--target-run-id", type=int, required=True)
@@ -272,6 +285,25 @@ def execute(args: argparse.Namespace) -> Any:
             return result
         if args.command == "report-jpdb-coverage":
             return coverage_report(connection, args.run_id)
+        if args.command == "select-combined-frequency-scope":
+            result = select_combined_scope(
+                connection,
+                args.jpdb.resolve(),
+                args.jpdb_limit,
+                {
+                    "aozora_bunko": args.aozora.resolve(),
+                    "bccwj": args.bccwj.resolve(),
+                    "cc100": args.cc100.resolve(),
+                    "monodicts_206k": args.monodicts.resolve(),
+                    "wikipedia_v2": args.wikipedia.resolve(),
+                    "kokugo_jiten": args.kokugo.resolve(),
+                },
+                args.frequency_limit,
+            )
+            connection.commit()
+            return result
+        if args.command == "report-combined-frequency-coverage":
+            return combined_coverage_report(connection, args.run_id)
         if args.command == "reuse-translations":
             result = reuse_accepted_translations(connection, args.source_run_id, args.target_run_id)
             connection.commit()

@@ -122,9 +122,24 @@ def selection_manifest_hash(connection: sqlite3.Connection) -> str:
     selected_articles = connection.execute(
         "SELECT id,source_sha256 FROM article WHERE selected=1 ORDER BY id"
     ).fetchall()
+    frequency_sources = connection.execute(
+        """SELECT source,source_sha256,rank_limit,title,revision,parser_version,metadata_json
+        FROM frequency_source ORDER BY source"""
+    ).fetchall()
+    frequency_terms = connection.execute(
+        """SELECT source,source_sha256,rank,term,matched FROM frequency_term
+        ORDER BY source,source_sha256,rank,term"""
+    ).fetchall()
+    frequency_articles = connection.execute(
+        """SELECT source,source_sha256,rank,term,article_id,match_kind FROM frequency_article
+        ORDER BY source,source_sha256,rank,term,article_id"""
+    ).fetchall()
     payload = {
         "decisions": [dict(row) for row in decisions],
         "selected_articles": [dict(row) for row in selected_articles],
+        "frequency_sources": [dict(row) for row in frequency_sources],
+        "frequency_terms": [dict(row) for row in frequency_terms],
+        "frequency_articles": [dict(row) for row in frequency_articles],
     }
     return sha256_bytes(canonical_json(payload))
 

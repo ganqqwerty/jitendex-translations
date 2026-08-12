@@ -57,7 +57,7 @@ def test_initialize_migrates_attempt_audit_columns_without_rewriting_history(tmp
         } <= columns
         assert row["model"] == "gpt-5.6-terra"
         assert row["effective_model_id"] is None
-        assert connection.execute("SELECT MAX(version) FROM schema_meta").fetchone()[0] == 6
+        assert connection.execute("SELECT MAX(version) FROM schema_meta").fetchone()[0] == 7
         assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
 
 

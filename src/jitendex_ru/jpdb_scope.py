@@ -28,6 +28,10 @@ def select_top_terms(connection: sqlite3.Connection, archive_path: Path, limit: 
             rows = json.loads(archive.read("term_meta_bank_1.json"))
         except KeyError as error:
             raise ValueError("JPDB archive has no term_meta_bank_1.json") from error
+        try:
+            index = json.loads(archive.read("index.json"))
+        except KeyError:
+            index = {}
     if not isinstance(rows, list) or len(rows) < limit:
         raise ValueError(f"JPDB archive has fewer than {limit} frequency rows")
 
@@ -42,8 +46,18 @@ def select_top_terms(connection: sqlite3.Connection, archive_path: Path, limit: 
             seen.add(term)
 
     connection.execute("UPDATE article SET selected=0")
-    connection.execute("DELETE FROM frequency_article WHERE source=?", (SOURCE,))
-    connection.execute("DELETE FROM frequency_term WHERE source=?", (SOURCE,))
+    connection.execute("DELETE FROM frequency_article")
+    connection.execute("DELETE FROM frequency_term")
+    connection.execute("DELETE FROM frequency_source")
+    connection.execute(
+        """INSERT INTO frequency_source
+        (source,source_sha256,rank_limit,local_path,title,revision,parser_version,metadata_json)
+        VALUES (?,?,?,?,?,?,?,?)""",
+        (
+            SOURCE, archive_hash, limit, str(archive_path), index.get("title"), index.get("revision"),
+            "jpdb-row-order-v1", json.dumps({"rank_mode": "row_order"}, ensure_ascii=False, sort_keys=True),
+        ),
+    )
     connection.executemany(
         "INSERT INTO frequency_term(source,source_sha256,rank,term) VALUES (?,?,?,?)",
         ((SOURCE, archive_hash, rank, term) for rank, term in ranked),
@@ -55,7 +69,7 @@ def select_top_terms(connection: sqlite3.Connection, archive_path: Path, limit: 
         reading_index.setdefault(nfc(article["reading"]), []).append(article["id"])
 
     matched_terms = 0
-    mappings: list[tuple[str, str, int, int, str]] = []
+    mappings: list[tuple[str, str, int, str, int, str]] = []
     article_ids: set[int] = set()
     for rank, term in ranked:
         matches: dict[int, str] = {}
@@ -70,10 +84,11 @@ def select_top_terms(connection: sqlite3.Connection, archive_path: Path, limit: 
                 (SOURCE, archive_hash, rank),
             )
         for article_id, match_kind in matches.items():
-            mappings.append((SOURCE, archive_hash, rank, article_id, match_kind))
+            mappings.append((SOURCE, archive_hash, rank, term, article_id, match_kind))
             article_ids.add(article_id)
     connection.executemany(
-        "INSERT INTO frequency_article(source,source_sha256,rank,article_id,match_kind) VALUES (?,?,?,?,?)",
+        """INSERT INTO frequency_article
+        (source,source_sha256,rank,term,article_id,match_kind) VALUES (?,?,?,?,?,?)""",
         mappings,
     )
     connection.executemany("UPDATE article SET selected=1 WHERE id=?", ((item,) for item in article_ids))
@@ -104,8 +119,8 @@ def coverage_report(connection: sqlite3.Connection, run_id: int) -> dict[str, An
         (SOURCE, source_hash),
     ).fetchone()
     covered = connection.execute(
-        """SELECT COUNT(DISTINCT ft.rank) FROM frequency_term ft
-        JOIN frequency_article fa ON fa.source=ft.source AND fa.source_sha256=ft.source_sha256 AND fa.rank=ft.rank
+        """SELECT COUNT(DISTINCT ft.term) FROM frequency_term ft
+        JOIN frequency_article fa ON fa.source=ft.source AND fa.source_sha256=ft.source_sha256 AND fa.term=ft.term
         JOIN run_article ra ON ra.article_id=fa.article_id AND ra.run_id=?
         WHERE ft.source=? AND ft.source_sha256=?""",
         (run_id, SOURCE, source_hash),

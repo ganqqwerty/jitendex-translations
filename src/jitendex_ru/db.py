@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Iterator, Mapping
 
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 SCHEMA = r"""
 CREATE TABLE IF NOT EXISTS schema_meta(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -77,17 +77,23 @@ CREATE TABLE IF NOT EXISTS jitendex_tag_translation_history(
   archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   replacement_source_sha256 TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS frequency_source(
+  source TEXT PRIMARY KEY, source_sha256 TEXT NOT NULL, rank_limit INTEGER NOT NULL CHECK(rank_limit > 0),
+  local_path TEXT NOT NULL, title TEXT, revision TEXT, parser_version TEXT NOT NULL,
+  metadata_json TEXT NOT NULL DEFAULT '{}'
+);
 CREATE TABLE IF NOT EXISTS frequency_term(
   source TEXT NOT NULL, source_sha256 TEXT NOT NULL, rank INTEGER NOT NULL,
   term TEXT NOT NULL, matched INTEGER NOT NULL DEFAULT 0 CHECK(matched IN (0,1)),
-  PRIMARY KEY(source, source_sha256, rank), UNIQUE(source, source_sha256, term)
+  PRIMARY KEY(source, source_sha256, term)
 );
+CREATE INDEX IF NOT EXISTS frequency_term_rank ON frequency_term(source,source_sha256,rank);
 CREATE TABLE IF NOT EXISTS frequency_article(
-  source TEXT NOT NULL, source_sha256 TEXT NOT NULL, rank INTEGER NOT NULL,
+  source TEXT NOT NULL, source_sha256 TEXT NOT NULL, rank INTEGER NOT NULL, term TEXT NOT NULL,
   article_id INTEGER NOT NULL REFERENCES article(id),
   match_kind TEXT NOT NULL CHECK(match_kind IN ('expression','reading')),
-  PRIMARY KEY(source, source_sha256, rank, article_id),
-  FOREIGN KEY(source, source_sha256, rank) REFERENCES frequency_term(source, source_sha256, rank)
+  PRIMARY KEY(source, source_sha256, term, article_id),
+  FOREIGN KEY(source, source_sha256, term) REFERENCES frequency_term(source, source_sha256, term)
 );
 CREATE TABLE IF NOT EXISTS selection_candidate(
   id INTEGER PRIMARY KEY, note_id INTEGER NOT NULL REFERENCES kaishi_note(id),
@@ -212,6 +218,47 @@ def connect(path: Path) -> sqlite3.Connection:
 def initialize(path: Path) -> None:
     with connect(path) as connection:
         connection.executescript(SCHEMA)
+        frequency_article_columns = {
+            row["name"] for row in connection.execute("PRAGMA table_info(frequency_article)")
+        }
+        if "term" not in frequency_article_columns:
+            connection.execute("PRAGMA foreign_keys = OFF")
+            connection.executescript(
+                """
+                BEGIN IMMEDIATE;
+                DROP INDEX IF EXISTS frequency_term_rank;
+                ALTER TABLE frequency_article RENAME TO frequency_article_v6;
+                ALTER TABLE frequency_term RENAME TO frequency_term_v6;
+                CREATE TABLE frequency_term(
+                  source TEXT NOT NULL, source_sha256 TEXT NOT NULL, rank INTEGER NOT NULL,
+                  term TEXT NOT NULL, matched INTEGER NOT NULL DEFAULT 0 CHECK(matched IN (0,1)),
+                  PRIMARY KEY(source, source_sha256, term)
+                );
+                CREATE INDEX frequency_term_rank ON frequency_term(source,source_sha256,rank);
+                CREATE TABLE frequency_article(
+                  source TEXT NOT NULL, source_sha256 TEXT NOT NULL, rank INTEGER NOT NULL, term TEXT NOT NULL,
+                  article_id INTEGER NOT NULL REFERENCES article(id),
+                  match_kind TEXT NOT NULL CHECK(match_kind IN ('expression','reading')),
+                  PRIMARY KEY(source, source_sha256, term, article_id),
+                  FOREIGN KEY(source, source_sha256, term)
+                    REFERENCES frequency_term(source, source_sha256, term)
+                );
+                INSERT INTO frequency_term(source,source_sha256,rank,term,matched)
+                SELECT source,source_sha256,rank,term,matched FROM frequency_term_v6;
+                INSERT INTO frequency_article(source,source_sha256,rank,term,article_id,match_kind)
+                SELECT fa.source,fa.source_sha256,fa.rank,ft.term,fa.article_id,fa.match_kind
+                FROM frequency_article_v6 fa
+                JOIN frequency_term_v6 ft
+                  ON ft.source=fa.source AND ft.source_sha256=fa.source_sha256 AND ft.rank=fa.rank;
+                DROP TABLE frequency_article_v6;
+                DROP TABLE frequency_term_v6;
+                COMMIT;
+                """
+            )
+            connection.execute("PRAGMA foreign_keys = ON")
+            violations = connection.execute("PRAGMA foreign_key_check").fetchall()
+            if violations:
+                raise RuntimeError(f"frequency table migration produced foreign-key violations: {violations}")
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(run)")}
         if "pipeline_version" not in columns:
             connection.execute(

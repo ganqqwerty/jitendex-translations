@@ -16,6 +16,48 @@ MEDIA_SUFFIXES = {".avif", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".m
 FIXED_ZIP_TIME = (1980, 1, 1, 0, 0, 0)
 
 
+def _rank_label(limit: int) -> str:
+    return f"{limit // 1000}k" if limit % 1000 == 0 else str(limit)
+
+
+def _frequency_metadata(connection: sqlite3.Connection, run_id: int) -> tuple[str, str, str] | None:
+    mapped = connection.execute(
+        """SELECT DISTINCT fs.source,fs.rank_limit FROM frequency_source fs
+        JOIN frequency_article fa ON fa.source=fs.source AND fa.source_sha256=fs.source_sha256
+        JOIN run_article ra ON ra.article_id=fa.article_id AND ra.run_id=?
+        ORDER BY fs.source""",
+        (run_id,),
+    ).fetchall()
+    if not mapped:
+        return None
+    limits = {row["source"]: row["rank_limit"] for row in mapped}
+    jpdb_limit = limits.get("jpdb")
+    external_limits = {limit for source, limit in limits.items() if source != "jpdb"}
+    if jpdb_limit is not None and external_limits:
+        if len(external_limits) != 1:
+            raise ValueError("combined frequency sources have inconsistent rank limits")
+        external_limit = next(iter(external_limits))
+        jpdb_label = _rank_label(jpdb_limit)
+        external_label = _rank_label(external_limit)
+        return (
+            f"Jitendex JPDB {jpdb_label} + frequency-six top{external_label} — русский",
+            f"jpdb-{jpdb_label}-freq6-{external_label}-ru",
+            "Производный русскоязычный словарь на основе Jitendex; выбор статей объединяет "
+            f"JPDB 1–{jpdb_limit:,} и верхние {external_limit:,} рангов шести частотных словарей. "
+            "Атрибуция Jitendex/JMdict/Tatoeba и условия CC BY-SA 4.0 сохранены.",
+        )
+    if jpdb_limit is not None:
+        jpdb_label = _rank_label(jpdb_limit)
+        return (
+            f"Jitendex JPDB {jpdb_label} — русский",
+            f"jpdb-{jpdb_label}-ru",
+            "Производный русскоязычный словарь на основе Jitendex; выбор статей соответствует "
+            f"верхним {jpdb_limit:,} строкам JPDB. Атрибуция Jitendex/JMdict/Tatoeba и условия "
+            "CC BY-SA 4.0 сохранены.",
+        )
+    return None
+
+
 def _paths(node: Any) -> Iterator[str]:
     if isinstance(node, dict):
         for key, value in node.items():
@@ -83,20 +125,16 @@ def build(
     files: dict[str, bytes] = {}
     with zipfile.ZipFile(source_row["local_path"]) as source:
         index = json.loads(source.read("index.json"))
-        frequency_scope = connection.execute(
-            """SELECT 1 FROM frequency_article fa JOIN run_article ra ON ra.article_id=fa.article_id
-            WHERE ra.run_id=? LIMIT 1""", (run_id,),
-        ).fetchone()
-        index["title"] = "Jitendex JPDB 5k — русский" if frequency_scope else "Jitendex Kaishi 1.5k — русский"
-        suffix = "jpdb-5k-ru" if frequency_scope else (
+        frequency_metadata = _frequency_metadata(connection, run_id)
+        index["title"] = frequency_metadata[0] if frequency_metadata else "Jitendex Kaishi 1.5k — русский"
+        suffix = frequency_metadata[1] if frequency_metadata else (
             "kaishi-ru-lexicographer-v2" if run["pipeline_version"] == "lexicographer-v2" else "kaishi-ru-v1"
         )
         index["revision"] = f"{index.get('revision', '')}-{suffix}"
         index["targetLanguage"] = "ru"
         index["description"] = (
-            "Производный русскоязычный словарь на основе Jitendex; выбор статей соответствует верхним 5000 строкам JPDB. "
-            "Атрибуция Jitendex/JMdict/Tatoeba и условия CC BY-SA 4.0 сохранены."
-            if frequency_scope else
+            frequency_metadata[2]
+            if frequency_metadata else
             "Производный русскоязычный словарь на основе Jitendex; выбор статей ограничен лексикой Kaishi 1.5k. "
             "Jitendex/JMdict/Tatoeba attribution and CC BY-SA 4.0 terms are retained. No affiliation with Kaishi."
         )
