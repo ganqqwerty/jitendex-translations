@@ -17,7 +17,7 @@ RUN-STOP-5 — Concurrency 100 remains the proven future setting. The concurrenc
 
 RUN-STOP-6 — Docker's internal disk limit is 264 GB and its PostgreSQL filesystem has about 115 GB free. Its disk image remains under `~/Library/Containers`, outside Documents and iCloud.
 
-RUN-STOP-7 — The verified `tags-ru-v1` Yomitan export 66 has SHA-256 `c157b41f3fc99a52d4099c8384e87c8e0ec8813e87c93f988a801c3e9fc63a58`. GoldenDict export 67 has SHA-256 `f81e9c8d41139a8cee09b5333587ef723797b12580e5e3e5db8a2714efe589e0`. Publication waits for the manual clean-profile Yomitan hover check.
+RUN-STOP-7 — The verified co-author `tags-ru-v1` exports are Yomitan 73, GoldenDict 74, MDict 75, PocketBook 76, and Apple Dictionary 77. Their hashes are recorded in [README-STATE](README.md) and the run history. Client release still requires the manual gates in [TOOL-CLIENT](DEVELOPER_TOOLING.md).
 
 ## RUN-PIN — Pinned runtime
 

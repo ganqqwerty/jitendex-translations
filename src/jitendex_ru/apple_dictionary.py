@@ -13,6 +13,7 @@ from typing import Any
 from urllib.parse import parse_qs, quote, urlsplit
 from xml.etree import ElementTree
 
+from .attribution import ATTRIBUTION
 from .database import ConnectionLike
 from .export_model import ExportCorpus, ExportEntry, ExportVariant, prepare_export
 from .export_render import (
@@ -50,11 +51,6 @@ CSS = """.jr-entry{line-height:1.45;color:inherit}.jr-head{margin:0 0 .5em;borde
 .dc-form-pri{color:green}.dc-form-irr{color:crimson}.dc-form-out,.dc-form-old{color:#315fba}.dc-form-rare{color:purple}
 .style-list-decimal{list-style-type:decimal}.style-list-disc{list-style-type:disc}.style-list-circle{list-style-type:circle}.style-list-square{list-style-type:square}
 """
-ATTRIBUTION = (
-    "Jitendex, JMdict and Tatoeba attribution is retained.\n"
-    "Russian derivative content is distributed under CC BY-SA 4.0.\n"
-    "See the upstream Jitendex project for complete source attribution.\n"
-)
 INSTALLATION = (
     "Experimental Apple Dictionary build. Dictionary.app and contextual Look Up are not yet verified.\n"
     "After closing the capability gate, place the .dictionary bundle in ~/Library/Dictionaries/.\n"

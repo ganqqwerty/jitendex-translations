@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .apply_translations import apply_article
+from .attribution import DICTIONARY_AUTHORS
 from .db import audit
 from .jitendex_tags import (
     TAG_CATALOG_VERSION, load_approved_tag_catalog, localize_embedded_tags,
@@ -184,6 +185,7 @@ def build(
         )
         index["revision"] = f"{index.get('revision', '')}-{suffix}-{TAG_CATALOG_VERSION}"
         index["targetLanguage"] = "ru"
+        index["author"] = DICTIONARY_AUTHORS
         index["description"] = (
             frequency_metadata[2]
             if frequency_metadata else

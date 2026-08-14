@@ -97,6 +97,14 @@ README-EX-4 — MDict uses the pinned `mdict-utils` writer to emit deterministic
 unencrypted MDict 2.0 MDX and MDD files. The package is marked experimental until
 the real-client matrix in `reports/exporters/mdict-capabilities.md` passes.
 
+| ID | Format | Export | SHA-256 |
+|---|---|---|---|
+| README-STATE-1 | Yomitan `tags-ru-v1` | 73 | `c5c012e3d77c714785881c0f67b7c76cb79e1902c8b73c7d0e8232c23ec2208e` |
+| README-STATE-2 | GoldenDict | 74 | `eb13c6eed1903e7771b90a55a9553ba2e3812562956961cd1b2a068c74977594` |
+| README-STATE-3 | MDict | 75 | `069f0bebbfe21a0c015e3ac565e4cc7253c88f6e9b7f933fc3c6d164168af269` |
+| README-STATE-4 | PocketBook | 76 | `8c9bcdbc7de13bfe5271ad1a2ff57baf367f134eaab39e90022f56265188f008` |
+| README-STATE-5 | Apple Dictionary | 77 | `0cfb5198b2ad502db3b4c76f78d0c8293e0c94a1dc1a1c6ce2828b27f607f482` |
+
 ```sh
 translationctl export-mdict --run-id ID --output dist/jitendex-ru-mdict.zip
 translationctl verify-mdict dist/jitendex-ru-mdict.zip
@@ -105,6 +113,8 @@ translationctl verify-mdict dist/jitendex-ru-mdict.zip
 README-EX-5 — Every exporter writes a deterministic ZIP manifest, loss ledger,
 capability profile, source and tool hashes, attribution, and installation note.
 Any omitted rich-content feature fails the build.
+
+README-STATE-8 — Every current archive credits Yuri Katkov as co-author of the Russian edition. The five archives are published in release `run59-tags-ru-v1`.
 
 ## README-DB — Database schema
 
