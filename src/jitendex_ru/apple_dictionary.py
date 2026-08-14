@@ -13,7 +13,7 @@ from typing import Any
 from urllib.parse import parse_qs, quote, urlsplit
 from xml.etree import ElementTree
 
-from .attribution import ATTRIBUTION
+from .attribution import ATTRIBUTION, PRODUCT_ID, PRODUCT_NAME
 from .database import ConnectionLike
 from .export_model import ExportCorpus, ExportEntry, ExportVariant, prepare_export
 from .export_render import (
@@ -31,10 +31,10 @@ from .export_render import (
 )
 from .util import canonical_json, sha256_file
 
-BASENAME = "Jitendex Russian"
-XML_NAME = "JitendexRussian.xml"
-CSS_NAME = "JitendexRussian.css"
-PLIST_NAME = "JitendexRussian.plist"
+BASENAME = PRODUCT_ID
+XML_NAME = f"{PRODUCT_ID}.xml"
+CSS_NAME = f"{PRODUCT_ID}.css"
+PLIST_NAME = f"{PRODUCT_ID}.plist"
 BUNDLE_NAME = f"{BASENAME}.dictionary"
 CAPABILITY_PROFILE = "apple-dictionary-ddk-experimental-v1"
 DICTIONARY_NAMESPACE = "http://www.apple.com/DTDs/DictionaryService-1.0.rng"
@@ -260,11 +260,11 @@ def _plist(corpus: ExportCorpus) -> bytes:
     return plistlib.dumps({
         "CFBundleDevelopmentRegion": "Russian",
         "CFBundleDisplayName": corpus.title,
-        "CFBundleIdentifier": "org.jitendex.dictionary.russian",
-        "CFBundleName": "JitendexRussian",
+        "CFBundleIdentifier": "org.kolobok.dictionary.jp-ru-400k",
+        "CFBundleName": PRODUCT_ID,
         "CFBundleShortVersionString": "1.0",
         "DCSDictionaryCopyright": "Jitendex/JMdict/Tatoeba; Russian derivative CC BY-SA 4.0",
-        "DCSDictionaryManufacturerName": "Jitendex Russian contributors",
+        "DCSDictionaryManufacturerName": "Колобок 400k; Юрий Катков",
         "DCSDictionaryFrontMatterReferenceID": "front_back_matter",
     }, fmt=plistlib.FMT_XML, sort_keys=True)
 
@@ -286,9 +286,10 @@ def render_apple_project(
             f'<d:dictionary xmlns="http://www.w3.org/1999/xhtml" xmlns:d="{DICTIONARY_NAMESPACE}">\n'
         )
         stream.write(
-            '<d:entry id="front_back_matter" d:title="Jitendex — сведения">'
+            f'<d:entry id="front_back_matter" d:title="{PRODUCT_NAME} — сведения">'
             f'<h1>{_escape(corpus.title)}</h1><p>{_escape(corpus.description)}</p>'
-            '<p>Jitendex, JMdict, Tatoeba; русская производная версия CC BY-SA 4.0.</p></d:entry>\n'
+            '<p>Jitendex, JMdict, Tatoeba; русская производная версия CC BY-SA 4.0. '
+            'Соавтор русской редакции: Юрий Катков.</p></d:entry>\n'
         )
         for entry in corpus.entries:
             markup, indexes = _render_entry(entry, resource_map, corpus.tag_mapping, ledger)

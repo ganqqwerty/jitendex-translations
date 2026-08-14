@@ -32,4 +32,4 @@ def test_all_article_scope_caps_final_increment_and_metadata(tmp_path):
     assert result["complete"] is True
     connection.execute("INSERT INTO run(jitendex_snapshot_id,kaishi_snapshot_id,selection_sha256,extractor_version,prompt_sha256,review_prompt_sha256,terminology_sha256,limits_json) VALUES (1,2,'all','e','p','rp','t','{}')")
     connection.execute("INSERT INTO run_article(run_id,article_id,structural_fingerprint) SELECT 2,id,'f' FROM article")
-    assert _frequency_metadata(connection, 2)[0] == "Jitendex полный — русский"
+    assert _frequency_metadata(connection, 2)[0] == "Колобок 400k"

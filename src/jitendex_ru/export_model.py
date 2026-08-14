@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from types import MappingProxyType
 from typing import Any
 
+from .attribution import PRODUCT_NAME
 from .build_dictionary import MEDIA_SUFFIXES, _frequency_metadata, materialize_run
 from .database import ConnectionLike
 from .jitendex_tags import (
@@ -205,7 +206,7 @@ def prepare_export(connection: ConnectionLike, run_id: int) -> ExportCorpus:
         if missing:
             raise ValueError(f"missing referenced media {missing[0]}")
     frequency_metadata = _frequency_metadata(connection, run_id)
-    title = frequency_metadata[0] if frequency_metadata else "Jitendex — русский"
+    title = frequency_metadata[0] if frequency_metadata else PRODUCT_NAME
     description = frequency_metadata[2] if frequency_metadata else (
         "Производный русскоязычный словарь на основе Jitendex. "
         "Атрибуция Jitendex/JMdict/Tatoeba и условия CC BY-SA 4.0 сохранены."
