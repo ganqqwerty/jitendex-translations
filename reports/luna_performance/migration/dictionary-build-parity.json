@@ -1,0 +1,11 @@
+{
+  "article_count": 296368,
+  "files": 301,
+  "postgresql_archive": "work/luna_performance/parity-run44-postgresql.zip",
+  "postgresql_sha256": "fa30ecf36ca420c90168b8cd7028364405cbb153564dfacfabdb19f4e81c7861",
+  "run_id": 44,
+  "schema_validated_banks": 96,
+  "sqlite_archive": "dist/jitendex-articles-296368-ru-luna-v4.zip",
+  "sqlite_sha256": "fa30ecf36ca420c90168b8cd7028364405cbb153564dfacfabdb19f4e81c7861",
+  "verified": true
+}

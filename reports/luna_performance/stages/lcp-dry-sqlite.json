@@ -1,0 +1,138 @@
+{
+  "commit": "7bf6e5f814498405b7a2f3d02bed265e64452d19",
+  "configuration": {
+    "concurrency": 80,
+    "database_backend": "sqlite",
+    "database_driver_version": "python-stdlib-3.13.5",
+    "database_schema_version": 9,
+    "database_server_version": "3.47.1",
+    "database_workers": 1,
+    "dry_run": true,
+    "limits_sha256": "c1fa009e350a241e272640a342e85c79d389c3c264c7697026c0f7a187d27a7e",
+    "measure_from": "measurement",
+    "measurement_seconds": 1200.0,
+    "model": "gpt-5.6-luna",
+    "pipeline_version": "lexicographer-v2",
+    "pool_max": 4,
+    "prompt_sha256": "fbd0e0c92914b4654b8ae8aaa7063b893d7d02eb8caf6b10cb015c72beb0c9b5",
+    "reasoning_effort": "medium",
+    "stage_id": "lcp-dry-sqlite",
+    "startup_seconds": 0.0
+  },
+  "corpus_sha256": "10481541450a50a454247b2c55f3101f9ab1008c4f068e32686364680feb7a0a",
+  "counters": {
+    "after": {
+      "articles": 13924,
+      "headwords": 13824,
+      "source_characters": 0,
+      "units": 0
+    },
+    "before": {
+      "articles": 13924,
+      "headwords": 13824,
+      "source_characters": 0,
+      "units": 0
+    },
+    "cached_input_tokens": 0,
+    "claim_milliseconds": 0.0,
+    "completed": 0,
+    "connections_in_use": 0,
+    "database_backend": "sqlite",
+    "database_checkouts": 0,
+    "database_duty_cycle": 0.0,
+    "database_retries": 0,
+    "deltas": {
+      "articles": 0,
+      "headwords": 0,
+      "source_characters": 0,
+      "units": 0
+    },
+    "error_rates": {
+      "failure_rate": 0.0,
+      "rate_limit_rate": 0.0,
+      "timeout_rate": 0.0,
+      "transport_failure_rate": 0.0,
+      "validation_rejection_rate": 0.0
+    },
+    "failed_attempts": 0,
+    "headwords_done": 13824,
+    "headwords_per_minute": 0.0,
+    "headwords_remaining": 46176,
+    "ingestion_milliseconds": 0.0,
+    "input_tokens": 0,
+    "latency_p50_ms": null,
+    "latency_p95_ms": null,
+    "latency_p99_ms": null,
+    "launch_delay_p50_seconds": null,
+    "launch_delay_p95_seconds": null,
+    "launch_delay_p99_seconds": null,
+    "measured_seconds": 0.0,
+    "measurement_before": {
+      "articles": 13924,
+      "headwords": 13824,
+      "source_characters": 0,
+      "units": 0
+    },
+    "output_tokens": 0,
+    "pool_wait_milliseconds": 0.0,
+    "progress_query_seconds": 0.0,
+    "rate_limits": 0,
+    "rates": {
+      "articles_per_minute": 0.0,
+      "headwords_per_minute": 0.0,
+      "source_characters_per_minute": 0.0,
+      "units_per_minute": 0.0
+    },
+    "retries": 0,
+    "runner_exit": 0,
+    "splits": 0,
+    "submitted": 0,
+    "timeouts": 0,
+    "total_tokens": 0,
+    "transaction_milliseconds": 0.0,
+    "transport_failures": 0,
+    "validation_rejections": 0,
+    "worker_peak_memory_bytes": 0,
+    "workers_active": 0
+  },
+  "ended_at": "2026-08-12T23:28:52.971974Z",
+  "machine_monitoring": [
+    {
+      "captured_at": "2026-08-12T23:28:45.370880Z",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t85%; discharging; 1:42 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 3072.00M  used = 1672.00M  free = 1400.00M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    15518.\nPages active:                                 812836.\nPages inactive:                               775139.\nPages speculative:                             38462.\nPages throttled:                                   0.\nPages wired down:                             337865.\nPages purgeable:                               11455.\n\"Translation faults\":                     4019855610.\nPages copy-on-write:                       643023270.\nPages zero filled:                        1545598870.\nPages reactivated:                          75693915.\nPages purged:                               30187629.\nFile-backed pages:                            622978.\nAnonymous pages:                             1003459.\nPages stored in compressor:                  2153704.\nPages occupied by compressor:                1103599.\nDecompressions:                             58791541.\nCompressions:                               77200838.\nPageins:                                   158205862.\nPageouts:                                     964022.\nSwapins:                                       40178.\nSwapouts:                                     184980.\nPages tagged:                                 157750.\nPages tagged resident:                        116894.\nPages tagged compressed:                       40856.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 6975.\nPages tag-storage free:                          211.\nPages tag-storage non-tag pageable:            91109.\nPages tag-storage non-tag wired:                   9.\nBytes of compressed tags:                    6373312.\nTagged compressions:                         1193859.\nTagged decompressions:                       1087057."
+    },
+    {
+      "captured_at": "2026-08-12T23:28:45.404287Z",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t85%; discharging; 1:42 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 3072.00M  used = 1672.00M  free = 1400.00M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    17373.\nPages active:                                 811159.\nPages inactive:                               775027.\nPages speculative:                             38650.\nPages throttled:                                   0.\nPages wired down:                             338080.\nPages purgeable:                               11455.\n\"Translation faults\":                     4019858352.\nPages copy-on-write:                       643023699.\nPages zero filled:                        1545599784.\nPages reactivated:                          75693915.\nPages purged:                               30187629.\nFile-backed pages:                            623151.\nAnonymous pages:                             1001685.\nPages stored in compressor:                  2153693.\nPages occupied by compressor:                1103599.\nDecompressions:                             58791552.\nCompressions:                               77200838.\nPageins:                                   158205927.\nPageouts:                                     964022.\nSwapins:                                       40178.\nSwapouts:                                     184980.\nPages tagged:                                 157712.\nPages tagged resident:                        116856.\nPages tagged compressed:                       40856.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 6975.\nPages tag-storage free:                          177.\nPages tag-storage non-tag pageable:            91143.\nPages tag-storage non-tag wired:                   9.\nBytes of compressed tags:                    6373312.\nTagged compressions:                         1193859.\nTagged decompressions:                       1087057."
+    }
+  ],
+  "monitoring_summary": {
+    "lock_wait_sample_count": 0,
+    "max_lock_waiting_sessions": 0,
+    "max_ungranted_locks": 0,
+    "postgresql_active_time_delta_milliseconds": 0.0,
+    "postgresql_statement_exec_delta_milliseconds": 0.0,
+    "sample_count": 0
+  },
+  "phases": [],
+  "postflight": {
+    "blocking_errors": 0,
+    "claimed_attempts": 0,
+    "duplicate_deterministic_translations": 0,
+    "leased_batches": 0,
+    "missing_units": 0,
+    "source_hash_mismatches": 0
+  },
+  "postgresql_monitoring": null,
+  "runner_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "runner_revision_sha256": "d6b00fe2d6ccb5ec01ac40a5230f7276bbfe06fbda403c97537df2dd976303b3",
+  "schema_version": 1,
+  "started_at": "2026-08-12T23:28:41.826183Z",
+  "worktree_diff_sha256": "31a9edbc9fca36f4a1a754ed065030ee1dd17e24c698455f180b952fae867365"
+}

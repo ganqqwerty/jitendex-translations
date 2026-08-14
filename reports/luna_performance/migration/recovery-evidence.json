@@ -1,0 +1,46 @@
+{
+  "captured_at": "2026-08-12T23:59:58Z",
+  "current_production": {
+    "accepted_units": 1588646,
+    "claimed_attempts": 0,
+    "database": "jitendex",
+    "export_id": 52,
+    "export_sha256": "9dd8e4c0569a6ab419fe89fcddcc20a831f12d7aad386c159ad19990d31bf072",
+    "export_verified": true,
+    "postgresql_server_version": 170010,
+    "run_id": 45,
+    "schema_version": 9,
+    "unfinished_batches": 0,
+    "unresolved_blocking_errors": 0
+  },
+  "postgresql_backup": {
+    "archive_listing_entries": 178,
+    "archive_listing_verified": true,
+    "bytes": 3148764609,
+    "path": "work/backups/jitendex-postgresql-run45-v8-safe-20260812.dump",
+    "run_id": 45,
+    "schema_version_at_backup": 8,
+    "sha256": "2bce06bcff99ee6a7a672d0540a4f4f146d6f2715ab0602d776f8c5f1703e4d2"
+  },
+  "pre_run_46_postgresql_backup": {
+    "archive_listing_entries": 189,
+    "archive_listing_verified": true,
+    "bytes": 3149117979,
+    "path": "work/backups/jitendex-postgresql-before-316368.dump",
+    "run_id": 45,
+    "schema_version": 9,
+    "sha256": "3da4cd03ee3d8724184d80e98941725335cf90a8cd4d99145ad2308775a8677d"
+  },
+  "sqlite_migration_source": {
+    "bytes": 34052730880,
+    "mode": "0444",
+    "parity_report": "reports/luna_performance/migration/database-parity.json",
+    "parity_report_sha256": "fb01974c23d58352c062b5d6ee2f9ca6b0c9510d82b80054ea8cf4084d7dac25",
+    "path": "work/luna_performance/migration-source.sqlite3",
+    "proof_run_id": 44,
+    "sha256": "f2f13ce105935510330d6aaffc44ba69d31fc3553399f24c9f4693b5dbe59de5",
+    "sqlite_version": "3.47.1",
+    "verified_export_sha256": "fa30ecf36ca420c90168b8cd7028364405cbb153564dfacfabdb19f4e81c7861",
+    "warning": "Migration proof only. PostgreSQL has newer production writes; never use this SQLite file for production rollback."
+  }
+}

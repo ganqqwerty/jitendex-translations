@@ -2,7 +2,7 @@
 
 README-1 — This repository implements the deterministic part of the workflow in
 [`PLAN.md`](PLAN.md): pinned acquisition, SQLite-backed imports and audit state,
-Kaishi/Jitendex selection, safe scalar-unit extraction, immutable worker
+Jitendex selection, safe scalar-unit extraction, immutable worker
 manifests, strict response validation, independent review ingestion, and a
 reproducible Yomitan ZIP build.
 

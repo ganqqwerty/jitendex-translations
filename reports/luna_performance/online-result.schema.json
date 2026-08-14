@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jitendex-luna-online-window-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "configuration", "commit", "runner_revision_sha256",
+    "started_at", "ended_at", "runner_exit", "phases", "counters",
+    "postgresql_monitoring", "monitoring_summary", "machine_monitoring",
+    "runner_log_sha256"
+  ],
+  "$defs": {
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["headwords", "articles", "units", "source_characters"],
+      "properties": {
+        "headwords": {"type": "integer", "minimum": 0},
+        "articles": {"type": "integer", "minimum": 0},
+        "units": {"type": "integer", "minimum": 0},
+        "source_characters": {"type": "integer", "minimum": 0}
+      }
+    },
+    "postflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "window_claimed_attempts", "global_claimed_attempts", "leased_batches",
+        "missing_units", "duplicate_translations", "unresolved_blocking_errors",
+        "source_hash_mismatches"
+      ],
+      "properties": {
+        "window_claimed_attempts": {"type": "integer", "minimum": 0},
+        "global_claimed_attempts": {"type": "integer", "minimum": 0},
+        "leased_batches": {"type": "integer", "minimum": 0},
+        "missing_units": {"type": "integer", "minimum": 0},
+        "duplicate_translations": {"type": "integer", "minimum": 0},
+        "unresolved_blocking_errors": {"type": "integer", "minimum": 0},
+        "source_hash_mismatches": {"type": "integer", "minimum": 0}
+      }
+    },
+    "workloadProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_batch_count", "unique_batch_count", "serialized_bytes",
+        "batch_articles", "batch_units", "source_characters",
+        "protected_token_units", "role_counts", "validation_issue_codes"
+      ],
+      "properties": {
+        "request_batch_count": {"type": "integer", "minimum": 0},
+        "unique_batch_count": {"type": "integer", "minimum": 0},
+        "serialized_bytes": {"type": "integer", "minimum": 0},
+        "batch_articles": {"type": "integer", "minimum": 0},
+        "batch_units": {"type": "integer", "minimum": 0},
+        "source_characters": {"type": "integer", "minimum": 0},
+        "protected_token_units": {"type": "integer", "minimum": 0},
+        "role_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "validation_issue_codes": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {"const": 1},
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "window_id", "run_id", "database_name", "database_backend",
+        "database_server_version", "database_driver_version",
+        "database_schema_version", "pool_max", "database_workers", "model",
+        "reasoning_effort", "prompt_sha256", "limits_sha256", "pipeline_version",
+        "concurrency", "ramp_seconds", "steady_seconds", "minimum_completed", "dry_run",
+        "request_timeout_seconds"
+      ],
+      "properties": {
+        "window_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,63}$"},
+        "run_id": {"type": "integer", "minimum": 1},
+        "database_name": {"type": "string", "minLength": 1},
+        "database_backend": {"const": "postgresql"},
+        "database_server_version": {"type": "string", "minLength": 1},
+        "database_driver_version": {"type": "string", "minLength": 1},
+        "database_schema_version": {"type": "integer", "minimum": 1},
+        "pool_max": {"type": "integer", "minimum": 1},
+        "database_workers": {"const": 1},
+        "model": {"type": "string", "minLength": 1},
+        "reasoning_effort": {"type": "string", "minLength": 1},
+        "prompt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "limits_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "pipeline_version": {"type": "string", "minLength": 1},
+        "concurrency": {"type": "integer", "minimum": 1},
+        "ramp_seconds": {"type": "number", "minimum": 0},
+        "steady_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "minimum_completed": {"type": "integer", "minimum": 1},
+        "dry_run": {"type": "boolean"},
+        "request_timeout_seconds": {
+          "anyOf": [
+            {"type": "number", "exclusiveMinimum": 0},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "runner_revision_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "ended_at": {"type": "string", "format": "date-time"},
+    "runner_exit": {"type": "integer"},
+    "phases": {"type": "array"},
+    "counters": {
+      "type": "object",
+      "required": ["complete", "measured_seconds", "before", "after", "deltas", "rates", "completed", "postflight", "workload_profile"],
+      "properties": {
+        "complete": {"type": "boolean"},
+        "incomplete_reason": {"type": "string", "minLength": 1},
+        "measured_seconds": {"type": "number", "minimum": 0},
+        "before": {"$ref": "#/$defs/workload"},
+        "after": {"$ref": "#/$defs/workload"},
+        "deltas": {"$ref": "#/$defs/workload"},
+        "rates": {"type": "object"},
+        "completed": {"type": "integer", "minimum": 0},
+        "postflight": {"$ref": "#/$defs/postflight"},
+        "workload_profile": {"$ref": "#/$defs/workloadProfile"},
+        "first_batch_id": {"type": ["string", "null"]},
+        "last_batch_id": {"type": ["string", "null"]},
+        "ordered_batch_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "postgresql_monitoring": {"type": "array", "minItems": 2},
+    "monitoring_summary": {
+      "type": "object",
+      "required": [
+        "sample_count", "lock_wait_sample_count", "max_ungranted_locks",
+        "max_lock_waiting_sessions", "max_duplicate_claimed_batches",
+        "postgresql_active_time_delta_milliseconds",
+        "postgresql_statement_exec_delta_milliseconds"
+      ]
+    },
+    "machine_monitoring": {"type": "array", "minItems": 2},
+    "runner_log_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"counters": {"properties": {"complete": {"const": true}}}}},
+      "then": {"properties": {"counters": {"required": ["first_batch_id", "last_batch_id", "ordered_batch_sha256"]}}},
+      "else": {"properties": {"counters": {"required": ["incomplete_reason"]}}}
+    }
+  ]
+}

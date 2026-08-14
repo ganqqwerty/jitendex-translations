@@ -1,0 +1,295 @@
+{
+  "identity_sequences": {
+    "article": {
+      "is_called": true,
+      "last_value": 433857,
+      "maximum_id": 433855,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 433858
+    },
+    "attempt_cost_report": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "audit_event": {
+      "is_called": true,
+      "last_value": 9997,
+      "maximum_id": 9995,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 9998
+    },
+    "export": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "jitendex_tag": {
+      "is_called": true,
+      "last_value": 238,
+      "maximum_id": 236,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 239
+    },
+    "jitendex_tag_translation_history": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "kaishi_note": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "review": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "run": {
+      "is_called": true,
+      "last_value": 3,
+      "maximum_id": 1,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 4
+    },
+    "selection_candidate": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "selection_decision": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "source_snapshot": {
+      "is_called": true,
+      "last_value": 4,
+      "maximum_id": 2,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 5
+    },
+    "translation": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "translation_canonicalization_history": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    },
+    "validation_issue": {
+      "is_called": true,
+      "last_value": 2,
+      "maximum_id": 0,
+      "probe_row_rolled_back": true,
+      "safe": true,
+      "tested_insert_id": 3
+    }
+  },
+  "immutable_history_triggers": 4,
+  "mismatches": [],
+  "postgresql_constraints_unvalidated": 0,
+  "postgresql_driver": "3.2.9",
+  "postgresql_server": 170010,
+  "run_fingerprints": {
+    "postgresql": {
+      "1": "9cb2fa6a9936a8691343c653e03e2d2985a92ef87c39e259fd95e933d16d2c90"
+    },
+    "sqlite": {
+      "1": "9cb2fa6a9936a8691343c653e03e2d2985a92ef87c39e259fd95e933d16d2c90"
+    }
+  },
+  "tables": {
+    "article": {
+      "postgresql_count": 60695,
+      "postgresql_sha256": "fc403be583e3e83cd15afcb458f35a61a9eeeb649ddbe4b0273e26d07a1e962a",
+      "sqlite_count": 60695,
+      "sqlite_sha256": "fc403be583e3e83cd15afcb458f35a61a9eeeb649ddbe4b0273e26d07a1e962a"
+    },
+    "attempt": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "attempt_cost_report": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "audit_event": {
+      "postgresql_count": 9995,
+      "postgresql_sha256": "2d2044c17551f91f572d291ca611a215a46622089eba5e52ab6ad8867c845339",
+      "sqlite_count": 9995,
+      "sqlite_sha256": "2d2044c17551f91f572d291ca611a215a46622089eba5e52ab6ad8867c845339"
+    },
+    "batch": {
+      "postgresql_count": 9994,
+      "postgresql_sha256": "fe01cd302a8f3c9935f4ff27cdda4fe52b3759d1ef782bc2cd3465930e52dfc1",
+      "sqlite_count": 9994,
+      "sqlite_sha256": "fe01cd302a8f3c9935f4ff27cdda4fe52b3759d1ef782bc2cd3465930e52dfc1"
+    },
+    "batch_item": {
+      "postgresql_count": 456651,
+      "postgresql_sha256": "88223132cb3ffd3cb94bbaf40f1aa2d58a7544e10c4fdabdf59e164f09828a0a",
+      "sqlite_count": 456651,
+      "sqlite_sha256": "88223132cb3ffd3cb94bbaf40f1aa2d58a7544e10c4fdabdf59e164f09828a0a"
+    },
+    "benchmark_marker": {
+      "postgresql_count": 1,
+      "postgresql_sha256": "763995f2d1cae6a5f9cb172d541b5e5a61440355f00eee2d457acb1ea259cb61",
+      "sqlite_count": 1,
+      "sqlite_sha256": "763995f2d1cae6a5f9cb172d541b5e5a61440355f00eee2d457acb1ea259cb61"
+    },
+    "export": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "export_file": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "frequency_article": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "frequency_source": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "frequency_term": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "jitendex_tag": {
+      "postgresql_count": 236,
+      "postgresql_sha256": "b0926dac196c926a9c57715a40afda0cfdefb0ad60246cc69e20632b82bb69d3",
+      "sqlite_count": 236,
+      "sqlite_sha256": "b0926dac196c926a9c57715a40afda0cfdefb0ad60246cc69e20632b82bb69d3"
+    },
+    "jitendex_tag_translation_history": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "kaishi_note": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "review": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "run": {
+      "postgresql_count": 1,
+      "postgresql_sha256": "760dd7330e9ddfe47c8bd8f878ed1ca34de8df30b4045c7bbc8b88ffcd63ba1a",
+      "sqlite_count": 1,
+      "sqlite_sha256": "760dd7330e9ddfe47c8bd8f878ed1ca34de8df30b4045c7bbc8b88ffcd63ba1a"
+    },
+    "run_article": {
+      "postgresql_count": 60695,
+      "postgresql_sha256": "3425c22ee32a11b9a1a9e943860ca8febc7d9d57139ee5098e1fd7d561e09a62",
+      "sqlite_count": 60695,
+      "sqlite_sha256": "3425c22ee32a11b9a1a9e943860ca8febc7d9d57139ee5098e1fd7d561e09a62"
+    },
+    "schema_meta": {
+      "postgresql_count": 2,
+      "postgresql_sha256": "fb964eed3ba293c8c1cbad6fa59d12e0be48ee16e22e8bb2870bfb48c024575e",
+      "sqlite_count": 2,
+      "sqlite_sha256": "fb964eed3ba293c8c1cbad6fa59d12e0be48ee16e22e8bb2870bfb48c024575e"
+    },
+    "selection_candidate": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "selection_decision": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "source_snapshot": {
+      "postgresql_count": 2,
+      "postgresql_sha256": "21509235bc876b60dc96664cc3eefb3f328dec8c04be98f0961d16fc3e7ed76d",
+      "sqlite_count": 2,
+      "sqlite_sha256": "21509235bc876b60dc96664cc3eefb3f328dec8c04be98f0961d16fc3e7ed76d"
+    },
+    "translation": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "translation_canonicalization_history": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    },
+    "translation_unit": {
+      "postgresql_count": 456651,
+      "postgresql_sha256": "337eb9e2010e60adc55fa61e69adea8f94e8332443632c9296eeaf90e80f1ded",
+      "sqlite_count": 456651,
+      "sqlite_sha256": "337eb9e2010e60adc55fa61e69adea8f94e8332443632c9296eeaf90e80f1ded"
+    },
+    "validation_issue": {
+      "postgresql_count": 0,
+      "postgresql_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8",
+      "sqlite_count": 0,
+      "sqlite_sha256": "5b6fb58e61fa475939767d68a446f97f1bff02c0e5935a3ea8bb51e6515783d8"
+    }
+  }
+}

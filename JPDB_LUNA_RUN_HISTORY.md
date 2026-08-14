@@ -2078,3 +2078,87 @@ SHA-256: fa30ecf36ca420c90168b8cd7028364405cbb153564dfacfabdb19f4e81c7861
 ~~~
 
 HIST-ALL-296368-4 — Export 51 was verified. Run 44 is the stopping point; 306,368 articles is next.
+
+## HIST-ALL-306368 — 306,368-article continuation results
+
+HIST-ALL-306368-1 — Run 45 retained run 44, added 10,000 source-ordered articles, reused 1,541,067 units, and translated 47,579 new units. It finished with 304,239 distinct headwords done and 127,306 remaining. PostgreSQL was the authoritative database for the resumed work.
+
+HIST-ALL-306368-2 — The paused run had 110 exact expired leases. Process absence and lease-token identity were proved before one atomic audited recovery returned them to the queue. The PostgreSQL runner then drained all work at concurrency 80 without database retries, transport failures, timeouts, or rate-limit failures.
+
+HIST-ALL-306368-3 — Recursive isolation left 185 terminal singleton leaves. Their validator-required source acronyms were missing from the model manifests. Audited corrected-manifest children exposed those protected tokens to Luna and all 185 leaves validated through normal claim and ingestion provenance. The repair pass submitted 188 attempts, including three automatic validation retries, and completed at 148.8 headwords per minute.
+
+HIST-ALL-306368-4 — All 1,588,646 units were accepted with zero gaps, unresolved errors, active batches, terminal leaves, or membership mismatches. Coverage was complete for all 246,264 matched JPDB terms and all 306,368 selected articles. Canonicalization changed 14 values. All 86 tests passed.
+
+~~~text
+ZIP members:                304
+schema-validated banks:      99
+archive articles:       306,368
+SHA-256: 9dd8e4c0569a6ab419fe89fcddcc20a831f12d7aad386c159ad19990d31bf072
+~~~
+
+HIST-ALL-306368-5 — Export 52 was verified. Run 45 is the stopping point; 316,368 articles is next.
+
+## HIST-ALL-316368 — 316,368-article continuation results
+
+HIST-ALL-316368-1 — Run 46 retained run 45, added 10,000 source-ordered articles, reused 1,588,646 units, and translated 25,305 new units. All work used authoritative PostgreSQL.
+
+HIST-ALL-316368-2 — Productive fixed windows measured 275.9 headwords per minute at concurrency 70, 300.0 at 80, and 311.9 at 90. Concurrency 70 was 8.0% slower than 80. Concurrency 90 was only 4.0% faster than 80 and did not pass the 5% increase gate.
+
+HIST-ALL-316368-3 — Acceptance initially selected a bad PostgreSQL nested-loop plan and exceeded 15 minutes. Removing a redundant run correlation let the existing globally unique unit index complete acceptance in 3.3 seconds. Returning article JSON once per article reduced canonicalization from over 13 minutes to 21.1 seconds. Bulk export replaced about 948,000 small reads and completed in 75.6 seconds. The changes preserve hashes, structural checks, and SQLite behavior.
+
+HIST-ALL-316368-4 — All 1,613,951 units were accepted with zero gaps, active batches, terminal leaves, unresolved errors, or membership mismatches. Canonicalization changed 119 values and its idempotence pass changed zero.
+
+~~~text
+ZIP members:                306
+schema-validated banks:      101
+archive articles:       316,368
+SHA-256: e024fa042d3cc516e22935e882e47a2359dddd77a4dafe47f731a43e520f98f5
+~~~
+
+HIST-ALL-316368-5 — Export 53 was verified. A PostgreSQL custom-format backup before the following scope expansion is `work/backups/jitendex-postgresql-before-326368.dump`, SHA-256 `7f6d924381006932f969b84d8b08ce8141840b9684d23e91619282c18dc66a39`.
+
+## HIST-ALL-326368 — 326,368-article continuation results
+
+HIST-ALL-326368-1 — Run 47 retained run 46, added 10,000 source-ordered articles, reused 1,613,951 units, and translated 41,539 new units from 1,268 initial batches.
+
+HIST-ALL-326368-2 — Productive window `run47-c100-1` measured 346.0 headwords and 1,855.9 units per minute for 90.006 seconds. It completed 88 measured requests with one validation retry, p50 69.0 seconds, p95 95.6 seconds, p99 103.5 seconds, 6.7% database duty, and 199 MB peak runner memory. It had zero rate limits, timeouts, transport failures, database retries, collisions, stale leases, missing units, or duplicate translations. Concurrency 100 beat 80 by 15.3% and 90 by 10.9%, so it passed the 5% gate.
+
+HIST-ALL-326368-3 — The final concurrency-100 drain took 936.2 seconds and submitted 1,118 attempts. It recorded 19 validation rejections, 16 request timeouts, 33 retries, and two splits. Exact leases were requeued automatically. Two transient rate-limit classifications came from timed-out service output. The drain ended with zero active work, terminal leaves, unresolved errors, transport failures, or database retries.
+
+HIST-ALL-326368-4 — Stale PostgreSQL statistics first made scope selection exceed three minutes. `ANALYZE` reduced the unchanged deterministic query to 13.7 seconds. Long row-wise unit extraction remains a preparation optimization opportunity; it did not affect translation correctness.
+
+HIST-ALL-326368-5 — All 1,655,490 units were accepted with zero gaps, active batches, terminal leaves, unresolved errors, or membership mismatches. Canonicalization changed 100 values and its idempotence pass changed zero. All 113 tests passed normally and with the disposable PostgreSQL recovery database enabled.
+
+~~~text
+ZIP members:                314
+schema-validated banks:      103
+archive articles:       326,368
+SHA-256: 8fc3962d23025ac807d84a4bc8e2d21e8ab8a6d1335201aa0c374a0c542acd0d
+~~~
+
+HIST-ALL-326368-6 — Export 54 was verified. Run 47 is the stopping point. Concurrency 100 is the proven setting for a future authorized run; do not create Run 48 or test 110 without new authorization.
+
+## HIST-ALL-336368 — 336,368-article continuation results
+
+HIST-ALL-336368-1 — Run 49 retained Run 47, added 10,000 source-ordered articles, reused 1,655,490 units, and translated 36,846 new units from 995 initial batches. Run 48 does not exist: a canceled preparation transaction consumed that PostgreSQL sequence value before rollback. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-336368.dump`, SHA-256 `3da7e5fc73b1ef94df58b19bf575a6ba8f17b9cfbd0132446cfc9e80db3567a9`.
+
+HIST-ALL-336368-2 — The first preparation attempt exceeded nine minutes in a correlated missing-article count and was canceled before commit. Replacing it with the equivalent run-article count minus distinct unit-article count reduced extraction to 29.0 seconds. The successful preparation took 158.6 seconds: source preflight 5.3, scope selection 13.6, extraction 29.0, reuse 70.1, batching 14.7, and verification 25.9 seconds.
+
+HIST-ALL-336368-3 — Productive window `run49-c110-1` completed 85 measured requests in 90.001 seconds at concurrency 110. It measured 332.0 headwords and 1,909.3 units per minute, p50 74.8 seconds, p95 99.1 seconds, p99 102.1 seconds, 7.3% database duty, and 196 MB peak runner memory. It had one validation retry and zero rate limits, timeouts, transport failures, database retries, claim collisions, stale leases, missing units, duplicates, or source-hash mismatches. Headword throughput was 4.0% below concurrency 100, so 100 remains the recommended setting.
+
+HIST-ALL-336368-4 — The main concurrency-110 drain and recovery produced 1,012 accepted attempts and 92 rejected validation attempts, with 74 retries and 17 splits. Across 1,085 timed attempts, p50 latency was 75.4 seconds and p95 was 116.8 seconds. The runner peaked near 200 MB. PostgreSQL recorded zero database retries.
+
+HIST-ALL-336368-5 — A laptop reboot interrupted three exact leases during the last 34 units. Host and PostgreSQL clocks remained correct; an initial claim that the clock moved backward was disproved by the boot time and both clocks. With zero surviving worker processes, the three matching lease tokens were marked interrupted and audited, then requeued through the normal runner recovery path. No attempts, translations, or evidence were deleted.
+
+HIST-ALL-336368-6 — Recursive recovery isolated one glossary leaf whose correct Latin taxon text repeatedly triggered the English-word limit. The saved Russian translation was ingested through a targeted claimed attempt with both taxa in standard parentheses, which passed the unchanged validator. The run ended with zero unfinished batches, terminal leaves, unresolved errors, claimed attempts, untranslated units, or membership mismatches.
+
+HIST-ALL-336368-7 — All 1,692,336 units were accepted. Canonicalization changed 213 values and its idempotence pass changed zero. All 113 tests passed normally and with the disposable PostgreSQL recovery database enabled. Preparation took 2 minutes 39 seconds, the fixed 110 window about 2 minutes including ramp and drain, the main translation work about 30 minutes before the reboot, resumed recovery 3 minutes 40 seconds, and the full batch about 57 minutes of wall time including reboot recovery, acceptance, export, and tests.
+
+~~~text
+ZIP members:                319
+schema-validated banks:      106
+archive articles:       336,368
+SHA-256: 84dcf1ecf6c5d4fe9532f2b1f415abc2f1f4edfe53422477ccfff116858001b2
+~~~
+
+HIST-ALL-336368-8 — Export 55 was verified. Run 49 is the stopping point. Concurrency 100 remains the proven setting for a future authorized run; do not create another run without new authorization.

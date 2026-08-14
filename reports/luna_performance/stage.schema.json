@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jitendex-luna-performance-stage-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "stage_id", "corpus_sha256", "database_backend",
+    "database_path", "run_id", "source_run_id", "headword_count", "article_count",
+    "unit_count", "source_characters", "batch_count", "extracted_units", "method", "template"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "stage_id": {"type": "string", "minLength": 1},
+    "corpus_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "database_backend": {"const": "sqlite"},
+    "database_path": {"type": "string"},
+    "run_id": {"type": "integer", "minimum": 1},
+    "source_run_id": {"type": "integer", "minimum": 1},
+    "headword_count": {"type": "integer", "minimum": 1},
+    "article_count": {"type": "integer", "minimum": 1},
+    "unit_count": {"type": "integer", "minimum": 1},
+    "source_characters": {"type": "integer", "minimum": 1},
+    "batch_count": {"type": "integer", "minimum": 1},
+    "extracted_units": {"type": "integer", "minimum": 1},
+    "method": {"type": "string", "minLength": 1},
+    "template": {"const": true}
+  }
+}

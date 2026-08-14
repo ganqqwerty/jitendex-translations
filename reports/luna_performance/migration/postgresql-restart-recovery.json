@@ -1,0 +1,24 @@
+{
+  "container": "jitendex-postgres",
+  "databases": {
+    "jitendex": {
+      "claimed_attempts": 0,
+      "schema_version": 9
+    },
+    "jitendex_lcp_parity": {
+      "claimed_attempts": 0,
+      "run_count": 45,
+      "schema_version": 9
+    },
+    "jitendex_lcp_recovery": {
+      "claimed_attempts": 0,
+      "run_count_before_repeatable_test_reset": 1,
+      "schema_version": 9
+    }
+  },
+  "pg_stat_statements_preloaded": true,
+  "production_runner_active": false,
+  "recovery_test_consecutive_passes": 2,
+  "restart_completed": true,
+  "verified": true
+}

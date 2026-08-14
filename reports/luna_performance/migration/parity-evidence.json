@@ -1,0 +1,15 @@
+{
+  "claimed_attempts_after_verification": 0,
+  "dictionary_build_parity": "reports/luna_performance/migration/dictionary-build-parity.json",
+  "fingerprint_report": {
+    "path": "reports/luna_performance/migration/run-fingerprint-parity.json",
+    "sha256": "3c8d54dd0c3898f1e90c0753136e091a88cdb4532afdefc1f78c453c3dd66aa1",
+    "verified": true
+  },
+  "full_table_report": {
+    "note": "All table counts and hashes, constraints, insert-and-rollback identity probes, immutable triggers, order-independent run fingerprints, and dictionary ZIP hashes passed with zero mismatches.",
+    "path": "reports/luna_performance/migration/database-parity.json",
+    "sha256": "fb01974c23d58352c062b5d6ee2f9ca6b0c9510d82b80054ea8cf4084d7dac25"
+  },
+  "verified": true
+}

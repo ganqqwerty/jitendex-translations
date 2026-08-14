@@ -1,0 +1,43 @@
+{
+  "captured_at": "2026-08-12T21:35:50.706107Z",
+  "database_name": "jitendex",
+  "pg_locks": [
+    [
+      "AccessShareLock",
+      true,
+      2
+    ]
+  ],
+  "pg_stat_activity": [
+    [
+      "active",
+      null,
+      null,
+      1
+    ]
+  ],
+  "pg_stat_database": [
+    30516,
+    79,
+    140831361,
+    531955621,
+    4422,
+    71845216859,
+    0,
+    0,
+    5408928.027,
+    1996531.73,
+    744565.375
+  ],
+  "pg_stat_statements_enabled": true,
+  "pg_stat_statements_totals": [
+    185,
+    213.0,
+    343214.3168690001,
+    95535139.0,
+    11547420.0,
+    1490186.0
+  ],
+  "schema_version": 1,
+  "server_version": 170010
+}

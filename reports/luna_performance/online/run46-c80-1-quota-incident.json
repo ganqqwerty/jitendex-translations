@@ -1,0 +1,32 @@
+{
+  "captured_at": "2026-08-13T00:33:34Z",
+  "classification": "quota_boundary_before_measurement",
+  "concurrency": 80,
+  "database_after_recovery": {
+    "claimed_attempts": 0,
+    "leased_batches": 0,
+    "ready_or_retryable_batches": 761,
+    "translations_added": 0
+  },
+  "events": {
+    "completed": 44,
+    "failed": 44,
+    "launched": 124,
+    "measurement_phase_started": false,
+    "quota_failures": 44,
+    "successful": 0
+  },
+  "log_path": "work/luna_performance/online/run46-c80-1.jsonl",
+  "log_sha256": "292326de4ab1b36d30818b20bfb6b1e02cf075f1df7eb00d1aeef81063705f0a",
+  "recovery": {
+    "exact_claims_found": 80,
+    "exact_claims_recovered": 80,
+    "method": "attempt ID, batch ID, and lease-token compare-and-set",
+    "runner_fix_added": "Recognize a usage boundary on the first failed result, interrupt that attempt without retry or split, stop new claims, and gracefully recover peers.",
+    "wrapper_fix_added": "Forward external interruption to the child process group and wait for runner cleanup."
+  },
+  "resume_not_before": "2026-08-18T23:00:00+02:00",
+  "run_id": 46,
+  "usable_for_tuning": false,
+  "window_id": "run46-c80-1"
+}

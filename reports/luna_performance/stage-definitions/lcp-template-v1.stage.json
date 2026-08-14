@@ -1,0 +1,17 @@
+{
+  "article_count": 60695,
+  "batch_count": 9994,
+  "corpus_sha256": "10481541450a50a454247b2c55f3101f9ab1008c4f068e32686364680feb7a0a",
+  "database_backend": "sqlite",
+  "database_path": "/Users/iuriikatkov/Documents/ChatGPT/jitendex-translations/work/luna_performance/template/template.sqlite3",
+  "extracted_units": 456651,
+  "headword_count": 60000,
+  "method": "difficulty-fifth-plus-hash-sample-v1",
+  "run_id": 1,
+  "schema_version": 1,
+  "source_characters": 14770918,
+  "source_run_id": 44,
+  "stage_id": "lcp-template-v1",
+  "template": true,
+  "unit_count": 456651
+}
