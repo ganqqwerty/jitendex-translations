@@ -7,7 +7,12 @@ name = "jitendex-translations"
 version = "0.1.0"
 description = "Auditable Kaishi-scoped Jitendex Russian translation pipeline"
 requires-python = ">=3.12"
-dependencies = ["fastjsonschema>=2.21", "Pillow>=11.3", "psycopg[binary,pool]==3.2.9"]
+dependencies = [
+    "fastjsonschema>=2.21",
+    "mdict-utils==1.3.14",
+    "Pillow>=11.3",
+    "psycopg[binary,pool]==3.2.9",
+]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]

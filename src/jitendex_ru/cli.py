@@ -9,6 +9,7 @@ from typing import Any
 
 from .acquire import acquire
 from .all_article_scope import select_all_article_scope
+from .apple_dictionary import build_apple_dictionary, verify_apple_dictionary
 from .batch import claim, make_batches, retry_or_split
 from .build_dictionary import build, record_yomitan_smoke, verify
 from .canonicalize import canonicalize_final_run
@@ -24,7 +25,9 @@ from .import_kaishi import import_kaishi
 from .jpdb_scope import (
     accept_deterministic_translations, coverage_report, reuse_accepted_translations, select_top_terms,
 )
+from .mdict import build_mdict, verify_mdict
 from .pilot import build_pilot_selection, load_pilot_selection, verify_pilot_batches, write_pilot_selection
+from .pocketbook import build_pocketbook, verify_pocketbook
 from .prep_metrics import PrepMetrics
 from .openai_requests import audit_run_input_tokens, write_token_audit
 from .resolve_selection import apply_resolutions, generate_candidates, make_resolution_batches, selection_manifest_hash, unresolved_report
@@ -137,6 +140,28 @@ def _parser() -> argparse.ArgumentParser:
     goldendict_parser.add_argument("--output", type=Path, required=True)
     verify_goldendict_parser = commands.add_parser("verify-goldendict")
     verify_goldendict_parser.add_argument("path", type=Path)
+    pocketbook_parser = commands.add_parser("export-pocketbook")
+    pocketbook_parser.add_argument("--run-id", type=int)
+    pocketbook_parser.add_argument("--output", type=Path, required=True)
+    pocketbook_parser.add_argument("--compiler", type=Path, required=True)
+    pocketbook_parser.add_argument("--compiler-sha256", required=True)
+    pocketbook_parser.add_argument("--language-dir", type=Path, required=True)
+    verify_pocketbook_parser = commands.add_parser("verify-pocketbook")
+    verify_pocketbook_parser.add_argument("path", type=Path)
+    apple_parser = commands.add_parser("export-apple-dictionary")
+    apple_parser.add_argument("--run-id", type=int)
+    apple_parser.add_argument("--output", type=Path, required=True)
+    apple_parser.add_argument("--build-tool", type=Path, required=True)
+    apple_parser.add_argument("--build-tool-sha256", required=True)
+    apple_parser.add_argument("--schema", type=Path)
+    apple_parser.add_argument("--schema-sha256")
+    verify_apple_parser = commands.add_parser("verify-apple-dictionary")
+    verify_apple_parser.add_argument("path", type=Path)
+    mdict_parser = commands.add_parser("export-mdict")
+    mdict_parser.add_argument("--run-id", type=int)
+    mdict_parser.add_argument("--output", type=Path, required=True)
+    verify_mdict_parser = commands.add_parser("verify-mdict")
+    verify_mdict_parser.add_argument("path", type=Path)
     smoke_parser = commands.add_parser("record-yomitan-smoke")
     smoke_parser.add_argument("path", type=Path)
     smoke_parser.add_argument("--actor", required=True)
@@ -519,6 +544,45 @@ def execute(args: argparse.Namespace) -> Any:
             return result
         if args.command == "verify-goldendict":
             result = verify_goldendict(connection, args.path.resolve())
+            connection.commit()
+            return result
+        if args.command == "export-pocketbook":
+            result = build_pocketbook(
+                connection, _active_run(connection, args.run_id), args.output.resolve(),
+                compiler=args.compiler.resolve(),
+                compiler_sha256=args.compiler_sha256,
+                language_dir=args.language_dir.resolve(),
+            )
+            connection.commit()
+            return result
+        if args.command == "verify-pocketbook":
+            result = verify_pocketbook(connection, args.path.resolve())
+            connection.commit()
+            return result
+        if args.command == "export-apple-dictionary":
+            if bool(args.schema) != bool(args.schema_sha256):
+                raise ValueError("--schema and --schema-sha256 must be supplied together")
+            result = build_apple_dictionary(
+                connection, _active_run(connection, args.run_id), args.output.resolve(),
+                build_tool=args.build_tool.resolve(),
+                build_tool_sha256=args.build_tool_sha256,
+                schema=args.schema.resolve() if args.schema else None,
+                schema_sha256=args.schema_sha256,
+            )
+            connection.commit()
+            return result
+        if args.command == "verify-apple-dictionary":
+            result = verify_apple_dictionary(connection, args.path.resolve())
+            connection.commit()
+            return result
+        if args.command == "export-mdict":
+            result = build_mdict(
+                connection, _active_run(connection, args.run_id), args.output.resolve(),
+            )
+            connection.commit()
+            return result
+        if args.command == "verify-mdict":
+            result = verify_mdict(connection, args.path.resolve())
             connection.commit()
             return result
         if args.command == "record-yomitan-smoke":

@@ -1,0 +1,138 @@
+{
+  "profile": "exporter-common-probe-v1",
+  "cases": [
+    {
+      "id": "PROBE-KEY-1",
+      "expression": "明日",
+      "reading": "あした",
+      "definition_tags": "arch pos-v5",
+      "rules": "v5",
+      "score": 12,
+      "sequence": 1001,
+      "term_tags": "★ приор.",
+      "glossary": [
+        {
+          "type": "structured-content",
+          "content": [
+            {
+              "tag": "div",
+              "data": {"content": "sense", "class": "sense-group"},
+              "content": [
+                {"tag": "span", "data": {"content": "part-of-speech-info"}, "content": "глагол"},
+                {"tag": "span", "style": {"fontWeight": "bold"}, "content": "завтра"},
+                {
+                  "tag": "div",
+                  "data": {"content": "example-sentence", "sentence-key": "p1", "source": "probe", "source-type": "fixture"},
+                  "content": [
+                    {"tag": "ruby", "content": ["明日", {"tag": "rt", "content": "あした"}]},
+                    "行きます。 — Пойду завтра."
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "a",
+              "href": "?query=昨日",
+              "content": "昨日"
+            },
+            {
+              "tag": "a",
+              "href": "https://www.edrdg.org/jmdict/j_jmdict.html",
+              "content": "JMdict"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PROBE-KEY-2",
+      "expression": "明日",
+      "reading": "みょうにち",
+      "definition_tags": "formal",
+      "rules": "",
+      "score": 4,
+      "sequence": 1002,
+      "term_tags": "редк.",
+      "glossary": [
+        {
+          "type": "structured-content",
+          "content": {
+            "tag": "div",
+            "data": {"content": "glossary"},
+            "content": "следующий день; формальное чтение"
+          }
+        }
+      ]
+    },
+    {
+      "id": "PROBE-RICH-1",
+      "expression": "表",
+      "reading": "ひょう",
+      "definition_tags": "n",
+      "rules": "",
+      "score": 0,
+      "sequence": 1003,
+      "term_tags": "",
+      "glossary": [
+        {
+          "type": "structured-content",
+          "content": [
+            {"tag": "ol", "style": {"listStyleType": "decimal"}, "content": [
+              {"tag": "li", "content": "таблица"},
+              {"tag": "li", "content": {"tag": "ul", "content": [{"tag": "li", "content": "вложенный пункт"}]}}
+            ]},
+            {"tag": "table", "content": [
+              {"tag": "tr", "content": [{"tag": "th", "content": "форма"}, {"tag": "th", "content": "чтение"}]},
+              {"tag": "tr", "content": [{"tag": "td", "content": "表"}, {"tag": "td", "content": "ひょう"}]}
+            ]},
+            {"tag": "img", "path": "probe/image.avif", "width": 2, "height": 2, "sizeUnits": "px", "appearance": "auto", "background": false, "collapsed": false, "collapsible": false, "alt": "тёмный квадрат"},
+            {"tag": "img", "path": "probe/vector.svg", "width": 2, "height": 2, "sizeUnits": "px", "appearance": "monochrome", "background": true, "collapsed": true, "collapsible": true},
+            {"tag": "details", "content": [{"tag": "summary", "content": "подробнее"}, {"tag": "div", "content": "скрытый текст должен сохраниться"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PROBE-KEY-3",
+      "expression": "かな・カナ A−B〜C",
+      "reading": "かな・かな えーびーしー",
+      "definition_tags": "",
+      "rules": "",
+      "score": -1,
+      "sequence": 1004,
+      "term_tags": "",
+      "glossary": ["XML: < > & \" ' ; русский; 日本語; emoji 🧭"]
+    },
+    {
+      "id": "PROBE-READING-ONLY-1",
+      "expression": "あいさつ",
+      "reading": "あいさつ",
+      "definition_tags": "",
+      "rules": "",
+      "score": 0,
+      "sequence": 1005,
+      "term_tags": "",
+      "glossary": ["приветствие"]
+    },
+    {
+      "id": "PROBE-COLLISION-1",
+      "expression": "あした",
+      "reading": "あした",
+      "definition_tags": "",
+      "rules": "",
+      "score": 0,
+      "sequence": 1006,
+      "term_tags": "",
+      "glossary": ["самостоятельная словарная статья с ключом, совпадающим с чтением другой статьи"]
+    }
+  ],
+  "boundaries": {
+    "nul_rejection": "bad\u0000value",
+    "invalid_xml_codepoint": "U+0001",
+    "long_headword_codepoints": 512,
+    "long_article_codepoints": 100000,
+    "duplicate_resource_paths": ["probe/image.png", "probe/image.png"],
+    "missing_alt_path": "probe/vector.svg",
+    "future_audio_path": "probe/audio.ogg"
+  }
+}

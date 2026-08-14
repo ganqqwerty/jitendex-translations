@@ -61,6 +61,51 @@ reading aliases, internal links, CSS, and referenced media.
 README-GD-3 — The exporter converts AVIF graphics to PNG for compatibility with
 older GoldenDict renderers. SVG glyphs remain SVG so they stay sharp.
 
+## README-EX — Rich dictionary exporters
+
+README-EX-1 — The PocketBook, Apple Dictionary, and MDict exporters start from the
+same localized structured article model. They retain lists, tables, ruby,
+examples, links, media, semantic classes, tags, tooltips, and attribution when
+the target can express them. Read [JITENDEX_EXPORTER_PLAN.md](JITENDEX_EXPORTER_PLAN.md)
+and the contracts under `reports/exporters/` before release work.
+
+README-EX-2 — PocketBook requires an external, hashed `converter.exe` and a pinned
+`jaK` or `jaR` language directory. On non-Windows hosts it also requires Wine.
+The package remains experimental until the device gates in
+`reports/exporters/pocketbook-capabilities.md` pass.
+
+```sh
+translationctl export-pocketbook --run-id ID --output dist/jitendex-ru-pocketbook.zip \
+  --compiler /path/to/converter.exe --compiler-sha256 SHA256 \
+  --language-dir /path/to/jaK
+translationctl verify-pocketbook dist/jitendex-ru-pocketbook.zip
+```
+
+README-EX-3 — Apple Dictionary requires the archived Dictionary Development Kit
+`build_dict.sh`. A matching RELAX NG schema and hash are optional command inputs
+but required to close the release gate. The exporter does not install the bundle.
+
+```sh
+translationctl export-apple-dictionary --run-id ID \
+  --output dist/jitendex-ru-apple-dictionary.zip \
+  --build-tool /path/to/build_dict.sh --build-tool-sha256 SHA256 \
+  --schema /path/to/AppleDictionarySchema.rng --schema-sha256 SHA256
+translationctl verify-apple-dictionary dist/jitendex-ru-apple-dictionary.zip
+```
+
+README-EX-4 — MDict uses the pinned `mdict-utils` writer to emit deterministic,
+unencrypted MDict 2.0 MDX and MDD files. The package is marked experimental until
+the real-client matrix in `reports/exporters/mdict-capabilities.md` passes.
+
+```sh
+translationctl export-mdict --run-id ID --output dist/jitendex-ru-mdict.zip
+translationctl verify-mdict dist/jitendex-ru-mdict.zip
+```
+
+README-EX-5 — Every exporter writes a deterministic ZIP manifest, loss ledger,
+capability profile, source and tool hashes, attribution, and installation note.
+Any omitted rich-content feature fails the build.
+
 ## README-DB — Database schema
 
 README-DB-1 — The current SQLite schema is version 7. `init-db` creates it, and normal database initialization upgrades older frequency tables in place.
