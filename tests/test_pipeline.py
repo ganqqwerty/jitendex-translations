@@ -201,6 +201,7 @@ def test_translation_review_and_reproducible_build(tmp_path):
     assert first_result["zip_sha256"] == second_result["zip_sha256"]
     assert verify(connection, first)["verified"]
     with zipfile.ZipFile(first) as archive:
+        assert json.loads(archive.read("index.json"))["author"] == "Stephen Kraus; Yuri Katkov"
         emitted = json.loads(archive.read("term_bank_1.json"))[0]
         assert emitted[5]["content"]["content"][0]["content"] == "есть"
         assert emitted[5]["content"]["content"][0]["lang"] == "ru"
@@ -225,6 +226,7 @@ def test_translation_review_and_reproducible_build(tmp_path):
             "jitendex-ru.ifo", "jitendex-ru.idx", "jitendex-ru.dict",
             "jitendex-ru.syn", "res/jitendex-ru.css",
         } <= set(archive.namelist())
+        assert "author=Stephen Kraus; Yuri Katkov" in archive.read("jitendex-ru.ifo").decode()
         golden_article = archive.read("jitendex-ru.dict").decode()
         assert "есть" in golden_article
         assert '<span class="jr-tag" title="Запись с высоким приоритетом">★</span>' in golden_article

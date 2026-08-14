@@ -61,15 +61,17 @@ README-ARCH-5 — Approved tag terminology is applied during export instead of r
 
 | ID | Format | Export | SHA-256 |
 |---|---|---|---|
-| README-STATE-1 | Yomitan `tags-ru-v1` | 66 | `c157b41f3fc99a52d4099c8384e87c8e0ec8813e87c93f988a801c3e9fc63a58` |
-| README-STATE-2 | GoldenDict | 67 | `f81e9c8d41139a8cee09b5333587ef723797b12580e5e3e5db8a2714efe589e0` |
-| README-STATE-3 | MDict | 70 | `9d766506f0aeeb0580f6dcf1679a2bde2faffb9586fa73397a201375e54bc7e0` |
-| README-STATE-4 | PocketBook | 71 | `348be94570d633078158babd87a5719c13542b201768960e5758e36f00ebb31d` |
-| README-STATE-5 | Apple Dictionary | 72 | `3bedac203b1591184563b6cda2d348d6e21ee041d5b97b910e8723d11c72e3dc` |
+| README-STATE-1 | Yomitan `tags-ru-v1` | 73 | `c5c012e3d77c714785881c0f67b7c76cb79e1902c8b73c7d0e8232c23ec2208e` |
+| README-STATE-2 | GoldenDict | 74 | `eb13c6eed1903e7771b90a55a9553ba2e3812562956961cd1b2a068c74977594` |
+| README-STATE-3 | MDict | 75 | `069f0bebbfe21a0c015e3ac565e4cc7253c88f6e9b7f933fc3c6d164168af269` |
+| README-STATE-4 | PocketBook | 76 | `8c9bcdbc7de13bfe5271ad1a2ff57baf367f134eaab39e90022f56265188f008` |
+| README-STATE-5 | Apple Dictionary | 77 | `0cfb5198b2ad502db3b4c76f78d0c8293e0c94a1dc1a1c6ce2828b27f607f482` |
 
 README-STATE-6 — Export 65 is the immutable pre-tag-unification Yomitan checkpoint. Export records 68 and 69 are reproducibility evidence, not release archives.
 
 README-STATE-7 — PocketBook, MDict, and Apple Dictionary pass structural archive verification but remain experimental until their real-client gates in `reports/exporters/` pass. The Yomitan clean-profile hover test is also still manual.
+
+README-STATE-8 — Every current archive credits Yuri Katkov as co-author of the Russian edition. The five archives are published in release `run59-tags-ru-v1`.
 
 ## README-TEST — Verification
 

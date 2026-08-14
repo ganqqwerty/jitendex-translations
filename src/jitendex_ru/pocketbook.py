@@ -13,6 +13,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 from xml.etree import ElementTree
 
+from .attribution import ATTRIBUTION
 from .database import ConnectionLike
 from .export_model import ExportCorpus, ExportEntry, ExportVariant, prepare_export
 from .export_render import (
@@ -35,11 +36,6 @@ ALLOWED_TAGS = {
     "a", "br", "details", "div", "img", "li", "ol", "rp", "rt", "ruby",
     "span", "summary", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul",
 }
-ATTRIBUTION = (
-    "Jitendex, JMdict and Tatoeba attribution is retained.\n"
-    "Russian derivative content is distributed under CC BY-SA 4.0.\n"
-    "See the upstream Jitendex project for complete source attribution.\n"
-)
 INSTALLATION = (
     "Experimental PocketBook build. Device compatibility is not yet verified.\n"
     "After closing the capability gate, copy jitendex-ru.dic to /system/dictionaries/ on the device.\n"

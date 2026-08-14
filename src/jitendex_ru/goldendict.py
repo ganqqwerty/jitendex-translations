@@ -17,6 +17,7 @@ from urllib.parse import parse_qs, quote, urlsplit
 
 from PIL import Image, ImageOps
 
+from .attribution import DICTIONARY_AUTHORS
 from .build_dictionary import FIXED_ZIP_TIME, _frequency_metadata, _paths, materialize_run
 from .database import ConnectionLike
 from .db import audit
@@ -403,7 +404,7 @@ def build_goldendict(
         if synonyms:
             ifo_lines.append(f"synwordcount={len(synonyms)}")
         ifo_lines.extend([
-            "sametypesequence=h", "author=Stephen Kraus; Russian translation contributors",
+            "sametypesequence=h", f"author={DICTIONARY_AUTHORS}",
             "website=https://jitendex.org", f"description={_ifo_value(description)}",
         ])
         (root / f"{BASENAME}.ifo").write_text("\n".join(ifo_lines) + "\n", encoding="utf-8", newline="\n")

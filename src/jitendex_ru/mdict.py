@@ -20,6 +20,7 @@ from xml.etree import ElementTree
 from mdict_utils import reader as mdict_reader
 from mdict_utils import writer as mdict_writer
 
+from .attribution import ATTRIBUTION
 from .database import ConnectionLike
 from .export_model import (
     ExportCorpus,
@@ -60,11 +61,6 @@ CSS = """.jr-entry{font-family:system-ui,-apple-system,sans-serif;line-height:1.
 .style-font-bold{font-weight:bold}.style-font-italic{font-style:italic}
 @media(prefers-color-scheme:dark){.image-monochrome{filter:invert(1)}}
 """
-ATTRIBUTION = (
-    "Jitendex, JMdict and Tatoeba attribution is retained.\n"
-    "Russian derivative content is distributed under CC BY-SA 4.0.\n"
-    "See the upstream Jitendex project for complete source attribution.\n"
-)
 INSTALLATION = (
     "Experimental unencrypted MDict 2.0 package. Official clients are not yet verified.\n"
     "Keep jitendex-ru.mdx and jitendex-ru.mdd together when importing them.\n"

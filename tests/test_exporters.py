@@ -295,6 +295,8 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     )
     assert pocket_result["headwords"] == 5
     assert pocketbook_module.verify_pocketbook(pocket_connection, pocket_output)["verified"]
+    with zipfile.ZipFile(pocket_output) as archive:
+        assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
 
     apple_tool = tmp_path / "fake-build-dict"
     apple_tool.write_text(
@@ -315,6 +317,8 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     )
     assert apple_result["indexes"] >= apple_result["headwords"]
     assert apple_module.verify_apple_dictionary(apple_connection, apple_output)["verified"]
+    with zipfile.ZipFile(apple_output) as archive:
+        assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
 
     monkeypatch.setattr(mdict_module, "prepare_export", lambda connection, run_id: corpus)
     mdict_connection = _ExportConnection()
@@ -325,3 +329,5 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     assert first_output.read_bytes() == second_output.read_bytes()
     assert first_result["records"] == second_result["records"]
     assert mdict_module.verify_mdict(mdict_connection, first_output)["verified"]
+    with zipfile.ZipFile(first_output) as archive:
+        assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
