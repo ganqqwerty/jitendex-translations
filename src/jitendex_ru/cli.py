@@ -17,8 +17,9 @@ from .database import Database
 from .combined_frequency_scope import combined_coverage_report, select_combined_scope
 from .db import audit
 from .extract_units import extract_selected
+from .goldendict import build_goldendict, verify_goldendict
 from .import_jitendex import import_jitendex
-from .jitendex_tags import import_jitendex_tags
+from .jitendex_tags import import_jitendex_tags, ingest_approved_tag_rows, read_approved_tag_csv
 from .import_kaishi import import_kaishi
 from .jpdb_scope import (
     accept_deterministic_translations, coverage_report, reuse_accepted_translations, select_top_terms,
@@ -41,6 +42,9 @@ def _parser() -> argparse.ArgumentParser:
     commands.add_parser("init-db")
     commands.add_parser("acquire")
     commands.add_parser("import-sources")
+    approved_tags = commands.add_parser("import-approved-tags")
+    approved_tags.add_argument("--snapshot-id", type=int, required=True)
+    approved_tags.add_argument("--csv", type=Path, required=True)
     commands.add_parser("resolve-scope")
     jpdb_scope = commands.add_parser("select-jpdb-scope")
     jpdb_scope.add_argument("path", type=Path)
@@ -128,6 +132,11 @@ def _parser() -> argparse.ArgumentParser:
     build_parser.add_argument("--output", type=Path, required=True)
     verify_parser = commands.add_parser("verify")
     verify_parser.add_argument("path", type=Path)
+    goldendict_parser = commands.add_parser("export-goldendict")
+    goldendict_parser.add_argument("--run-id", type=int)
+    goldendict_parser.add_argument("--output", type=Path, required=True)
+    verify_goldendict_parser = commands.add_parser("verify-goldendict")
+    verify_goldendict_parser.add_argument("path", type=Path)
     smoke_parser = commands.add_parser("record-yomitan-smoke")
     smoke_parser.add_argument("path", type=Path)
     smoke_parser.add_argument("--actor", required=True)
@@ -300,6 +309,14 @@ def execute(args: argparse.Namespace) -> Any:
             result = {"jitendex_articles_added": import_jitendex(connection, jitendex_id, paths["jitendex"]),
                       "kaishi_notes_added": import_kaishi(connection, kaishi_id, paths["kaishi"]),
                       **import_jitendex_tags(connection, jitendex_id, paths["jitendex"])}
+            connection.commit()
+            return result
+        if args.command == "import-approved-tags":
+            source = args.csv.resolve()
+            result = ingest_approved_tag_rows(
+                connection, args.snapshot_id, read_approved_tag_csv(source),
+                source_path=str(source), source_sha256=sha256_file(source),
+            )
             connection.commit()
             return result
         if args.command == "resolve-scope":
@@ -486,13 +503,22 @@ def execute(args: argparse.Namespace) -> Any:
             connection.commit()
             return result
         if args.command == "build":
-            tag_notes = json.loads((config.root / "terminology/tag-bank-ru-v1.json").read_text(encoding="utf-8"))
-            result = build(connection, _active_run(connection, args.run_id), args.output.resolve(), tag_notes)
+            result = build(connection, _active_run(connection, args.run_id), args.output.resolve())
             connection.commit()
             return result
         if args.command == "verify":
             result = verify(connection, args.path.resolve())
             result.update(validate_archive(args.path.resolve(), config.work_dir / "schemas" / "pinned-yomitan"))
+            connection.commit()
+            return result
+        if args.command == "export-goldendict":
+            result = build_goldendict(
+                connection, _active_run(connection, args.run_id), args.output.resolve(),
+            )
+            connection.commit()
+            return result
+        if args.command == "verify-goldendict":
+            result = verify_goldendict(connection, args.path.resolve())
             connection.commit()
             return result
         if args.command == "record-yomitan-smoke":

@@ -48,6 +48,19 @@ README-8 — `acquire` also downloads the two Yomitan JSON schemas from an immut
 commit and verifies their configured SHA-256 values. `verify` validates every
 emitted bank against those pinned copies.
 
+## README-GD — GoldenDict export
+
+README-GD-1 — `export-goldendict --run-id ID --output dist/jitendex-ru-goldendict.zip`
+builds the accepted database run as a reproducible StarDict 2.4.2 bundle. Run
+`verify-goldendict PATH` before release.
+
+README-GD-2 — Extract the ZIP into one folder. Add that folder as a GoldenDict
+dictionary source and rescan dictionaries. The bundle contains HTML articles,
+reading aliases, internal links, CSS, and referenced media.
+
+README-GD-3 — The exporter converts AVIF graphics to PNG for compatibility with
+older GoldenDict renderers. SVG glyphs remain SVG so they stay sharp.
+
 ## README-DB — Database schema
 
 README-DB-1 — The current SQLite schema is version 7. `init-db` creates it, and normal database initialization upgrades older frequency tables in place.

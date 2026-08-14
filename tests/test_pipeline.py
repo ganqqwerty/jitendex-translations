@@ -1,13 +1,16 @@
 import json
 import zipfile
+from io import BytesIO
 
 import pytest
+from PIL import Image
 
 from jitendex_ru.batch import claim, make_batches
 from jitendex_ru.apply_translations import _compose_glossary, _localize_mixed_form_restrictions
 from jitendex_ru.build_dictionary import _chunk, build, record_yomitan_smoke, verify
 from jitendex_ru.db import connect, initialize
 from jitendex_ru.extract_units import extract_selected
+from jitendex_ru.goldendict import build_goldendict, verify_goldendict
 from jitendex_ru.review import apply_adjudication, _review_manifest, _split_review_envelope, ingest_review, make_review_batches
 from jitendex_ru.util import canonical_json, sha256_bytes
 from jitendex_ru.validate_response import ingest_response
@@ -98,13 +101,19 @@ def test_translation_review_and_reproducible_build(tmp_path):
     source_zip = tmp_path / "source.zip"
     source_article = [
         "食べる", "たべる", "", "v1", 0,
-        {"type": "structured-content", "content": {"tag": "span", "lang": "en", "data": {"content": "glossary"}, "content": "to eat"}},
-        42, "",
+        {"type": "structured-content", "content": {"tag": "div", "content": [
+            {"tag": "span", "lang": "en", "data": {"content": "glossary"}, "content": "to eat"},
+            {"tag": "img", "path": "jitendex/graphics/example.avif", "width": 2, "height": 2, "sizeUnits": "px"},
+        ]}},
+        42, "★",
     ]
+    image_data = BytesIO()
+    Image.new("RGB", (2, 2), (210, 40, 30)).save(image_data, format="AVIF", quality=100)
     with zipfile.ZipFile(source_zip, "w") as archive:
         archive.writestr("index.json", json.dumps({"title": "Jitendex", "revision": "v", "format": 3}))
         archive.writestr("styles.css", "span {}")
         archive.writestr("tag_bank_1.json", json.dumps([["★", "popular", 2, "high priority entry", 2]]))
+        archive.writestr("jitendex/graphics/example.avif", image_data.getvalue())
 
     db_path = tmp_path / "progress.sqlite3"
     initialize(db_path)
@@ -115,6 +124,15 @@ def test_translation_review_and_reproducible_build(tmp_path):
     )
     connection.execute(
         "INSERT INTO source_snapshot(kind,version,url,sha256,local_path,extractor_version) VALUES ('kaishi','v','u','k','k','e')"
+    )
+    connection.execute(
+        """INSERT INTO jitendex_tag(
+          snapshot_id,source_kind,source_key,code,category,label_en,description_en,
+          source_sha256,occurrence_count,label_ru,description_ru,confidence,
+          translation_source,translation_source_sha256,translation_source_path
+        ) VALUES (1,'tag_bank','tag_bank_1.json:0','★','popular','★','high priority entry',
+          'tag-source',1,'★','Запись с высоким приоритетом','high',
+          'approved_workbook','catalog-hash','/approved.csv')"""
     )
     raw = canonical_json(source_article).decode()
     connection.execute(
@@ -178,16 +196,47 @@ def test_translation_review_and_reproducible_build(tmp_path):
 
     first = tmp_path / "one.zip"
     second = tmp_path / "two.zip"
-    tag_notes = {"high priority entry": "высокоприоритетная словарная статья"}
-    first_result = build(connection, 1, first, tag_notes)
-    second_result = build(connection, 1, second, tag_notes)
+    first_result = build(connection, 1, first)
+    second_result = build(connection, 1, second)
     assert first_result["zip_sha256"] == second_result["zip_sha256"]
     assert verify(connection, first)["verified"]
     with zipfile.ZipFile(first) as archive:
         emitted = json.loads(archive.read("term_bank_1.json"))[0]
-        assert emitted[5]["content"]["content"] == "есть"
-        assert emitted[5]["content"]["lang"] == "ru"
-        assert json.loads(archive.read("tag_bank_1.json"))[0][3] == "высокоприоритетная словарная статья"
+        assert emitted[5]["content"]["content"][0]["content"] == "есть"
+        assert emitted[5]["content"]["content"][0]["lang"] == "ru"
+        assert json.loads(archive.read("tag_bank_1.json"))[0] == [
+            "★", "popular", 2, "Запись с высоким приоритетом", 2,
+        ]
+    golden_one = tmp_path / "golden-one.zip"
+    golden_two = tmp_path / "golden-two.zip"
+    golden_result = build_goldendict(connection, 1, golden_one)
+    assert golden_result["converted_images"] == 1
+    assert golden_result["tag_bank_references_replaced"] == 1
+    golden_audit = json.loads(connection.execute(
+        "SELECT details_json FROM audit_event WHERE event_type='goldendict_build' AND entity_id=?",
+        (str(golden_result["export_id"]),),
+    ).fetchone()[0])
+    assert golden_audit["tag_catalog_version"] == "tags-ru-v1"
+    assert golden_audit["tag_bank_references_replaced"] == 1
+    assert golden_result["zip_sha256"] == build_goldendict(connection, 1, golden_two)["zip_sha256"]
+    assert verify_goldendict(connection, golden_one)["verified"]
+    with zipfile.ZipFile(golden_one) as archive:
+        assert {
+            "jitendex-ru.ifo", "jitendex-ru.idx", "jitendex-ru.dict",
+            "jitendex-ru.syn", "res/jitendex-ru.css",
+        } <= set(archive.namelist())
+        golden_article = archive.read("jitendex-ru.dict").decode()
+        assert "есть" in golden_article
+        assert '<span class="jr-tag" title="Запись с высоким приоритетом">★</span>' in golden_article
+        assert 'data-rules="v1" data-score="0" data-sequence="42"' in golden_article
+        assert 'src="jitendex/graphics/example.png"' in golden_article
+        assert "res/jitendex/graphics/example.png" in archive.namelist()
+        assert not any(name.endswith(".avif") for name in archive.namelist())
+        with Image.open(BytesIO(archive.read("res/jitendex/graphics/example.png"))) as converted:
+            assert converted.format == "PNG"
+            assert converted.size == (2, 2)
+        assert "たべる" in archive.read("jitendex-ru.syn").decode(errors="ignore")
+        assert "span {}" in archive.read("res/jitendex-ru.css").decode()
     smoke_path = tmp_path / "smoke.json"
     smoke_path.write_text(json.dumps({
         "schema_version": 1, "zip_sha256": first_result["zip_sha256"],
@@ -202,4 +251,4 @@ def test_translation_review_and_reproducible_build(tmp_path):
     assert connection.execute("SELECT state FROM run WHERE id=1").fetchone()[0] == "complete"
     connection.execute("UPDATE translation SET target_text='подмена' WHERE accepted=1")
     with pytest.raises(ValueError, match="accepted target hash changed"):
-        build(connection, 1, tmp_path / "tampered.zip", tag_notes)
+        build(connection, 1, tmp_path / "tampered.zip")

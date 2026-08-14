@@ -10,6 +10,12 @@ from typing import Any, Iterator
 
 from .apply_translations import apply_article
 from .db import audit
+from .jitendex_tags import (
+    TAG_CATALOG_VERSION, load_approved_tag_catalog, localize_embedded_tags,
+    localize_tag_bank_rows, localize_term_tag_references,
+    verify_localized_embedded_tags, verify_localized_tag_bank_rows,
+    verify_localized_term_tag_references,
+)
 from .util import canonical_json, sha256_bytes, sha256_file
 
 
@@ -122,10 +128,10 @@ def _chunk(rows: list[list[Any]], max_bytes: int = 4 * 1024 * 1024) -> list[list
     return chunks
 
 
-def build(
-    connection: ConnectionLike, run_id: int, output: Path,
-    tag_notes: dict[str, str] | None = None,
-) -> dict[str, Any]:
+def materialize_run(
+    connection: ConnectionLike, run_id: int,
+) -> tuple[RowLike, RowLike, list[list[Any]]]:
+    """Apply every accepted translation and return run, source, and articles."""
     run = connection.execute("SELECT * FROM run WHERE id=?", (run_id,)).fetchone()
     if run is None:
         raise ValueError(f"unknown run {run_id}")
@@ -158,6 +164,15 @@ def build(
     rows = [apply_article(connection, run_id, article, units_by_article.get(article["id"], [])) for article in articles]
     if not rows:
         raise ValueError("selection is empty")
+    return run, source_row, rows
+
+
+def build(
+    connection: ConnectionLike, run_id: int, output: Path,
+) -> dict[str, Any]:
+    run, source_row, rows = materialize_run(connection, run_id)
+    catalog = load_approved_tag_catalog(connection, run["jitendex_snapshot_id"])
+    embedded = localize_embedded_tags(rows, catalog)
     media = sorted({path for row in rows for path in _paths(row)})
     files: dict[str, bytes] = {}
     with zipfile.ZipFile(source_row["local_path"]) as source:
@@ -167,7 +182,7 @@ def build(
         suffix = frequency_metadata[1] if frequency_metadata else (
             "kaishi-ru-lexicographer-v2" if run["pipeline_version"] == "lexicographer-v2" else "kaishi-ru-v1"
         )
-        index["revision"] = f"{index.get('revision', '')}-{suffix}"
+        index["revision"] = f"{index.get('revision', '')}-{suffix}-{TAG_CATALOG_VERSION}"
         index["targetLanguage"] = "ru"
         index["description"] = (
             frequency_metadata[2]
@@ -178,18 +193,19 @@ def build(
         files["index.json"] = canonical_json(index)
         if "styles.css" in source.namelist():
             files["styles.css"] = source.read("styles.css")
-        for name in source.namelist():
-            if re.fullmatch(r"tag_bank_\d+\.json", name):
-                tag_rows = json.loads(source.read(name))
-                localized = []
-                for row in tag_rows:
-                    if not isinstance(row, list) or len(row) < 4 or not isinstance(row[3], str):
-                        raise ValueError(f"invalid tag row in {name}")
-                    translated = (tag_notes or {}).get(row[3])
-                    if row[3] and translated is None:
-                        raise ValueError(f"missing Russian tag note for {row[3]!r}")
-                    localized.append([*row[:3], translated or row[3], *row[4:]])
-                files[name] = canonical_json(localized)
+        tag_bank_names = sorted(
+            (name for name in source.namelist() if re.fullmatch(r"tag_bank_\d+\.json", name)),
+            key=lambda name: int(re.search(r"\d+", name)[0]),
+        )
+        source_tag_banks = {name: json.loads(source.read(name)) for name in tag_bank_names}
+        tag_bank_rows = [row for name in tag_bank_names for row in source_tag_banks[name]]
+        localized_tag_rows, tag_mapping = localize_tag_bank_rows(tag_bank_rows, catalog)
+        offset = 0
+        for name in tag_bank_names:
+            size = len(source_tag_banks[name])
+            files[name] = canonical_json(localized_tag_rows[offset:offset + size])
+            offset += size
+        tag_references = localize_term_tag_references(rows, tag_mapping)
         for path in media:
             if path not in source.namelist():
                 raise ValueError(f"missing referenced media {path}")
@@ -213,11 +229,35 @@ def build(
         "INSERT INTO export_file(export_id,path,sha256,byte_count) VALUES (?,?,?,?)",
         ((export_id, item["path"], item["sha256"], item["bytes"]) for item in manifest),
     )
-    audit(connection, "build", "export", export_id, {"output": str(output), "zip_sha256": zip_hash})
-    return {"export_id": export_id, "files": len(files), "articles": len(rows), "zip_sha256": zip_hash}
+    tag_summary = {
+        "tag_catalog_version": catalog["version"],
+        "tag_catalog_sha256": catalog["source_sha256"],
+        "embedded_tag_occurrences": embedded["embedded_tag_occurrences"],
+        "embedded_labels_replaced": embedded["embedded_labels_replaced"],
+        "embedded_tooltips_replaced": embedded["embedded_tooltips_replaced"],
+        "tag_bank_rows": len(catalog["tag_bank"]),
+        **tag_references,
+    }
+    audit(connection, "build", "export", export_id, {
+        "output": str(output), "zip_sha256": zip_hash, **tag_summary,
+    })
+    return {
+        "export_id": export_id, "files": len(files), "articles": len(rows),
+        "zip_sha256": zip_hash, **tag_summary,
+    }
 
 
 def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
+    zip_hash = sha256_file(path)
+    export = connection.execute(
+        """SELECT e.run_id,r.jitendex_snapshot_id FROM export e
+        JOIN run r ON r.id=e.run_id
+        WHERE e.output_path=? AND e.zip_sha256=? ORDER BY e.id DESC LIMIT 1""",
+        (str(path), zip_hash),
+    ).fetchone()
+    if export is None:
+        raise ValueError("archive has no matching export record")
+    catalog = load_approved_tag_catalog(connection, export["jitendex_snapshot_id"])
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
         if not names or names[0] != "index.json":
@@ -227,28 +267,41 @@ def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         index = json.loads(archive.read("index.json"))
         if index.get("targetLanguage") != "ru":
             raise ValueError("targetLanguage is not ru")
+        if not str(index.get("revision", "")).endswith(f"-{TAG_CATALOG_VERSION}"):
+            raise ValueError("archive revision lacks the approved tag-catalog version")
+        tag_names = sorted(
+            (name for name in names if re.fullmatch(r"tag_bank_\d+\.json", name)),
+            key=lambda name: int(re.search(r"\d+", name)[0]),
+        )
+        tag_rows = [row for name in tag_names for row in json.loads(archive.read(name))]
+        tag_mapping = verify_localized_tag_bank_rows(tag_rows, catalog)
         term_names = sorted((name for name in names if re.fullmatch(r"term_bank_\d+\.json", name)), key=lambda name: int(re.search(r"\d+", name)[0]))
         article_count = 0
+        embedded_tag_occurrences = 0
+        tag_bank_references = 0
         missing_media: set[str] = set()
         for name in term_names:
             rows = json.loads(archive.read(name))
             article_count += len(rows)
+            embedded_tag_occurrences += verify_localized_embedded_tags(rows, catalog)[
+                "embedded_tag_occurrences"
+            ]
+            tag_bank_references += verify_localized_term_tag_references(rows, tag_mapping)
             for row in rows:
                 missing_media.update(path for path in _paths(row) if path not in names)
         if missing_media:
             raise ValueError(f"missing media: {sorted(missing_media)}")
-    export = connection.execute(
-        "SELECT run_id FROM export WHERE output_path=? AND zip_sha256=? ORDER BY id DESC LIMIT 1",
-        (str(path), sha256_file(path)),
-    ).fetchone()
-    if export is None:
-        raise ValueError("archive has no matching export record")
     expected = connection.execute("SELECT COUNT(*) FROM run_article WHERE run_id=?", (export["run_id"],)).fetchone()[0]
     if article_count != expected:
         raise ValueError(f"expected {expected} articles, found {article_count}")
-    zip_hash = sha256_file(path)
     connection.execute("UPDATE export SET verified=1 WHERE output_path=? AND zip_sha256=?", (str(path), zip_hash))
-    return {"verified": True, "articles": article_count, "files": len(names), "zip_sha256": zip_hash}
+    return {
+        "verified": True, "articles": article_count, "files": len(names), "zip_sha256": zip_hash,
+        "tag_catalog_version": catalog["version"],
+        "tag_catalog_sha256": catalog["source_sha256"],
+        "embedded_tag_occurrences": embedded_tag_occurrences,
+        "tag_bank_rows": len(tag_mapping), "tag_bank_references": tag_bank_references,
+    }
 
 
 YOMITAN_SMOKE_CHECKS = {

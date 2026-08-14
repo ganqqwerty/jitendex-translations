@@ -2388,3 +2388,17 @@ SHA-256: 68b4ef51f06213428e0c5b223b6715e2099542e28456c9fe8e42df75587d127b
 ~~~
 
 HIST-ALL-433885-6 — Export 65 was verified and Run 59 completes the full Jitendex corpus. The first preparation command used local port 5432 instead of Docker's published port 5433 and failed before database changes. Future commands should resolve the port with `docker port jitendex-postgres 5432/tcp`. The first verify command omitted `JITENDEX_POSTGRES_URL` and failed before reading the archive; the corrected command passed. Future verification shells must export the authoritative URL first.
+
+## HIST-TAGS-RU-V1 — Run 59 approved Russian tags
+
+HIST-TAGS-RU-V1-1 — Before the canonical import, PostgreSQL was backed up to `work/backups/jitendex-postgresql-before-tags-ru-v1.dump`. The validated dump SHA-256 is `9bf1d1ae89696232d919581ab3f2ba18c50637a76882962b8ad4ee6d265b7b7a`.
+
+HIST-TAGS-RU-V1-2 — `terminology/jitendex-tags-ru.csv` reconciled all 236 source identities. Its SHA-256 is `f3f3649806a9de4fc7a0c1a96cffafc343d8d7d31592b0547266809c127a95fa`. The first import updated provenance only, created no replacement history, and the repeated import made no changes.
+
+HIST-TAGS-RU-V1-3 — Yomitan export 66 is `dist/jitendex-articles-433885-ru-luna-v4-tags-ru-v1.zip`, SHA-256 `c157b41f3fc99a52d4099c8384e87c8e0ec8813e87c93f988a801c3e9fc63a58`. It contains 654,503 embedded tag occurrences, replaced 1,706 historical labels and 454 historical tooltips, localized eight tag-bank rows, and rewrote 136,832 tag-reference fields. Of 167,269 tag references, 137,523 changed; 29,746 `★` references were already canonical.
+
+HIST-TAGS-RU-V1-4 — GoldenDict export 67 is `dist/jitendex-articles-433885-ru-goldendict-tags-ru-v1.zip`, SHA-256 `f81e9c8d41139a8cee09b5333587ef723797b12580e5e3e5db8a2714efe589e0`. Its verifier checked 654,503 embedded tags and 167,269 tag-bank badges with exact Russian labels and tooltips.
+
+HIST-TAGS-RU-V1-5 — Both archives reproduced byte-for-byte on a second build. All 140 tests passed with two expected PostgreSQL integration skips. Yomitan schema validation and both independent archive verifiers passed. The Run 59 report is `reports/jitendex_tags/run59-tag-unification.json` and records zero missing mappings.
+
+HIST-TAGS-RU-V1-6 — Automated browser control cannot open Chrome extension settings, so the clean-profile Yomitan import and representative POS, field, dialect, and tag-bank hover check remains a manual release gate. Export 65 was not modified.

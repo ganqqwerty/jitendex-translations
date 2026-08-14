@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .database import ConnectionLike, RowLike
 
+import csv
 import json
 import re
 import zipfile
@@ -27,6 +28,13 @@ SOURCE_FORM_KANA = {
     "kureru": "くれる", "Kuru": "くる", "suru": "する", "zuru": "ずる", "jiru": "じる",
     "-aru": "ある", "Iku/Yuku": "行く／ゆく",
 }
+APPROVED_TAG_COLUMNS = (
+    "source_kind", "category", "code", "label_en", "label_ru",
+    "description_en", "description_ru", "occurrence_count", "confidence", "review_reason",
+)
+APPROVED_TAG_ROW_COUNT = 236
+TAG_CATALOG_VERSION = "tags-ru-v1"
+NON_BREAKING_SPACE = "\u00a0"
 
 
 def _walk(node: Any) -> Iterator[dict[str, Any]]:
@@ -44,6 +52,278 @@ def _source_hash(row: Mapping[str, Any]) -> str:
         key: row[key]
         for key in ("source_kind", "source_key", "code", "category", "label_en", "description_en")
     }))
+
+
+def read_approved_tag_csv(path: Path) -> list[dict[str, Any]]:
+    """Read the exact approved CSV schema without changing its wording."""
+    with path.open(encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream)
+        if tuple(reader.fieldnames or ()) != APPROVED_TAG_COLUMNS:
+            raise ValueError(
+                f"approved tag CSV columns must be {APPROVED_TAG_COLUMNS}, found {reader.fieldnames}"
+            )
+        rows: list[dict[str, Any]] = []
+        for line_number, source in enumerate(reader, 2):
+            if None in source:
+                raise ValueError(f"approved tag CSV row {line_number} has extra columns")
+            row = {key: value if value is not None else "" for key, value in source.items()}
+            try:
+                row["occurrence_count"] = int(row["occurrence_count"])
+            except ValueError as error:
+                raise ValueError(
+                    f"approved tag CSV row {line_number} has an invalid occurrence_count"
+                ) from error
+            rows.append(row)
+    if len(rows) != APPROVED_TAG_ROW_COUNT:
+        raise ValueError(
+            f"approved tag CSV must contain exactly {APPROVED_TAG_ROW_COUNT} rows, found {len(rows)}"
+        )
+    return rows
+
+
+def load_approved_tag_catalog(
+    connection: ConnectionLike, snapshot_id: int,
+) -> dict[str, Any]:
+    """Load one complete approved catalog and reject mixed or ambiguous provenance."""
+    rows = connection.execute(
+        "SELECT * FROM jitendex_tag WHERE snapshot_id=? ORDER BY id", (snapshot_id,),
+    ).fetchall()
+    if not rows:
+        raise ValueError(f"snapshot {snapshot_id} has no Jitendex tag catalog")
+    unapproved = [row["id"] for row in rows if row["translation_source"] != "approved_workbook"]
+    if unapproved:
+        raise ValueError(f"snapshot {snapshot_id} has {len(unapproved)} unapproved Jitendex tags")
+    source_hashes = {row["translation_source_sha256"] for row in rows}
+    source_paths = {row["translation_source_path"] for row in rows}
+    if len(source_hashes) != 1 or None in source_hashes or len(source_paths) != 1 or None in source_paths:
+        raise ValueError("approved Jitendex tags do not share one source path and SHA-256")
+
+    by_identity: dict[tuple[str, str, str], dict[str, Any]] = {}
+    embedded: dict[tuple[str, str], dict[str, Any]] = {}
+    tag_bank: dict[str, dict[str, Any]] = {}
+    for database_row in rows:
+        row = dict(database_row)
+        if (
+            not isinstance(row["label_ru"], str) or not row["label_ru"].strip()
+            or not isinstance(row["description_ru"], str) or not row["description_ru"].strip()
+        ):
+            raise ValueError(f"approved Jitendex tag {row['id']} is incomplete")
+        identity = (row["source_kind"], row["category"], row["code"] or "")
+        if identity in by_identity:
+            raise ValueError(f"duplicate approved Jitendex tag identity {identity}")
+        by_identity[identity] = row
+        if row["source_kind"] == "embedded_tooltip":
+            key = (row["category"], row["code"] or "")
+            if key in embedded:
+                raise ValueError(f"duplicate approved embedded Jitendex tag {key}")
+            embedded[key] = row
+        elif row["source_kind"] == "tag_bank":
+            code = row["code"] or ""
+            if not code or code in tag_bank:
+                raise ValueError(f"invalid or duplicate approved tag-bank code {code!r}")
+            tag_bank[code] = row
+        else:
+            raise ValueError(f"unsupported approved Jitendex tag source {row['source_kind']!r}")
+    encoded_labels = [row["label_ru"].replace(" ", NON_BREAKING_SPACE) for row in tag_bank.values()]
+    if len(encoded_labels) != len(set(encoded_labels)):
+        raise ValueError("approved Russian tag-bank labels collide")
+    return {
+        "snapshot_id": snapshot_id,
+        "version": TAG_CATALOG_VERSION,
+        "source_sha256": next(iter(source_hashes)),
+        "source_path": next(iter(source_paths)),
+        "embedded": embedded,
+        "tag_bank": tag_bank,
+    }
+
+
+def tag_bank_mapping(catalog: Mapping[str, Any]) -> dict[str, dict[str, str]]:
+    return {
+        code: {
+            "label_ru": row["label_ru"],
+            "encoded_label_ru": row["label_ru"].replace(" ", NON_BREAKING_SPACE),
+            "description_ru": row["description_ru"],
+        }
+        for code, row in catalog["tag_bank"].items()
+    }
+
+
+def localize_embedded_tags(value: Any, catalog: Mapping[str, Any]) -> dict[str, Any]:
+    """Override every structured tag label and tooltip and describe the replaced variants."""
+    details: dict[tuple[str, str], dict[str, Any]] = {}
+    label_replacements = 0
+    tooltip_replacements = 0
+    for node in _walk(value):
+        data = node.get("data")
+        if not (isinstance(data, dict) and data.get("class") == "tag"):
+            continue
+        category = data.get("content")
+        code = data.get("code", "")
+        label = node.get("content")
+        tooltip = node.get("title")
+        if not all(isinstance(item, str) for item in (category, code, label, tooltip)):
+            raise ValueError("invalid embedded Jitendex tag structure")
+        key = (category, code)
+        approved = catalog["embedded"].get(key)
+        if approved is None:
+            raise ValueError(f"missing approved embedded Jitendex tag {key}")
+        detail = details.setdefault(key, {
+            "source_kind": "embedded_tooltip", "category": category, "code": code,
+            "approved_label_ru": approved["label_ru"],
+            "approved_description_ru": approved["description_ru"],
+            "occurrences": 0, "label_variants": Counter(), "tooltip_variants": Counter(),
+        })
+        detail["occurrences"] += 1
+        detail["label_variants"][label] += 1
+        detail["tooltip_variants"][tooltip] += 1
+        if label != approved["label_ru"]:
+            label_replacements += 1
+            node["content"] = approved["label_ru"]
+        if tooltip != approved["description_ru"]:
+            tooltip_replacements += 1
+            node["title"] = approved["description_ru"]
+    return {
+        "embedded_tag_occurrences": sum(item["occurrences"] for item in details.values()),
+        "embedded_labels_replaced": label_replacements,
+        "embedded_tooltips_replaced": tooltip_replacements,
+        "embedded_tags": [
+            {
+                **{key: value for key, value in detail.items() if key not in {"label_variants", "tooltip_variants"}},
+                "label_variants": dict(sorted(detail["label_variants"].items())),
+                "tooltip_variants": dict(sorted(detail["tooltip_variants"].items())),
+            }
+            for _identity, detail in sorted(details.items())
+        ],
+    }
+
+
+def localize_tag_bank_rows(
+    rows: Sequence[Sequence[Any]], catalog: Mapping[str, Any],
+) -> tuple[list[list[Any]], dict[str, dict[str, str]]]:
+    """Localize tag-bank names and descriptions after exact source-side validation."""
+    mapping = tag_bank_mapping(catalog)
+    localized: list[list[Any]] = []
+    seen: set[str] = set()
+    for source in rows:
+        if len(source) < 4 or not all(isinstance(source[index], str) for index in (0, 1, 3)):
+            raise ValueError("invalid Jitendex tag-bank row")
+        code, category, description = source[0], source[1], source[3]
+        approved = catalog["tag_bank"].get(code)
+        if approved is None:
+            raise ValueError(f"missing approved Jitendex tag-bank mapping for {code!r}")
+        if category != approved["category"] or description != approved["description_en"]:
+            raise ValueError(f"Jitendex tag-bank source identity changed for {code!r}")
+        seen.add(code)
+        localized.append([
+            mapping[code]["encoded_label_ru"], *source[1:3], approved["description_ru"], *source[4:],
+        ])
+    missing = set(mapping) - seen
+    if missing:
+        raise ValueError(f"source archive lacks approved Jitendex tag-bank rows: {sorted(missing)}")
+    return localized, mapping
+
+
+def localize_term_tag_references(
+    rows: Sequence[list[Any]], mapping: Mapping[str, Mapping[str, str]],
+) -> dict[str, int]:
+    """Rewrite Yomitan tag references, using ASCII spaces only as separators."""
+    references = 0
+    fields_changed = 0
+    for row in rows:
+        if len(row) < 8:
+            raise ValueError("invalid Yomitan term row")
+        for index in (2, 7):
+            value = row[index]
+            if not isinstance(value, str):
+                raise ValueError("invalid Yomitan term tag reference field")
+            if not value:
+                continue
+            tags = [tag for tag in value.split(" ") if tag]
+            unknown = [tag for tag in tags if tag not in mapping]
+            if unknown:
+                raise ValueError(f"missing approved tag-bank references: {unknown}")
+            localized = " ".join(mapping[tag]["encoded_label_ru"] for tag in tags)
+            references += len(tags)
+            fields_changed += int(localized != value)
+            row[index] = localized
+    return {"tag_bank_references": references, "tag_bank_reference_fields_replaced": fields_changed}
+
+
+def count_tag_bank_references(
+    rows: Sequence[Sequence[Any]], mapping: Mapping[str, Mapping[str, str]],
+) -> int:
+    """Count source tag references while rejecting unknown codes before export."""
+    references = 0
+    for row in rows:
+        if len(row) < 8:
+            raise ValueError("invalid Yomitan term row")
+        for index in (2, 7):
+            value = row[index]
+            if not isinstance(value, str):
+                raise ValueError("invalid Yomitan term tag reference field")
+            tags = [tag for tag in value.split(" ") if tag]
+            unknown = [tag for tag in tags if tag not in mapping]
+            if unknown:
+                raise ValueError(f"missing approved tag-bank references: {unknown}")
+            references += len(tags)
+    return references
+
+
+def verify_localized_embedded_tags(value: Any, catalog: Mapping[str, Any]) -> dict[str, Any]:
+    """Independently require every emitted structured tag to equal the approved catalog."""
+    result = localize_embedded_tags(value, catalog)
+    if result["embedded_labels_replaced"] or result["embedded_tooltips_replaced"]:
+        raise ValueError(
+            "export contains non-canonical embedded Jitendex tag labels or tooltips"
+        )
+    return result
+
+
+def verify_localized_tag_bank_rows(
+    rows: Sequence[Sequence[Any]], catalog: Mapping[str, Any],
+) -> dict[str, dict[str, str]]:
+    mapping = tag_bank_mapping(catalog)
+    by_label = {item["encoded_label_ru"]: (code, item) for code, item in mapping.items()}
+    seen: set[str] = set()
+    for row in rows:
+        if len(row) < 4 or not all(isinstance(row[index], str) for index in (0, 1, 3)):
+            raise ValueError("invalid localized Jitendex tag-bank row")
+        match = by_label.get(row[0])
+        if match is None:
+            raise ValueError(f"unapproved localized Jitendex tag-bank label {row[0]!r}")
+        code, approved = match
+        source = catalog["tag_bank"][code]
+        if row[1] != source["category"] or row[3] != approved["description_ru"]:
+            raise ValueError(f"localized Jitendex tag-bank row differs from the catalog for {code!r}")
+        if code in seen:
+            raise ValueError(f"duplicate localized Jitendex tag-bank row for {code!r}")
+        seen.add(code)
+    missing = set(mapping) - seen
+    if missing:
+        raise ValueError(f"localized archive lacks approved tag-bank rows: {sorted(missing)}")
+    return mapping
+
+
+def verify_localized_term_tag_references(
+    rows: Sequence[Sequence[Any]], mapping: Mapping[str, Mapping[str, str]],
+) -> int:
+    approved_labels = {item["encoded_label_ru"] for item in mapping.values()}
+    references = 0
+    for row in rows:
+        if len(row) < 8:
+            raise ValueError("invalid localized Yomitan term row")
+        for index in (2, 7):
+            value = row[index]
+            if not isinstance(value, str):
+                raise ValueError("invalid localized Yomitan term tag reference field")
+            if not value:
+                continue
+            tags = [tag for tag in value.split(" ") if tag]
+            unknown = [tag for tag in tags if tag not in approved_labels]
+            if unknown:
+                raise ValueError(f"unapproved localized term tag references: {unknown}")
+            references += len(tags)
+    return references
 
 
 def extract_jitendex_tags(archive_path: Path) -> list[dict[str, Any]]:
@@ -267,24 +547,26 @@ def ingest_approved_tag_rows(
     if not database_rows:
         raise ValueError(f"snapshot {snapshot_id} has no Jitendex tag catalog")
 
-    def identity(row: Mapping[str, Any]) -> tuple[str, str, str, str, str, int]:
+    def identity(row: Mapping[str, Any]) -> tuple[str, str, str]:
         code = row.get("code")
         return (
             str(row.get("source_kind") or ""),
             str(row.get("category") or ""),
             "" if code is None else str(code),
-            str(row.get("label_en") or ""),
-            str(row.get("description_en") or ""),
-            int(row.get("occurrence_count") or 0),
         )
 
-    approved_by_identity: dict[tuple[str, str, str, str, str, int], Mapping[str, Any]] = {}
+    approved_by_identity: dict[tuple[str, str, str], Mapping[str, Any]] = {}
     for row in rows:
         key = identity(row)
         if key in approved_by_identity:
             raise ValueError(f"duplicate approved tag identity: {key}")
         approved_by_identity[key] = row
-    database_by_identity = {identity(dict(row)): row for row in database_rows}
+    database_by_identity: dict[tuple[str, str, str], RowLike] = {}
+    for row in database_rows:
+        key = identity(dict(row))
+        if key in database_by_identity:
+            raise ValueError(f"duplicate database tag identity: {key}")
+        database_by_identity[key] = row
     missing = database_by_identity.keys() - approved_by_identity.keys()
     extra = approved_by_identity.keys() - database_by_identity.keys()
     if missing or extra:
@@ -295,6 +577,17 @@ def ingest_approved_tag_rows(
     replacements: list[tuple[RowLike, str, str, str, str | None]] = []
     for key, database_row in database_by_identity.items():
         approved = approved_by_identity[key]
+        approved_source = (
+            str(approved.get("label_en") or ""),
+            str(approved.get("description_en") or ""),
+            int(approved.get("occurrence_count") or 0),
+        )
+        database_source = (
+            database_row["label_en"], database_row["description_en"],
+            database_row["occurrence_count"],
+        )
+        if approved_source != database_source:
+            raise ValueError(f"approved workbook source fields differ for tag identity {key}")
         label = approved.get("label_ru")
         description = approved.get("description_ru")
         confidence = approved.get("confidence")
@@ -310,19 +603,32 @@ def ingest_approved_tag_rows(
             raise ValueError(f"approved tag {database_row['id']} has invalid confidence")
         if (confidence == "high" and reason is not None) or (confidence != "high" and reason is None):
             raise ValueError(f"approved tag {database_row['id']} has inconsistent confidence/review_reason")
-        replacements.append((database_row, label.strip(), description.strip(), str(confidence), reason))
+        replacements.append((database_row, label, description, str(confidence), reason))
 
     changed = 0
+    provenance_updated = 0
     for database_row, label, description, confidence, reason in replacements:
-        current_state = (
+        current_terminology = (
             database_row["label_ru"], database_row["description_ru"], database_row["confidence"],
-            database_row["review_reason"], database_row["translation_source"],
-            database_row["translation_source_sha256"], database_row["translation_source_path"],
+            database_row["review_reason"],
         )
-        approved_state = (
-            label, description, confidence, reason, "approved_workbook", source_sha256, source_path,
+        approved_terminology = (label, description, confidence, reason)
+        same_authority = database_row["translation_source"] == "approved_workbook"
+        same_provenance = (
+            same_authority
+            and database_row["translation_source_sha256"] == source_sha256
+            and database_row["translation_source_path"] == source_path
         )
-        if current_state == approved_state:
+        if current_terminology == approved_terminology and same_provenance:
+            continue
+        if current_terminology == approved_terminology and same_authority:
+            connection.execute(
+                """UPDATE jitendex_tag SET
+                  translation_source_sha256=?,translation_source_path=?,approved_at=CURRENT_TIMESTAMP
+                WHERE id=?""",
+                (source_sha256, source_path, database_row["id"]),
+            )
+            provenance_updated += 1
             continue
         connection.execute(
             """INSERT INTO jitendex_tag_translation_history(
@@ -351,11 +657,13 @@ def ingest_approved_tag_rows(
         "source_sha256": source_sha256,
         "rows": len(replacements),
         "changed": changed,
+        "provenance_updated": provenance_updated,
     })
     return {
         "snapshot_id": snapshot_id,
         "rows_reconciled": len(replacements),
         "rows_replaced": changed,
+        "rows_provenance_updated": provenance_updated,
         "source_sha256": source_sha256,
     }
 

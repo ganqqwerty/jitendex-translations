@@ -6,9 +6,9 @@ RUN-2 measure the time of the things you do.
 
 ## RUN-STOP — Current state (update when state changed)
 
-RUN-STOP-1 — Run 59 is complete in authoritative PostgreSQL with all 433,885 frozen articles, 2,053,045 accepted units, zero unfinished leaf work, and verified export 65.
+RUN-STOP-1 — Run 59 is complete in authoritative PostgreSQL with all 433,885 frozen articles, 2,053,045 accepted units, zero unfinished leaf work, and verified exports 65 through 67.
 
-RUN-STOP-2 — The verified archive is `dist/jitendex-articles-433885-ru-luna-v4.zip`. Its SHA-256 is `68b4ef51f06213428e0c5b223b6715e2099542e28456c9fe8e42df75587d127b`.
+RUN-STOP-2 — Verified export 65 remains unchanged at `dist/jitendex-articles-433885-ru-luna-v4.zip`, SHA-256 `68b4ef51f06213428e0c5b223b6715e2099542e28456c9fe8e42df75587d127b`.
 RUN-STOP-3 — Run 59 is the completed full-corpus checkpoint. All 431,545 Jitendex headwords are translated and zero remain. There is no next productive scope unless the source dictionary gains articles.
 
 RUN-STOP-4 — PostgreSQL is authoritative. The old SQLite source is read-only migration evidence and must not receive production writes.
@@ -17,6 +17,8 @@ RUN-STOP-5 — Concurrency 100 remains the proven future setting. The concurrenc
 
 RUN-STOP-6 — Docker's internal disk limit is 264 GB and its PostgreSQL filesystem has about 115 GB free. Its disk image remains under `~/Library/Containers`, outside Documents and iCloud.
 
+RUN-STOP-7 — The verified `tags-ru-v1` Yomitan export 66 has SHA-256 `c157b41f3fc99a52d4099c8384e87c8e0ec8813e87c93f988a801c3e9fc63a58`. GoldenDict export 67 has SHA-256 `f81e9c8d41139a8cee09b5333587ef723797b12580e5e3e5db8a2714efe589e0`. Publication waits for the manual clean-profile Yomitan hover check.
+
 ## RUN-PIN — Pinned runtime
 
 RUN-PIN-1 — Run from `/Users/iuriikatkov/Documents/ChatGPT/jitendex-translations` with `config.luna.toml` and the configured `JITENDEX_POSTGRES_URL`.
@@ -24,6 +26,14 @@ RUN-PIN-1 — Run from `/Users/iuriikatkov/Documents/ChatGPT/jitendex-translatio
 RUN-PIN-2 — Translation uses `gpt-5.6-luna`, medium reasoning, `prompts/translate_luna_v4.txt`, `lexicographer-v2`, and the batch limits in `config.luna.toml`.
 
 RUN-PIN-3 — Do not change the model, prompt, reasoning, validator, batching limits, or runner revision during online concurrency tuning.
+
+## RUN-TAGS — Approved Russian tags
+
+RUN-TAGS-1 — `terminology/jitendex-tags-ru.csv` is the exact authority for 236 labels and tooltips. Import it with `import-approved-tags --csv PATH --snapshot-id ID` after a PostgreSQL backup.
+
+RUN-TAGS-2 — Yomitan and GoldenDict builds load only complete `approved_workbook` rows from `jitendex_tag`. Missing, duplicate, incomplete, or colliding mappings stop the build.
+
+RUN-TAGS-3 — Both exporters localize embedded tags from source category and code. Yomitan also localizes tag-bank names, descriptions, and term references. Do not edit historical Luna translations or use `terminology/tag-bank-ru-v1.json` for current builds.
 
 ~~~bash
 export PYTHONPATH=src
@@ -114,12 +124,12 @@ RUN-FINISH-2 — Require exactly one accepted translation per unit, zero blockin
 ~~~bash
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   build --run-id "$JPDB_RUN_ID" \
-  --output "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4.zip"
+  --output "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4-tags-ru-v1.zip"
 
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
-  verify "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4.zip"
+  verify "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4-tags-ru-v1.zip"
 
-shasum -a 256 "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4.zip"
+shasum -a 256 "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4-tags-ru-v1.zip"
 ~~~
 
 RUN-FINISH-3 — Run the full test suite, record the verified export and online window results in [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md), and update only RUN-STOP for the following batch. Also add lessons learned to [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md) . If there were hiccups, add ideas on mitigating them to the history file. Times too need to be recorded there for future analysis. If the times are unusually long or short, the analysis must be added to the same history file.

@@ -1,5 +1,6 @@
 import json
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -8,6 +9,11 @@ from jitendex_ru.jitendex_tags import (
     import_jitendex_tags,
     ingest_approved_tag_rows,
     ingest_tag_translations,
+    load_approved_tag_catalog,
+    localize_embedded_tags,
+    localize_tag_bank_rows,
+    localize_term_tag_references,
+    read_approved_tag_csv,
     translated_tag_notes,
 )
 
@@ -108,4 +114,101 @@ def test_approved_catalog_replaces_luna_with_history_and_blocks_model_overwrite(
         ingest_tag_translations(
             connection, payload, [row], model="gpt-5.6-luna",
             reasoning_effort="medium", prompt_sha256="new-prompt",
+        )
+
+    provenance = ingest_approved_tag_rows(
+        connection, 1, approved, source_path="/approved.csv", source_sha256="csv-hash",
+    )
+    assert provenance["rows_replaced"] == 0
+    assert provenance["rows_provenance_updated"] == 2
+    assert connection.execute(
+        "SELECT COUNT(*) FROM jitendex_tag_translation_history"
+    ).fetchone()[0] == 2
+    repeated = ingest_approved_tag_rows(
+        connection, 1, approved, source_path="/approved.csv", source_sha256="csv-hash",
+    )
+    assert repeated["rows_replaced"] == 0
+    assert repeated["rows_provenance_updated"] == 0
+
+
+def test_reads_the_complete_canonical_csv_without_changing_values():
+    path = Path(__file__).parents[1] / "terminology" / "jitendex-tags-ru.csv"
+    rows = read_approved_tag_csv(path)
+
+    assert len(rows) == 236
+    assert {row["source_kind"] for row in rows} == {"embedded_tooltip", "tag_bank"}
+    priority = next(row for row in rows if row["code"] == "priority\u00a0form")
+    assert priority["label_ru"] == "приор. форма"
+    assert priority["description_ru"] == "Написание или чтение этого термина с высоким приоритетом"
+
+
+def test_approved_csv_parser_rejects_incomplete_catalog(tmp_path):
+    path = tmp_path / "incomplete.csv"
+    path.write_text(
+        "source_kind,category,code,label_en,label_ru,description_en,description_ru,"
+        "occurrence_count,confidence,review_reason\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="exactly 236 rows"):
+        read_approved_tag_csv(path)
+
+
+def test_localizes_embedded_and_multiword_tag_bank_terminology_exactly():
+    catalog = {
+        "embedded": {("part-of-speech-info", ""): {
+            "label_ru": "часть речи", "description_ru": "Описание части речи",
+        }},
+        "tag_bank": {"priority\u00a0form": {
+            "category": "frequent", "description_en": "high priority spelling or reading of this term",
+            "label_ru": "приор. форма",
+            "description_ru": "Написание или чтение этого термина с высоким приоритетом",
+        }},
+    }
+    embedded = {
+        "tag": "span", "data": {"class": "tag", "content": "part-of-speech-info"},
+        "content": "old label", "title": "old tooltip",
+    }
+    result = localize_embedded_tags(embedded, catalog)
+    localized_rows, mapping = localize_tag_bank_rows([[
+        "priority\u00a0form", "frequent", 1,
+        "high priority spelling or reading of this term", 1,
+    ]], catalog)
+    term = ["語", "ご", "priority\u00a0form", "", 0, [], 1, "priority\u00a0form"]
+    references = localize_term_tag_references([term], mapping)
+
+    assert embedded["content"] == "часть речи"
+    assert embedded["title"] == "Описание части речи"
+    assert result["embedded_labels_replaced"] == 1
+    assert localized_rows[0][0] == "приор.\u00a0форма"
+    assert localized_rows[0][3] == "Написание или чтение этого термина с высоким приоритетом"
+    assert term[2] == term[7] == "приор.\u00a0форма"
+    assert references == {"tag_bank_references": 2, "tag_bank_reference_fields_replaced": 2}
+
+
+def test_catalog_loader_rejects_duplicate_approved_identity(tmp_path):
+    connection = _database(tmp_path)
+    for source_key in ("one", "two"):
+        connection.execute(
+            """INSERT INTO jitendex_tag(
+              snapshot_id,source_kind,source_key,code,category,label_en,description_en,
+              source_sha256,occurrence_count,label_ru,description_ru,confidence,
+              translation_source,translation_source_sha256,translation_source_path
+            ) VALUES (1,'embedded_tooltip',?,'n','part-of-speech-info',?,?,'s',1,
+              'сущ.','Существительное','high','approved_workbook','csv-hash','/approved.csv')""",
+            (source_key, f"noun-{source_key}", f"noun tooltip {source_key}"),
+        )
+
+    with pytest.raises(ValueError, match="duplicate approved Jitendex tag identity"):
+        load_approved_tag_catalog(connection, 1)
+
+    approved = [{
+        "source_kind": "embedded_tooltip", "category": "part-of-speech-info", "code": "n",
+        "label_en": "noun-one", "description_en": "noun tooltip one", "occurrence_count": 1,
+        "label_ru": "сущ.", "description_ru": "Существительное", "confidence": "high",
+        "review_reason": None,
+    }]
+    with pytest.raises(ValueError, match="duplicate database tag identity"):
+        ingest_approved_tag_rows(
+            connection, 1, approved, source_path="/approved.csv", source_sha256="csv-hash",
         )
