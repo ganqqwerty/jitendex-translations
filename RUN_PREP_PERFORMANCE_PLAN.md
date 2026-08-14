@@ -1,6 +1,6 @@
 # RPP — Make RUN-PREP faster
 
-RPP-1 — Status: implemented and disposable-tested. The next approved real RUN-PREP measurement is still required before changing the runbook time estimate.
+RPP-1 — Status: complete. The optimized path passed disposable tests and the approved real Run 50 preparation.
 
 ## RPP-EVIDENCE — What we know
 
@@ -96,4 +96,6 @@ RPP-RESULT-6 — One full 3.1 GB restore into the production Docker volume exhau
 
 RPP-RESULT-7 — All 115 tests pass normally and with the disposable PostgreSQL tests enabled. PostgreSQL tests cover incremental copy, set-based reuse, COPY batch loading, audit counts, claims, interruption, retries, splits, and connection loss.
 
-RPP-RESULT-8 — Retain the ready-article filter, bulk evidence query, cached-size packing, COPY loading, phase metrics, progress messages, saved report, and benchmark. They pass parity and memory gates, and the measured packing and loading phases exceed the required two-times speedup. Do not change the runbook estimate until the next approved real RUN-PREP records its result.
+RPP-RESULT-8 — Retain the ready-article filter, bulk evidence query, cached-size packing, COPY loading, phase metrics, progress messages, saved report, and benchmark. They pass parity and memory gates, and the measured packing and loading phases exceed the required two-times speedup.
+
+RPP-RESULT-9 — RPP-DECIDE-3 prepared real Run 50 from Run 49 in 171.40 seconds with no Luna requests. It selected 346,368 articles, copied and reused 1,692,336 accepted units, created 29,904 ready units in 824 batches, and passed all parity gates. Peak measured process memory was 1.88 GB. The saved result is [run-50-prep.json](reports/run_prep/run-50-prep.json).

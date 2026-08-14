@@ -6,14 +6,16 @@ RUN-2 measure the time of the things you do.
 
 ## RUN-STOP — Current state (update when state changed)
 
-RUN-STOP-1 — Run 49 is complete in authoritative PostgreSQL with 336,368 frozen articles, 1,692,336 accepted units, zero unfinished work, and verified export 55. Run 48 was never created; its PostgreSQL sequence value was consumed by a rolled-back preparation attempt.
+RUN-STOP-1 — Run 49 is complete in authoritative PostgreSQL with 336,368 frozen articles, 1,692,336 accepted units, zero unfinished work, and verified export 55. Run 50 is prepared with 346,368 articles, 1,692,336 reused translations, and 29,904 ready units in 824 batches.
 
 RUN-STOP-2 — The verified archive is `dist/jitendex-articles-336368-ru-luna-v4.zip`. Its SHA-256 is `84dcf1ecf6c5d4fe9532f2b1f415abc2f1f4edfe53422477ccfff116858001b2`.
-RUN-STOP-3 — Stop at Run 49. Do not create another run or send more Luna requests without new user authorization.
+RUN-STOP-3 — Stop before translating Run 50. Its preparation made zero Luna requests. Do not start its ready batches without new user authorization.
 
 RUN-STOP-4 — PostgreSQL is authoritative. The old SQLite source is read-only migration evidence and must not receive production writes.
 
 RUN-STOP-5 — Concurrency 100 remains the proven future setting. The concurrency-110 fixed window reached 332.0 headwords per minute, 4.0% below concurrency 100, although it remained operationally clean.
+
+RUN-STOP-6 — Run 50 preparation took 171.40 seconds and passed all pre-Luna gates. Its report is `reports/run_prep/run-50-prep.json`.
 
 ## RUN-PIN — Pinned runtime
 
@@ -29,6 +31,7 @@ export JPDB_SOURCE_RUN_ID=49
 export JPDB_ADD_ARTICLES=10000
 export JPDB_TARGET_ARTICLES=346368
 export JPDB_SCOPE_LABEL=346368
+export JPDB_RUN_ID=50
 ~~~
 
 ## RUN-PREFLIGHT — Protect production
@@ -62,7 +65,7 @@ RUN-PREP-2 — PostgreSQL copies unchanged unit metadata from the source run, pa
 
 RUN-PREP-3 — The driver must report the target article count, zero source-unit identity gaps, zero claimed attempts, zero unresolved errors, and nonzero ready units and batches. Use its returned `target_run_id` as `JPDB_RUN_ID`.
 
-RUN-PREP-4 — Record every reported phase time. A normal 10,000-article increment should take about two to four minutes after this optimization. Investigate PostgreSQL activity and statistics if it exceeds ten minutes.
+RUN-PREP-4 — Record every reported phase time. The real optimized 10,000-article increment took 171.40 seconds, so allow about three minutes. Investigate PostgreSQL activity and statistics if it exceeds ten minutes.
 
 ## RUN-TUNE — Productive online tuning
 
