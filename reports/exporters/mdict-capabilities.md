@@ -75,6 +75,8 @@ MD-CAP-IMPL-2 — The independent checker verifies both binary headers without u
 
 MD-CAP-IMPL-3 — MD-CAP-IMPL-2 is not the independent full-reader gate because the secondary reader ships in the same project as the writer.
 
+MD-CAP-IMPL-4 — `mdict-utils==1.3.14` built the full Run 59 corpus into export 70 with 433,885 articles, 415,836 headwords, 570,588 MDX records, 117,201 redirects, and 237 MDD resources. The structurally verified archive SHA-256 is `9d766506f0aeeb0580f6dcf1679a2bde2faffb9586fa73397a201375e54bc7e0`; the independent client gate remains open.
+
 ## MD-CAP-GATE — Release gate
 
 | ID | Required probe | Status |

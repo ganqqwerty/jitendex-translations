@@ -1,127 +1,94 @@
 # README — Jitendex Russian translation pipeline
 
-README-1 — This repository implements the deterministic part of the workflow in
-[`PLAN.md`](PLAN.md): pinned acquisition, SQLite-backed imports and audit state,
-Jitendex selection, safe scalar-unit extraction, immutable worker
-manifests, strict response validation, independent review ingestion, and a
-reproducible Yomitan ZIP build.
+README-1 — This repository translates the frozen Jitendex dictionary into Russian with Luna, stores every attempt and accepted result in PostgreSQL, and builds verified Yomitan, GoldenDict, MDict, PocketBook, and Apple Dictionary archives.
 
-README-2 — The active `lexicographer-v2` pipeline treats the English Jitendex article as
-evidence, not as text to translate. Terra first understands the article and its
-preservation inventory, then authors Russian wording from the Japanese term,
-examples, and linguistic metadata. English synonyms inside one sense are sent
-as a single `glossary_set`; the response may contain a different number of
-Russian definitions. The assembler changes only that glossary content and
-scalar Russian labels/examples while retaining tables, Japanese examples,
-ruby, links, sense structure, media, and attribution.
+README-2 — PostgreSQL is authoritative. SQLite files and old pilot scripts are migration evidence only. Never direct production writes back to SQLite.
 
-README-3 — Runs are isolated in the same SQLite database. `run.pipeline_version`, prompt
-hashes, run-scoped unit IDs, and `run_article` fingerprints keep v2 units,
-batches, attempts, reviews, and exports separate from the completed scalar-v1
-results. Do not delete run 1 when starting v2.
+README-3 — Run 59 completed the frozen Jitendex `2026.07.09.0` snapshot: 433,885 articles, 431,545 headwords, and 2,053,045 accepted translation units. There is no untranslated work in this snapshot.
 
-README-4 — Requires Python 3.12+, `zstd` for modern Anki packages, and the two pinned
-source artifacts. Install locally with:
+## README-START — Start here
 
-```sh
-python -m pip install -e '.[test]'
-cp config.example.toml config.toml
-translationctl --config config.toml init-db
-translationctl --config config.toml acquire
-translationctl --config config.toml import-sources
-```
+README-START-1 — A new developer should read these files in this order: [developer tooling](DEVELOPER_TOOLING.md), [Luna operations](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md), [completed-run history](JPDB_LUNA_RUN_HISTORY.md), and [exporter plan](JITENDEX_EXPORTER_PLAN.md).
 
-README-5 — Run `translationctl --help` for the complete staged workflow. Worker and review
-agents only read manifests from `work/inbox` and write strict JSON to outbox
-paths; they never edit the database or source JSON.
+README-START-2 — Bootstrap Python from the checked-in lock file. Python 3.12 or newer works; the reference workstation uses Python 3.13.
 
-README-6 — The normal sequence after import is `resolve-scope`, review the unresolved JSON
-from `report scope`, `apply-resolutions`, `extract-units`, `make-batches`, then
-repeat `claim`/`ingest-response`. After all translation batches pass,
-`make-review-batches` starts the independent review pass. `validate`, `build`,
-and `verify` close the release gate. A third failed attempt is split
-deterministically; a single-unit failure is blocked for adjudication.
+~~~bash
+git clone REPOSITORY_URL jitendex-translations
+cd jitendex-translations
+uv sync --extra test
+export PYTHONPATH="$PWD/src"
+PYTHONPATH=src .venv/bin/pytest -q
+~~~
 
-README-7 — `claim --batch-id ID` can reserve a specific ready batch for a focused pilot.
+README-START-3 — Start Docker PostgreSQL and export `JITENDEX_POSTGRES_URL` exactly as shown in [TOOL-PG](DEVELOPER_TOOLING.md). Every `translationctl`, runner, verifier, and exporter command needs that environment variable.
 
-README-8 — `acquire` also downloads the two Yomitan JSON schemas from an immutable upstream
-commit and verifies their configured SHA-256 values. `verify` validates every
-emitted bank against those pinned copies.
+README-START-4 — Confirm the current state before changing anything.
 
-## README-GD — GoldenDict export
+~~~bash
+docker ps --filter name=jitendex-postgres
+PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml report progress
+git status --short
+~~~
 
-README-GD-1 — `export-goldendict --run-id ID --output dist/jitendex-ru-goldendict.zip`
-builds the accepted database run as a reproducible StarDict 2.4.2 bundle. Run
-`verify-goldendict PATH` before release.
+## README-MAP — Important files
 
-README-GD-2 — Extract the ZIP into one folder. Add that folder as a GoldenDict
-dictionary source and rescan dictionaries. The bundle contains HTML articles,
-reading aliases, internal links, CSS, and referenced media.
+| ID | Path | Purpose |
+|---|---|---|
+| README-MAP-1 | `config.luna.toml` | Authoritative PostgreSQL, model, prompt, source, schema, and batch configuration |
+| README-MAP-2 | `prompts/translate_luna_v4.txt` | Pinned Luna translation prompt; changing it changes provenance |
+| README-MAP-3 | `terminology/jitendex-tags-ru.csv` | Exact authority for 236 Russian tag labels and tooltips |
+| README-MAP-4 | `scripts/prepare_luna_run.py` | Timed, no-Luna creation of the next same-snapshot production run |
+| README-MAP-5 | `scripts/run_luna_online_window.py` | Production-safe concurrency window, monitoring, drain, and evidence writer |
+| README-MAP-6 | `scripts/run_codex_batches.py` | Isolated bundled-Codex dispatcher and deterministic response ingester |
+| README-MAP-7 | `src/jitendex_ru/` | Database, selection, extraction, validation, acceptance, and exporter code |
+| README-MAP-8 | `reports/luna_performance/online/` | Immutable per-window performance summaries |
+| README-MAP-9 | `work/luna_performance/online/` | Per-event runner logs for online windows |
+| README-MAP-10 | `dist/` | Final non-overwriting dictionary archives |
 
-README-GD-3 — The exporter converts AVIF graphics to PNG for compatibility with
-older GoldenDict renderers. SVG glyphs remain SVG so they stay sharp.
+## README-ARCH — Translation contract
 
-## README-EX — Rich dictionary exporters
+README-ARCH-1 — The active pipeline is `lexicographer-v2`. Luna receives the Japanese term, structured Jitendex evidence, examples, metadata, protected tokens, and one immutable batch manifest. English is evidence, not text to translate.
 
-README-EX-1 — The PocketBook, Apple Dictionary, and MDict exporters start from the
-same localized structured article model. They retain lists, tables, ruby,
-examples, links, media, semantic classes, tags, tooltips, and attribution when
-the target can express them. Read [JITENDEX_EXPORTER_PLAN.md](JITENDEX_EXPORTER_PLAN.md)
-and the contracts under `reports/exporters/` before release work.
+README-ARCH-2 — The runner invokes `gpt-5.6-luna` at medium reasoning through the bundled ChatGPT Codex executable. Each model request runs ephemerally in a read-only temporary workspace and receives a generated output schema that fixes batch IDs, unit IDs, and source hashes.
 
-README-EX-2 — PocketBook requires an external, hashed `converter.exe` and a pinned
-`jaK` or `jaR` language directory. On non-Windows hosts it also requires Wine.
-The package remains experimental until the device gates in
-`reports/exporters/pocketbook-capabilities.md` pass.
+README-ARCH-3 — Only the coordinator talks to PostgreSQL. It claims a lease, launches one isolated request, records usage, validates the response, ingests accepted fields, and deterministically retries or splits failures. Workers never edit source files or the database.
 
-```sh
-translationctl export-pocketbook --run-id ID --output dist/jitendex-ru-pocketbook.zip \
-  --compiler /path/to/converter.exe --compiler-sha256 SHA256 \
-  --language-dir /path/to/jaK
-translationctl verify-pocketbook dist/jitendex-ru-pocketbook.zip
-```
+README-ARCH-4 — Successful responses may change only translatable glossary sets and scalar labels or examples. The assembler preserves Japanese text, article structure, lists, tables, ruby, links, media, tags, attribution, and protected tokens.
 
-README-EX-3 — Apple Dictionary requires the archived Dictionary Development Kit
-`build_dict.sh`. A matching RELAX NG schema and hash are optional command inputs
-but required to close the release gate. The exporter does not install the bundle.
+README-ARCH-5 — Approved tag terminology is applied during export instead of rewriting historical Luna responses. Missing, duplicate, incomplete, or colliding tag identities stop the build.
 
-```sh
-translationctl export-apple-dictionary --run-id ID \
-  --output dist/jitendex-ru-apple-dictionary.zip \
-  --build-tool /path/to/build_dict.sh --build-tool-sha256 SHA256 \
-  --schema /path/to/AppleDictionarySchema.rng --schema-sha256 SHA256
-translationctl verify-apple-dictionary dist/jitendex-ru-apple-dictionary.zip
-```
+## README-STATE — Verified Run 59 releases
 
-README-EX-4 — MDict uses the pinned `mdict-utils` writer to emit deterministic,
-unencrypted MDict 2.0 MDX and MDD files. The package is marked experimental until
-the real-client matrix in `reports/exporters/mdict-capabilities.md` passes.
+| ID | Format | Export | SHA-256 |
+|---|---|---|---|
+| README-STATE-1 | Yomitan `tags-ru-v1` | 66 | `c157b41f3fc99a52d4099c8384e87c8e0ec8813e87c93f988a801c3e9fc63a58` |
+| README-STATE-2 | GoldenDict | 67 | `f81e9c8d41139a8cee09b5333587ef723797b12580e5e3e5db8a2714efe589e0` |
+| README-STATE-3 | MDict | 70 | `9d766506f0aeeb0580f6dcf1679a2bde2faffb9586fa73397a201375e54bc7e0` |
+| README-STATE-4 | PocketBook | 71 | `348be94570d633078158babd87a5719c13542b201768960e5758e36f00ebb31d` |
+| README-STATE-5 | Apple Dictionary | 72 | `3bedac203b1591184563b6cda2d348d6e21ee041d5b97b910e8723d11c72e3dc` |
 
-```sh
-translationctl export-mdict --run-id ID --output dist/jitendex-ru-mdict.zip
-translationctl verify-mdict dist/jitendex-ru-mdict.zip
-```
+README-STATE-6 — Export 65 is the immutable pre-tag-unification Yomitan checkpoint. Export records 68 and 69 are reproducibility evidence, not release archives.
 
-README-EX-5 — Every exporter writes a deterministic ZIP manifest, loss ledger,
-capability profile, source and tool hashes, attribution, and installation note.
-Any omitted rich-content feature fails the build.
+README-STATE-7 — PocketBook, MDict, and Apple Dictionary pass structural archive verification but remain experimental until their real-client gates in `reports/exporters/` pass. The Yomitan clean-profile hover test is also still manual.
 
-## README-DB — Database schema
+## README-TEST — Verification
 
-README-DB-1 — The current SQLite schema is version 7. `init-db` creates it, and normal database initialization upgrades older frequency tables in place.
+README-TEST-1 — Run the full suite before a production preparation, after code changes, and before a release commit.
 
-README-DB-2 — Frequency provenance has three layers. `frequency_source` pins each active source snapshot and rank limit. `frequency_term` stores one row per exact normalized term. `frequency_article` maps that exact term to every matching Jitendex article.
+~~~bash
+PYTHONPATH=src .venv/bin/pytest -q
+~~~
 
-README-DB-3 — Frequency ranks are not identities and may repeat. `frequency_term` is keyed by `(source, source_sha256, term)`. `frequency_article` is keyed by `(source, source_sha256, term, article_id)`. This preserves tied ranks and makes every article mapping traceable to its headword.
+README-TEST-2 — Two PostgreSQL recovery tests skip unless `JITENDEX_TEST_POSTGRES_URL` points to a disposable database. Never point that variable at the production `jitendex` database.
 
-README-DB-4 — The version-7 migration preserves version-6 terms and mappings while adding the term to each article mapping. Back up the production database and run SQLite integrity and foreign-key checks before continuing a release.
+README-TEST-3 — Every release archive must pass its matching `verify*` command with the production database URL exported. A ZIP hash without a matching verified database export record is not a release.
 
-README-DB-5 — Use [JPDB_LUNA_ORCHESTRATION_RUNBOOK.md](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md) for operational commands. The combined six-list top-40k scope is a one-off supplement described in [FREQUENCY_TOP40K_TRANSLATION_PLAN.md](FREQUENCY_TOP40K_TRANSLATION_PLAN.md); normal releases continue by JPDB frequency.
+## README-OLD — Historical material
+
+README-OLD-1 — Old SQLite plans, pilots, comparison models, benchmarks, and one-off scripts are project archaeology. Use them only when the active PostgreSQL workflow is blocked or a task explicitly asks for them.
+
+README-OLD-2 — [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md) records completed outcomes and incidents. Do not copy commands from old incidents when the current runbook gives a newer procedure.
 
 ## README-DEMO — Public demos
 
-README-DEMO-1 — The [project home page](https://ganqqwerty.github.io/jitendex-translations/) introduces the Russian dictionary and links to its current downloads.
-
-README-DEMO-2 — The [frequency analysis](https://ganqqwerty.github.io/jitendex-translations/frequency/) shows the source-list coverage used to plan translation scopes.
-
-README-DEMO-3 — The [translation comparison](https://ganqqwerty.github.io/jitendex-translations/comparison/) shows public samples from the completed dictionary batches.
+README-DEMO-1 — The [translation comparison](https://ganqqwerty.github.io/jitendex-translations/) and [frequency analysis](https://ganqqwerty.github.io/jitendex-translations/frequency/) are intentionally public dictionary demos.

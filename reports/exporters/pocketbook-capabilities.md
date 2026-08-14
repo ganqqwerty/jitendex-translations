@@ -6,7 +6,7 @@ PB-CAP-SCOPE-1 — This contract covers the XDXF source profile and the native P
 
 PB-CAP-SCOPE-2 — The source profile is based on PocketBook's installation guide, the XDXF project, PocketBookDic, and the `jaK` and `jaR` converter language files named by EXP-SRC-1 through EXP-SRC-4.
 
-PB-CAP-SCOPE-3 — No PocketBook converter, Wine runtime, PocketBook device, or firmware test target is present on this workstation.
+PB-CAP-SCOPE-3 — The pinned PocketBook converter, Japanese `jaK` files, and Wine 11.0 are installed outside iCloud under `~/Library/Application Support/jitendex-translations/export-tools/`. No PocketBook device or firmware test target is present.
 
 PB-CAP-SCOPE-4 — The native gate is `OPEN`. A release command must fail before compilation unless the user supplies a compiler path, compiler SHA-256, and pinned Japanese language directory.
 
@@ -16,9 +16,9 @@ PB-CAP-SCOPE-5 — Source rendering is allowed for research and review. It is no
 
 | ID | Item | Required value | Current result |
 |---|---|---|---|
-| PB-CAP-TOOL-1 | Compiler | External PocketBook converter with recorded source and SHA-256 | Missing |
-| PB-CAP-TOOL-2 | Runtime | Native Windows or Wine for a Windows executable | Missing |
-| PB-CAP-TOOL-3 | Language files | One pinned `jaK` or `jaR` directory containing `keyboard.txt`, `collates.txt`, and `morphems.txt` | Missing |
+| PB-CAP-TOOL-1 | Compiler | External PocketBook converter with recorded source and SHA-256 | Installed from pinned Git commit; full corpus compiled |
+| PB-CAP-TOOL-2 | Runtime | Native Windows or Wine for a Windows executable | Wine 11.0 installed; full corpus compiled |
+| PB-CAP-TOOL-3 | Language files | One pinned `jaK` or `jaR` directory containing `keyboard.txt`, `collates.txt`, and `morphems.txt` | Pinned `jaK` installed and hashed |
 | PB-CAP-TOOL-4 | Device | Maintained PocketBook model and firmware | Missing |
 | PB-CAP-TOOL-5 | Intermediate | Deterministic UTF-8 XDXF in `visual` format | Implemented; common probe passes |
 
@@ -68,6 +68,8 @@ PB-CAP-KEY-4 — NUL, invalid XML characters, empty expressions, unsafe resource
 PB-CAP-IMPL-1 — The common probe passes deterministic XDXF parsing, multiple-key generation, rich fallbacks, resource conversion, and the external compiler argument contract.
 
 PB-CAP-IMPL-2 — The compiler-contract test uses a local fake tool. It does not close any native compiler or device gate.
+
+PB-CAP-IMPL-3 — Commit `3bb444c7a5b1a011e0fca9e99fba0e7ae025e36f`, converter SHA-256 `9eda24d32a9bb76697c8c0ca713d6299c7881ade76bfb317b9ac7bf95d06936f`, and `jaK` compiled the full Run 59 corpus through Wine into export 71. The archive contains 433,885 articles and 415,836 headwords, passed structural verification, and has SHA-256 `348be94570d633078158babd87a5719c13542b201768960e5758e36f00ebb31d`.
 
 ## PB-CAP-GATE — Release gate
 

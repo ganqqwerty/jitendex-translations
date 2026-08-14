@@ -445,8 +445,8 @@ EXP-STAT-1 — Phase A and Phase B artifacts now exist: the full source inventor
 
 EXP-STAT-2 — The shared rich model, loss ledger, codec helpers, three target renderers, deterministic packages, verifiers, CLI commands, and automated probe tests are implemented.
 
-EXP-STAT-3 — The MDict common probe is byte-reproducible. Its official client and independent full-reader gates remain open.
+EXP-STAT-3 — The MDict common probe is byte-reproducible, and full-corpus export 70 passes structural verification. Its official client and independent full-reader gates remain open.
 
-EXP-STAT-4 — PocketBook and Apple source projects and external-tool contracts are tested with fake tools. Their proprietary native tools and real application or device gates remain open.
+EXP-STAT-4 — PocketBook export 71 was compiled through Wine with the pinned real converter, and Apple export 72 was compiled with DDK 26.6. Both full-corpus archives pass structural verification. Their real device or application gates remain open.
 
 EXP-STAT-5 — No target is release-complete under EXP-ACPT-3 through EXP-ACPT-5. Experimental package labels and hard external-tool failures prevent an unverified build from being presented as compatible.

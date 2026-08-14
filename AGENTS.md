@@ -38,4 +38,4 @@ AG-DOC-7 Use simple langauge. Be short.
 
 ## IDX Index of important files
 
-[README](README.md), [Luna runbook](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md), [Luna run history](JPDB_LUNA_RUN_HISTORY.md), [Luna v4 prompt](prompts/translate_luna_v4.txt), [tag replacement plan](JITENDEX_TAG_REPLACEMENT_PLAN.md), and [Luna run 3 preflight](reports/luna_run3_preflight.md).
+[README](README.md), [developer tooling](DEVELOPER_TOOLING.md), [Luna runbook](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md), [Luna run history](JPDB_LUNA_RUN_HISTORY.md), [Luna v4 prompt](prompts/translate_luna_v4.txt), [tag replacement plan](JITENDEX_TAG_REPLACEMENT_PLAN.md), and [Luna run 3 preflight](reports/luna_run3_preflight.md).
