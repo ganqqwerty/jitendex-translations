@@ -2185,3 +2185,24 @@ SHA-256: 55bac7397ed07067c05fc7b95aff6a4f7f413e994fa4bf4de3d75796e39ac846
 ~~~
 
 HIST-ALL-346368-7 — Export 56 was verified. Run 50 is the stopping point. Concurrency 100 remains the proven setting for a future authorized run; do not create another run without new authorization.
+
+## HIST-ALL-356368 — 356,368-article continuation results
+
+HIST-ALL-356368-1 — Run 51 retained Run 50, added 10,000 source-ordered articles, reused 1,722,240 units, and translated 36,470 new units from 963 initial batches. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-356368.dump`, SHA-256 `5b7f1902a4e97fa0047bec4e586e86d7960de6d637181ca21879e30c41091ceb`.
+
+HIST-ALL-356368-2 — Preparation took 179.47 seconds: source preflight 9.20, scope selection 14.14, extraction 36.69, reuse 82.61, batching 9.97, and verification 26.86 seconds. It passed all pre-Luna gates.
+
+HIST-ALL-356368-3 — Six full concurrency-100 windows completed 467 measured requests and 540 drain requests. Mean measured throughput was 295.8 headwords per minute. Peak runner memory was 202 MB. The windows recorded 19 measured validation rejections, 16 retries, three splits, and zero rate limits, timeouts, transport failures, database retries, claim collisions, stale leases, missing units, or duplicate translations.
+
+HIST-ALL-356368-4 — The final eight retry batches recursively isolated four singleton glosses: two spelling variants for Saccocirrus worms and two for the New Guinea singing dog. Repeated Latin taxonomic text triggered `too_much_english`. The audited targeted-leaf path ingested concise Russian definitions without more Luna requests. The short-window telemetry wrapper again ended without a measurement phase after productive work finished during ramp; no request or translation was lost.
+
+HIST-ALL-356368-5 — All 1,758,710 units were accepted with zero unfinished leaves, unresolved errors, missing units, duplicates, source-hash mismatches, or membership mismatches. Export used session-only 512 MB `work_mem` and disabled parallel gather to avoid Docker temporary-file spill. Build and independent verification took 298 seconds. All 113 tests passed with two expected PostgreSQL integration skips.
+
+~~~text
+ZIP members:                332
+schema-validated banks:     111
+archive articles:       356,368
+SHA-256: a2d431226f3d64628ae5142406a6f4487fe22678a35934ea8a19ef75f3cbefdd
+~~~
+
+HIST-ALL-356368-6 — Export 57 was verified. Run 51 is the latest completed checkpoint. The next 10,000-article continuation targets 366,368 articles.
