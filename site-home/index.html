@@ -3,28 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#e8462a">
-  <meta name="description" content="Полный русский перевод Jitendex: 433 885 японских словарных статей, примеры, словоформы и лингвистические пометы. Скачать для Yomitan и GoldenDict.">
+  <meta name="theme-color" content="#c95945">
+  <meta name="description" content="Русский перевод Jitendex: 433 885 словарных статей, примеры, словоформы и лингвистические пометы. О том, как переводили словарь, и файлы для Yomitan и GoldenDict.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ru_RU">
   <meta property="og:title" content="Мы перевели Jitendex на русский">
-  <meta property="og:description" content="433 885 статей, примеры, словоформы и всякая интересная лингвистика. Теперь по-русски.">
+  <meta property="og:description" content="433 885 статей Jitendex переведены на русский с помощью Luna Medium и автоматических проверок.">
   <meta property="og:url" content="https://ganqqwerty.github.io/jitendex-translations/">
   <meta property="og:image" content="https://ganqqwerty.github.io/jitendex-translations/og.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Мы перевели Jitendex на русский">
-  <meta name="twitter:description" content="433 885 японских словарных статей для Yomitan и GoldenDict.">
+  <meta name="twitter:description" content="433 885 статей Jitendex по-русски. Перевод Luna Medium, проверки и исправление ошибок.">
   <meta name="twitter:image" content="https://ganqqwerty.github.io/jitendex-translations/og.png">
   <title>Русский Jitendex: полный перевод японского словаря</title>
   <style>
     :root {
       --paper: #ffffff;
-      --paper-deep: #eef1f4;
+      --paper-deep: #f4f5f6;
       --ink: #171714;
       --muted: #625e55;
-      --red: #e8462a;
-      --red-dark: #b52a17;
-      --yellow: #f0bc3d;
+      --red: #c95945;
+      --red-dark: #914032;
+      --yellow: #efca83;
       --line: rgba(23, 23, 20, .18);
       --white: #ffffff;
       --serif: Georgia, "Times New Roman", serif;
@@ -34,11 +34,7 @@
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      background:
-        linear-gradient(rgba(23, 23, 20, .025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(23, 23, 20, .025) 1px, transparent 1px),
-        var(--paper);
-      background-size: 32px 32px;
+      background: var(--paper);
       color: var(--ink);
       font-family: var(--sans);
       line-height: 1.55;
@@ -54,10 +50,10 @@
     .nav { display: flex; gap: 22px; font-size: 13px; font-weight: 750; }
     .nav a { text-decoration: none; }
     .nav a:hover { color: var(--red-dark); }
-    .hero { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(340px, .88fr); gap: 64px; align-items: center; padding: 80px 0 92px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(340px, .88fr); gap: 64px; align-items: center; padding: 72px 0 84px; }
     .eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; color: var(--red-dark); font-size: 12px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
     .eyebrow::before { content: ""; width: 34px; height: 3px; background: var(--red); }
-    h1 { max-width: 780px; margin: 0; font-family: var(--serif); font-size: clamp(52px, 7.4vw, 96px); font-weight: 500; line-height: .94; letter-spacing: -.06em; }
+    h1 { max-width: 780px; margin: 0; font-family: var(--serif); font-size: clamp(46px, 6.2vw, 78px); font-weight: 500; line-height: .98; letter-spacing: -.05em; }
     h1 em { color: var(--red); font-style: normal; }
     .lead { max-width: 690px; margin: 32px 0 0; color: #393730; font-size: clamp(18px, 2.2vw, 23px); line-height: 1.48; }
     .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
@@ -78,12 +74,12 @@
     .example-ru { margin-top: 5px; color: var(--muted); font-size: 14px; }
     .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 17px; }
     .tag { padding: 5px 8px; border: 1px solid var(--line); background: var(--paper); font-size: 11px; font-weight: 800; }
-    .stats { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); background: var(--ink); color: var(--white); }
+    .stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper-deep); color: var(--ink); }
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
-    .stat { min-height: 154px; padding: 30px; border-right: 1px solid rgba(255,255,255,.2); }
+    .stat { min-height: 142px; padding: 30px; border-right: 1px solid var(--line); }
     .stat:last-child { border-right: 0; }
     .stat strong { display: block; font-family: var(--serif); font-size: clamp(34px, 4vw, 54px); font-weight: 500; line-height: 1; }
-    .stat span { display: block; margin-top: 10px; color: rgba(255,255,255,.7); font-size: 13px; }
+    .stat span { display: block; margin-top: 10px; color: var(--muted); font-size: 13px; }
     .section { padding: 100px 0; border-bottom: 1px solid var(--line); }
     .section-head { display: grid; grid-template-columns: .72fr 1.28fr; gap: 54px; margin-bottom: 52px; }
     .kicker { color: var(--red-dark); font-size: 12px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
@@ -93,10 +89,10 @@
     .feature-no { color: var(--red); font-family: var(--serif); font-size: 17px; }
     .feature h3 { margin: 48px 0 12px; font-family: var(--serif); font-size: 28px; font-weight: 500; line-height: 1.1; }
     .feature p { margin: 0; color: var(--muted); font-size: 14px; }
-    .manifesto { overflow: hidden; background: var(--red); color: var(--white); }
-    .manifesto-inner { position: relative; padding: 96px 0; }
-    .manifesto-inner::after { content: "日本語"; position: absolute; right: -40px; bottom: -76px; color: rgba(255,255,255,.1); font-family: var(--serif); font-size: 190px; line-height: 1; white-space: nowrap; }
-    blockquote { position: relative; z-index: 1; max-width: 980px; margin: 0; font-family: var(--serif); font-size: clamp(36px, 6vw, 72px); line-height: 1.03; letter-spacing: -.045em; }
+    .manifesto { overflow: hidden; border-top: 1px solid rgba(201,89,69,.25); border-bottom: 1px solid rgba(201,89,69,.25); background: #fff7f4; color: var(--ink); }
+    .manifesto-inner { position: relative; padding: 72px 0; }
+    .manifesto-inner::after { content: "日本語"; position: absolute; right: -30px; bottom: -60px; color: rgba(201,89,69,.08); font-family: var(--serif); font-size: 160px; line-height: 1; white-space: nowrap; }
+    blockquote { position: relative; z-index: 1; max-width: 920px; margin: 0; font-family: var(--serif); font-size: clamp(30px, 4.4vw, 52px); line-height: 1.13; letter-spacing: -.035em; }
     .story-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 70px; }
     .story h3 { margin: 0 0 18px; font-family: var(--serif); font-size: 32px; font-weight: 500; }
     .story p { margin: 0 0 16px; color: #3f3c35; font-size: 17px; }
@@ -109,7 +105,7 @@
     .download p { max-width: 420px; margin: 0; color: var(--muted); }
     .download-arrow { position: absolute; top: 27px; right: 30px; font-size: 30px; transition: transform .15s ease; }
     .download-size { position: absolute; right: 30px; bottom: 26px; color: var(--muted); font-size: 12px; }
-    .links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
+    .links { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
     .text-link { padding: 18px 20px; border: 1px solid var(--line); background: rgba(255,255,255,.4); text-decoration: none; font-size: 14px; font-weight: 800; }
     .text-link:hover { border-color: var(--red); color: var(--red-dark); }
     .thanks { display: grid; grid-template-columns: .7fr 1.3fr; gap: 54px; align-items: start; }
@@ -122,7 +118,7 @@
       .dictionary-card { max-width: 610px; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .stat:nth-child(2) { border-right: 0; }
-      .stat:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.2); }
+      .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
       .section-head, .thanks { grid-template-columns: 1fr; gap: 22px; }
       .feature-grid { grid-template-columns: 1fr; }
       .feature { min-height: 0; }
@@ -137,7 +133,7 @@
       .dictionary-card { padding: 24px; box-shadow: 8px 8px 0 var(--yellow); }
       .term { font-size: 44px; }
       .stats-grid { grid-template-columns: 1fr; }
-      .stat { min-height: 120px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.2); }
+      .stat { min-height: 120px; border-right: 0; border-bottom: 1px solid var(--line); }
       .section { padding: 72px 0; }
       .downloads, .links { grid-template-columns: 1fr; }
       .download { min-height: 240px; }
@@ -151,18 +147,18 @@
     <a class="brand" href="#top"><span class="brand-mark">辞</span><span>Jitendex по-русски</span></a>
     <nav class="nav" aria-label="Основная навигация">
       <a href="#inside">Что внутри</a>
+      <a href="#process">Как переводили</a>
       <a href="#download">Скачать</a>
       <a href="comparison/">Сравнить</a>
-      <a href="#feedback">Обратная связь</a>
     </nav>
   </header>
 
   <main id="top">
     <section class="wrap hero" aria-labelledby="HOME-TITLE">
       <div>
-        <div class="eyebrow">Полный русский перевод · 2026</div>
-        <h1 id="HOME-TITLE">Мы перевели <em>самый лучший</em> японско-английский словарь</h1>
-        <p class="lead" id="HOME-LEAD">Jitendex: 433 885 статей, словоформы, примеры употребления и всякая занятная лингвистика. Перевод получился вполне приличный. Учить английский перед японским теперь не обязательно.</p>
+        <div class="eyebrow">Русский перевод Jitendex · 2026</div>
+        <h1 id="HOME-TITLE">Jitendex теперь есть <em>по-русски</em></h1>
+        <p class="lead" id="HOME-LEAD">Мы перевели все 433 885 статей Jitendex: значения, словоформы, примеры и лингвистические пометы. Большая работа закончена. Теперь словарём можно спокойно пользоваться без промежуточного английского, и это очень радует.</p>
         <div class="actions">
           <a class="button button-primary" href="https://github.com/ganqqwerty/jitendex-translations/releases/download/run59-tags-ru-v1/jitendex-articles-433885-ru-luna-v4-tags-ru-v1.zip">Скачать для Yomitan ↓</a>
           <a class="button button-ghost" href="https://github.com/ganqqwerty/jitendex-translations/releases/download/run59-tags-ru-v1/jitendex-articles-433885-ru-goldendict-tags-ru-v1.zip">Скачать для GoldenDict ↓</a>
@@ -191,44 +187,45 @@
     </section>
 
     <section class="wrap section" id="inside" aria-labelledby="INSIDE-TITLE">
-      <div class="section-head"><div class="kicker">Что внутри</div><h2 id="INSIDE-TITLE">Нормальный большой словарь, со всеми потрохами</h2></div>
+      <div class="section-head"><div class="kicker">Что внутри</div><h2 id="INSIDE-TITLE">Статьи переведены вместе со всеми подробностями</h2></div>
       <div class="feature-grid">
-        <article class="feature"><div class="feature-no">01</div><h3 id="INSIDE-SENSES">Смыслы и оговорки</h3><p id="INSIDE-SENSES-1">Короткими переводами дело не кончилось. Пояснения, ограничения, синонимы и антонимы тоже переведены.</p></article>
-        <article class="feature"><div class="feature-no">02</div><h3 id="INSIDE-FORMS">Словоформы никуда не делись</h3><p id="INSIDE-FORMS-1">Чтения, редкие и устаревшие формы, части речи, диалекты и прочие полезные пометы остались на месте.</p></article>
-        <article class="feature"><div class="feature-no">03</div><h3 id="INSIDE-EXAMPLES">Примеры на месте</h3><p id="INSIDE-EXAMPLES-1">Японские фразы сохранены, рядом лежит русский перевод. Таблицы, картинки и структура статей пережили перевод без приключений.</p></article>
+        <article class="feature"><div class="feature-no">01</div><h3 id="INSIDE-SENSES">Значения и пояснения</h3><p id="INSIDE-SENSES-1">Переведены короткие толкования, подробные пояснения, ограничения, синонимы и антонимы.</p></article>
+        <article class="feature"><div class="feature-no">02</div><h3 id="INSIDE-FORMS">Формы остались на месте</h3><p id="INSIDE-FORMS-1">Чтения, редкие и устаревшие варианты, части речи, диалекты и полезные пометы никуда не делись.</p></article>
+        <article class="feature"><div class="feature-no">03</div><h3 id="INSIDE-EXAMPLES">Японский всегда рядом</h3><p id="INSIDE-EXAMPLES-1">Исходные фразы сохранены рядом с русским текстом. Таблицы, картинки и внутренняя структура статей тоже уцелели.</p></article>
       </div>
     </section>
 
     <section class="manifesto" aria-labelledby="MANIFESTO-TITLE">
-      <div class="wrap manifesto-inner"><blockquote id="MANIFESTO-TITLE">Русскоязычная иммерсивная японистика наконец вылезла из бронзового века.</blockquote></div>
+      <div class="wrap manifesto-inner"><blockquote id="MANIFESTO-TITLE">Работа заняла много времени. Зато теперь большой японский словарь можно открыть по-русски, и это просто приятно.</blockquote></div>
     </section>
 
-    <section class="wrap section" aria-labelledby="WHY-TITLE">
-      <div class="section-head"><div class="kicker">Зачем это всё</div><h2 id="WHY-TITLE">Английский больше не стоит между вами и японским</h2></div>
+    <section class="wrap section" id="process" aria-labelledby="PROCESS-TITLE">
+      <div class="section-head"><div class="kicker">Как переводили</div><h2 id="PROCESS-TITLE">Luna Medium, проверки и много исправленных ошибок</h2></div>
       <div class="story-grid">
         <div class="story">
-          <h3 id="TOOLS-TITLE">Всё уже собрано</h3>
-          <p id="TOOLS-1">Есть Yomitan с этим словарём, Вародаем и Kenrowa. Есть «Наминори» с двумя переводами Таэ Кима, подробные руководства о том, где и что смотреть, и чат, в котором помогут.</p>
-          <p id="TOOLS-2">Короче, для чтения, грамматики и ежедневной иммерсии больше не надо собирать набор из обрывков.</p>
+          <h3 id="PROCESS-LUNA-TITLE">Сначала перевод</h3>
+          <p id="PROCESS-LUNA-1">Словарь переводила модель gpt-5.6-luna с уровнем рассуждений medium. Статьи шли небольшими партиями, а результат складывался обратно с исходной разметкой Jitendex.</p>
+          <p id="PROCESS-LUNA-2">Потом включались проверки. Они ловили пропуски, лишний текст, сломанную структуру и ответы не по формату. Неудачные фрагменты отправлялись на повторный перевод, сложные партии дробились. Так мы постепенно вычистили ошибки, которые можно было поймать автоматически.</p>
         </div>
         <div class="story roadmap">
-          <h3 id="ROADMAP-TITLE">А дальше?</h3>
-          <p id="ROADMAP-1">Честно, пока не знаю. Может, прогоним топ-50 000 слов через модель подороже. Может, добавим дословные переводы фраз: сейчас они порой чересчур литературные.</p>
-          <p id="ROADMAP-2">Сначала послушаем вас. Если огрех можно поймать и исправить, попробуем исправить.</p>
+          <h3 id="PROCESS-TATOEBA-TITLE">Фразы из Tatoeba</h3>
+          <p id="PROCESS-TATOEBA-1">Примеры предложений пришли в Jitendex из <a href="https://tatoeba.org/">Tatoeba</a>. Мы переводили их литературно: старались передать смысл и написать нормальную русскую фразу.</p>
+          <p id="PROCESS-TATOEBA-2">Это не подстрочник. Если разбираете японскую грамматику слово за словом, смотрите на оригинал рядом: русский перевод может быть устроен совсем иначе.</p>
         </div>
       </div>
     </section>
 
     <section class="wrap section" id="download" aria-labelledby="DOWNLOAD-TITLE">
-      <div class="section-head"><div class="kicker">Забрать словарь</div><h2 id="DOWNLOAD-TITLE">Качайте словарик и идите читать</h2></div>
+      <div class="section-head"><div class="kicker">Скачать</div><h2 id="DOWNLOAD-TITLE">Два готовых формата словаря</h2></div>
       <div class="downloads">
         <a class="download" href="https://github.com/ganqqwerty/jitendex-translations/releases/download/run59-tags-ru-v1/jitendex-articles-433885-ru-luna-v4-tags-ru-v1.zip"><span class="download-format">Расширение для браузера</span><span class="download-arrow">↗</span><h3>Yomitan</h3><p id="DOWNLOAD-YOMITAN-1">Всплывающий словарь для сайтов, книг и субтитров. Навели мышку на слово, получили статью.</p><span class="download-size">≈ 42 МБ · ZIP</span></a>
         <a class="download" href="https://github.com/ganqqwerty/jitendex-translations/releases/download/run59-tags-ru-v1/jitendex-articles-433885-ru-goldendict-tags-ru-v1.zip"><span class="download-format">Настольный словарь</span><span class="download-arrow">↗</span><h3>GoldenDict</h3><p id="DOWNLOAD-GOLDENDICT-1">Офлайн-версия со статьями, ссылками, картинками и оформлением. Скачали, поставили, пользуетесь.</p><span class="download-size">≈ 103 МБ · ZIP</span></a>
       </div>
       <div class="links">
-        <a class="text-link" href="comparison/">Посмотреть переводы вживую →</a>
-        <a class="text-link" href="frequency/">Изучить покрытие частотных словарей →</a>
-        <a class="text-link" href="https://github.com/ganqqwerty/jitendex-translations">Код, методика и история проекта →</a>
+        <a class="text-link" href="comparison/">Посмотреть примеры переводов →</a>
+        <a class="text-link" href="https://jitendex.org/">Оригинальный сайт Jitendex →</a>
+        <a class="text-link" href="https://github.com/Jitendex/Jitendex">Оригинальный Jitendex на GitHub →</a>
+        <a class="text-link" href="https://t.me/immersionjp">Telegram: @immersionjp →</a>
       </div>
     </section>
 
@@ -246,6 +243,6 @@
     </section>
   </main>
 
-  <footer><div class="wrap footer-inner"><span>Jitendex по-русски · общественный словарный проект</span><span><a href="https://github.com/ganqqwerty/jitendex-translations/releases/tag/run59-tags-ru-v1">Последний релиз</a> · <a href="https://github.com/ganqqwerty/jitendex-translations">GitHub</a></span></div></footer>
+  <footer><div class="wrap footer-inner"><span>Jitendex по-русски · общественный словарный проект</span><span><a href="https://jitendex.org/">Оригинальный Jitendex</a> · <a href="https://t.me/immersionjp">@immersionjp</a> · <a href="https://github.com/ganqqwerty/jitendex-translations">GitHub проекта</a></span></div></footer>
 </body>
 </html>
