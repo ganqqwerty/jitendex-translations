@@ -6,16 +6,16 @@ RUN-2 measure the time of the things you do.
 
 ## RUN-STOP — Current state (update when state changed)
 
-RUN-STOP-1 — Run 58 is complete in authoritative PostgreSQL with 426,368 frozen articles, 2,024,526 accepted units, zero unfinished leaf work, and verified export 64.
+RUN-STOP-1 — Run 59 is complete in authoritative PostgreSQL with all 433,885 frozen articles, 2,053,045 accepted units, zero unfinished leaf work, and verified export 65.
 
-RUN-STOP-2 — The verified archive is `dist/jitendex-articles-426368-ru-luna-v4.zip`. Its SHA-256 is `d192baef6c43cf0c3f30f5b304e2b73a97d082a9a74e8a03204390deb222dd35`.
-RUN-STOP-3 — Run 58 is the latest completed 10,000-article checkpoint. It has 424,032 translated headwords and 7,513 remaining. The final scope adds the remaining 7,517 source articles.
+RUN-STOP-2 — The verified archive is `dist/jitendex-articles-433885-ru-luna-v4.zip`. Its SHA-256 is `68b4ef51f06213428e0c5b223b6715e2099542e28456c9fe8e42df75587d127b`.
+RUN-STOP-3 — Run 59 is the completed full-corpus checkpoint. All 431,545 Jitendex headwords are translated and zero remain. There is no next productive scope unless the source dictionary gains articles.
 
 RUN-STOP-4 — PostgreSQL is authoritative. The old SQLite source is read-only migration evidence and must not receive production writes.
 
 RUN-STOP-5 — Concurrency 100 remains the proven future setting. The concurrency-110 fixed window reached 332.0 headwords per minute, 4.0% below concurrency 100, although it remained operationally clean.
 
-RUN-STOP-6 — Docker's internal disk limit is 264 GB and its PostgreSQL filesystem has about 118 GB free. Its disk image remains under `~/Library/Containers`, outside Documents and iCloud.
+RUN-STOP-6 — Docker's internal disk limit is 264 GB and its PostgreSQL filesystem has about 115 GB free. Its disk image remains under `~/Library/Containers`, outside Documents and iCloud.
 
 ## RUN-PIN — Pinned runtime
 
@@ -27,8 +27,8 @@ RUN-PIN-3 — Do not change the model, prompt, reasoning, validator, batching li
 
 ~~~bash
 export PYTHONPATH=src
-export JPDB_SOURCE_RUN_ID=58
-export JPDB_ADD_ARTICLES=7517
+export JPDB_SOURCE_RUN_ID=59
+export JPDB_ADD_ARTICLES=0
 export JPDB_TARGET_ARTICLES=433885
 export JPDB_SCOPE_LABEL=433885
 export JPDB_RUN_ID=59
@@ -40,13 +40,7 @@ RUN-PREFLIGHT-1 — Finish the local test, recovery, and parity gates in LCP-REA
 
 RUN-PREFLIGHT-2 — Require one intended PostgreSQL database, no other runner, zero claimed attempts, zero unfinished work in `JPDB_SOURCE_RUN_ID`, and its verified export hash before changing scope.
 
-RUN-PREFLIGHT-3 — Make and hash a PostgreSQL backup before creating the next run. Never put the database URL in a command log or report.
-
-~~~bash
-pg_dump -Fc "$JITENDEX_POSTGRES_URL" \
-  -f work/backups/jitendex-postgresql-before-433885.dump
-shasum -a 256 work/backups/jitendex-postgresql-before-433885.dump
-~~~
+RUN-PREFLIGHT-3 — There is no next run now. If new source articles appear, choose a new unique backup name, make and hash a PostgreSQL backup before creating a run, and never put the database URL in a command log or report.
 
 RUN-PREFLIGHT-4 — Check live Codex usage status before the run and before each concurrency increase. The current account does not enforce a five-hour window; stop only on an actual quota or authentication boundary.
 

@@ -2365,3 +2365,26 @@ SHA-256: d192baef6c43cf0c3f30f5b304e2b73a97d082a9a74e8a03204390deb222dd35
 ~~~
 
 HIST-ALL-426368-6 — Export 64 was verified. Run 58 is the latest completed checkpoint. The final continuation adds the remaining 7,517 source articles to reach all 433,885 articles.
+
+## HIST-ALL-433885 — Full-corpus continuation results
+
+HIST-ALL-433885-1 — Run 59 retained Run 58, added the final 7,517 source-ordered articles, reused 2,024,526 units, and translated 28,519 new units from 728 initial batches. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-433885.dump`, SHA-256 `31653ba79d08813660d098e2a361af62ebeb0025c6202b6aa59dcd761230db3b`. Dump creation took 4 minutes 6 seconds. Listing, copying, hashing, and cleanup took about 28 seconds.
+
+HIST-ALL-433885-2 — Preparation took 332.83 seconds: source preflight 33.94, scope selection 33.67, extraction 45.57, reuse 146.63, batching 10.17, and verification 62.84 seconds. It created 2,053,045 total units and passed every pre-Luna gate with zero gaps, claims, unresolved errors, or unbatched units.
+
+HIST-ALL-433885-3 — Four full concurrency-100 windows completed 293 measured requests and 400 drain requests. Mean measured throughput was 283.15 headwords per minute, ranging from 242.65 to 325.99. Measured p50 latency ranged from 72.17 to 76.10 seconds and p95 from 91.08 to 98.52 seconds. Peak runner memory was 195 MB and maximum database duty cycle was 14.31%. The measured phases recorded three validation rejections and three retries, with zero splits, rate limits, timeouts, transport failures, database retries, claim collisions, stale leases, or lock waits.
+
+HIST-ALL-433885-4 — Across the complete four windows, productive drains included four validation rejections and two timeouts among six rejected attempts; all six retried successfully. The final 41-batch tail took 3 minutes 1 second and completed without another rejected attempt. As expected for fewer than 60 remaining batches, the wrapper reported that it could not form a full measurement phase after productive work had emptied the queue. PostgreSQL then proved all 728 batches deterministically validated, all 2,053,045 units translated, and zero active, ready, leased, retryable, terminal, claimed, or unresolved work.
+
+HIST-ALL-433885-5 — Acceptance took 4.28 seconds and validation took 23.88 seconds. All 2,053,045 units were accepted with zero membership mismatches or blocking issues. Build took 130.52 seconds and independent verification took 233.30 seconds with session-only 512 MB `work_mem` and parallel gather disabled. All 113 tests passed with two expected PostgreSQL integration skips. Run 59 took about 48 minutes from backup start through verified export, tests, and final audit.
+
+~~~text
+ZIP members:                369
+schema-validated banks:     130
+archive articles:       433,885
+translated headwords:   431,545
+headwords remaining:          0
+SHA-256: 68b4ef51f06213428e0c5b223b6715e2099542e28456c9fe8e42df75587d127b
+~~~
+
+HIST-ALL-433885-6 — Export 65 was verified and Run 59 completes the full Jitendex corpus. The first preparation command used local port 5432 instead of Docker's published port 5433 and failed before database changes. Future commands should resolve the port with `docker port jitendex-postgres 5432/tcp`. The first verify command omitted `JITENDEX_POSTGRES_URL` and failed before reading the archive; the corrected command passed. Future verification shells must export the authoritative URL first.
