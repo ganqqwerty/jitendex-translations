@@ -6,16 +6,16 @@ RUN-2 measure the time of the things you do.
 
 ## RUN-STOP — Current state (update when state changed)
 
-RUN-STOP-1 — Run 49 is complete in authoritative PostgreSQL with 336,368 frozen articles, 1,692,336 accepted units, zero unfinished work, and verified export 55. Run 50 is prepared with 346,368 articles, 1,692,336 reused translations, and 29,904 ready units in 824 batches.
+RUN-STOP-1 — Run 50 is complete in authoritative PostgreSQL with 346,368 frozen articles, 1,722,240 accepted units, zero unfinished leaf work, and verified export 56.
 
-RUN-STOP-2 — The verified archive is `dist/jitendex-articles-336368-ru-luna-v4.zip`. Its SHA-256 is `84dcf1ecf6c5d4fe9532f2b1f415abc2f1f4edfe53422477ccfff116858001b2`.
-RUN-STOP-3 — Stop before translating Run 50. Its preparation made zero Luna requests. Do not start its ready batches without new user authorization.
+RUN-STOP-2 — The verified archive is `dist/jitendex-articles-346368-ru-luna-v4.zip`. Its SHA-256 is `55bac7397ed07067c05fc7b95aff6a4f7f413e994fa4bf4de3d75796e39ac846`.
+RUN-STOP-3 — Stop at Run 50. Do not prepare another run or send more Luna requests without new user authorization.
 
 RUN-STOP-4 — PostgreSQL is authoritative. The old SQLite source is read-only migration evidence and must not receive production writes.
 
 RUN-STOP-5 — Concurrency 100 remains the proven future setting. The concurrency-110 fixed window reached 332.0 headwords per minute, 4.0% below concurrency 100, although it remained operationally clean.
 
-RUN-STOP-6 — Run 50 preparation took 171.40 seconds and passed all pre-Luna gates. Its report is `reports/run_prep/run-50-prep.json`.
+RUN-STOP-6 — Run 50 preparation took 171.40 seconds. Translation, retry isolation, acceptance, export, verification, and tests took about 45 more minutes. Details are in [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md).
 
 ## RUN-PIN — Pinned runtime
 

@@ -2162,3 +2162,26 @@ SHA-256: 84dcf1ecf6c5d4fe9532f2b1f415abc2f1f4edfe53422477ccfff116858001b2
 ~~~
 
 HIST-ALL-336368-8 — Export 55 was verified. Run 49 is the stopping point. Concurrency 100 remains the proven setting for a future authorized run; do not create another run without new authorization.
+
+## HIST-ALL-346368 — 346,368-article continuation results
+
+HIST-ALL-346368-1 — Run 50 retained Run 49, added 10,000 source-ordered articles, reused 1,692,336 units, and translated 29,904 new units from 824 initial batches. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-346368.dump`, SHA-256 `508692ec3c140d2f3d7023e0fd9e1eff65232017e30bfb113aecdf3826fcbf9e`.
+
+HIST-ALL-346368-2 — Optimized preparation took 171.40 seconds: source preflight 8.96, scope selection 16.35, extraction 34.17, reuse 77.33, batching 9.04, and verification 25.56 seconds. It passed all identity, acceptance, batching, and error gates with no Luna requests.
+
+HIST-ALL-346368-3 — Five full concurrency-100 windows completed 404 measured requests and 453 drain requests. Their mean measured throughput was 308.5 headwords per minute, with individual results from 288.0 to 340.6. Peak runner memory was 202 MB. They recorded 13 measured validation rejections, 10 retries, three splits, and zero rate limits, timeouts, transport failures, database retries, claim collisions, stale leases, missing units, or duplicate translations.
+
+HIST-ALL-346368-4 — The final four retry batches recursively isolated three singleton spelling variants of one slipper-lobster gloss. Luna repeatedly returned correct Russian text with Latin taxonomic names that triggered `too_much_english`. The audited targeted-leaf path ingested the concise Russian definition `лангуст-цикада (один из видов)` for all three without another Luna request. The final short-window telemetry wrapper exited after productive work ended during ramp because it had no measurement phase; no request or translation was lost.
+
+HIST-ALL-346368-5 — The first export attempt exhausted Docker's remaining 6.6 GB while PostgreSQL spilled a large parallel sort at the default 4 MB `work_mem`. A session-only 512 MB `work_mem` with parallel gather disabled avoided the spill without moving data into iCloud or changing persistent database settings. Build and independent verification then took 288 seconds.
+
+HIST-ALL-346368-6 — All 1,722,240 units were accepted with zero unfinished leaves, unresolved errors, missing units, duplicates, source-hash mismatches, or membership mismatches. The 22 blocked batch rows are preserved split-parent provenance. All 113 tests passed with two expected PostgreSQL integration skips. Run 50 took about 48 minutes from creation through verified export and tests.
+
+~~~text
+ZIP members:                323
+schema-validated banks:     108
+archive articles:       346,368
+SHA-256: 55bac7397ed07067c05fc7b95aff6a4f7f413e994fa4bf4de3d75796e39ac846
+~~~
+
+HIST-ALL-346368-7 — Export 56 was verified. Run 50 is the stopping point. Concurrency 100 remains the proven setting for a future authorized run; do not create another run without new authorization.
