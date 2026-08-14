@@ -2206,3 +2206,24 @@ SHA-256: a2d431226f3d64628ae5142406a6f4487fe22678a35934ea8a19ef75f3cbefdd
 ~~~
 
 HIST-ALL-356368-6 — Export 57 was verified. Run 51 is the latest completed checkpoint. The next 10,000-article continuation targets 366,368 articles.
+
+## HIST-ALL-366368 — 366,368-article continuation results
+
+HIST-ALL-366368-1 — Run 52 retained Run 51, added 10,000 source-ordered articles, reused 1,758,710 units, and translated 34,268 new units from 862 initial batches. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-366368.dump`, SHA-256 `1cf2a714132af34478bf37a6332c44cc409b846919d479d4f65893917cc749e0`.
+
+HIST-ALL-366368-2 — Preparation recorded source preflight 9.78 seconds, scope selection 18.76, extraction 40.39, reuse 89.42, and batching 10.61 seconds. The final acceptance-gap query exhausted Docker temporary space under default 4 MB `work_mem`; the identical read-only gate passed with session-only 512 MB `work_mem` and parallel gather disabled. Run 52 had 366,368 articles, 1,792,978 units, 34,268 ready units, 862 batches, and zero gaps or unresolved errors before Luna started.
+
+HIST-ALL-366368-3 — Five full concurrency-100 windows completed 373 measured requests and 500 drain requests. Mean measured throughput was 284.7 headwords per minute. Peak runner memory was 200 MB. They recorded nine measured validation rejections, seven retries, two splits, and zero rate limits, timeouts, transport failures, database retries, claim collisions, stale leases, missing units, or duplicate translations.
+
+HIST-ALL-366368-4 — The final retry window isolated two untranslated xref leaves: `daffodil; narcissus` and `YouTube`. The audited targeted-leaf path ingested `нарцисс` and `Ютуб` without more Luna requests. The short-window telemetry wrapper ended without a measurement phase after productive work finished during ramp; no request or translation was lost.
+
+HIST-ALL-366368-5 — All 1,792,978 units were accepted with zero unfinished leaves, unresolved errors, missing units, duplicates, source-hash mismatches, or membership mismatches. Build and independent verification took 305 seconds using session-only sort memory. All 113 tests passed with two expected PostgreSQL integration skips.
+
+~~~text
+ZIP members:                334
+schema-validated banks:     113
+archive articles:       366,368
+SHA-256: 2e8390e3f3d71032d042d1c4662ccd19e03e51483845a3b81ba0219f8450b287
+~~~
+
+HIST-ALL-366368-6 — Export 58 was verified. Run 52 is the latest completed checkpoint. Docker has about 2 GB free, so PostgreSQL storage must be expanded or safely migrated outside Documents before the next 10,000-article continuation.
