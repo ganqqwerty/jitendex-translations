@@ -554,7 +554,7 @@ def write_zip_sample_dataset(
     description: str,
     active_path: str,
 ) -> dict[str, Any]:
-    columns = (("original", "Original Jitendex (English)"), ("russian", "Jitendex — русский"))
+    columns = (("original", "Original Jitendex (English)"), ("russian", "Колобок 400k"))
     data_dir = output / "data"
     if data_dir.exists():
         shutil.rmtree(data_dir)
@@ -664,7 +664,7 @@ def build_zip_samples(output: Path) -> None:
             samples_by_slug[demo["slug"]],
             originals,
             styles=styles,
-            title=f'Jitendex English × русский — {demo["rank_label"]} — 100 примеров',
+            title=f'Jitendex English × Колобок 400k — {demo["rank_label"]} — 100 примеров',
             description=f'Сто примеров новых статей из проверенного словаря: {demo["rank_label"]}.',
             active_path=f'/{demo["slug"]}/',
         )

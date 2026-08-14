@@ -13,7 +13,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 from xml.etree import ElementTree
 
-from .attribution import ATTRIBUTION
+from .attribution import ATTRIBUTION, PRODUCT_ID
 from .database import ConnectionLike
 from .export_model import ExportCorpus, ExportEntry, ExportVariant, prepare_export
 from .export_render import (
@@ -30,7 +30,7 @@ from .export_render import (
 )
 from .util import canonical_json, sha256_bytes, sha256_file
 
-BASENAME = "jitendex-ru"
+BASENAME = PRODUCT_ID
 CAPABILITY_PROFILE = "pocketbook-xdxf-experimental-v1"
 ALLOWED_TAGS = {
     "a", "br", "details", "div", "img", "li", "ol", "rp", "rt", "ruby",
@@ -38,7 +38,7 @@ ALLOWED_TAGS = {
 }
 INSTALLATION = (
     "Experimental PocketBook build. Device compatibility is not yet verified.\n"
-    "After closing the capability gate, copy jitendex-ru.dic to /system/dictionaries/ on the device.\n"
+    f"After closing the capability gate, copy {PRODUCT_ID}.dic to /system/dictionaries/ on the device.\n"
 )
 
 

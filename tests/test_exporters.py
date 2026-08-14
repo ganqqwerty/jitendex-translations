@@ -164,7 +164,7 @@ def test_loss_ledger_rejects_omissions():
 
 def test_pocketbook_renders_keys_rich_fallbacks_and_compiler_contract(tmp_path):
     corpus = _corpus(tmp_path)
-    output = tmp_path / "jitendex-ru.xdxf"
+    output = tmp_path / "jp-ru-kolobok-400k.xdxf"
     ledger = LossLedger("pocketbook")
     counts = render_pocketbook_xdxf(
         corpus, output,
@@ -297,6 +297,9 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     assert pocketbook_module.verify_pocketbook(pocket_connection, pocket_output)["verified"]
     with zipfile.ZipFile(pocket_output) as archive:
         assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
+        assert "Соавтор русской редакции: Юрий Катков." in archive.read("ATTRIBUTION.txt").decode()
+        assert "jp-ru-kolobok-400k.xdxf" in archive.namelist()
+        assert "jp-ru-kolobok-400k.dic" in archive.namelist()
 
     apple_tool = tmp_path / "fake-build-dict"
     apple_tool.write_text(
@@ -319,6 +322,8 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     assert apple_module.verify_apple_dictionary(apple_connection, apple_output)["verified"]
     with zipfile.ZipFile(apple_output) as archive:
         assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
+        assert "Соавтор русской редакции: Юрий Катков." in archive.read("ATTRIBUTION.txt").decode()
+        assert any(name.startswith("jp-ru-kolobok-400k.dictionary/") for name in archive.namelist())
 
     monkeypatch.setattr(mdict_module, "prepare_export", lambda connection, run_id: corpus)
     mdict_connection = _ExportConnection()
@@ -331,3 +336,6 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     assert mdict_module.verify_mdict(mdict_connection, first_output)["verified"]
     with zipfile.ZipFile(first_output) as archive:
         assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
+        assert "Соавтор русской редакции: Юрий Катков." in archive.read("ATTRIBUTION.txt").decode()
+        assert "jp-ru-kolobok-400k.mdx" in archive.namelist()
+        assert "jp-ru-kolobok-400k.mdd" in archive.namelist()

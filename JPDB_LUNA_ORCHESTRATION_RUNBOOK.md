@@ -17,7 +17,7 @@ RUN-STOP-5 — Concurrency 100 remains the proven future setting. The concurrenc
 
 RUN-STOP-6 — Docker's internal disk limit is 264 GB and its PostgreSQL filesystem has about 115 GB free. Its disk image remains under `~/Library/Containers`, outside Documents and iCloud.
 
-RUN-STOP-7 — The verified co-author `tags-ru-v1` exports are Yomitan 73, GoldenDict 74, MDict 75, PocketBook 76, and Apple Dictionary 77. Their hashes are recorded in [README-STATE](README.md) and the run history. Client release still requires the manual gates in [TOOL-CLIENT](DEVELOPER_TOOLING.md).
+RUN-STOP-7 — The verified `Колобок 400k` exports are Yomitan 78, GoldenDict 79, MDict 80, PocketBook 81, and Apple Dictionary 82. Their hashes are recorded in [README-STATE](README.md) and the run history. Client release still requires the manual gates in [TOOL-CLIENT](DEVELOPER_TOOLING.md).
 
 ## RUN-PIN — Pinned runtime
 
@@ -218,12 +218,12 @@ export PGOPTIONS='-c work_mem=512MB -c max_parallel_workers_per_gather=0'
 
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   build --run-id "$JPDB_RUN_ID" \
-  --output "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4-tags-ru-v1.zip"
+  --output "dist/jp-ru-kolobok-400k-yomitan.zip"
 
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
-  verify "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4-tags-ru-v1.zip"
+  verify "dist/jp-ru-kolobok-400k-yomitan.zip"
 
-shasum -a 256 "dist/jitendex-articles-${JPDB_SCOPE_LABEL}-ru-luna-v4-tags-ru-v1.zip"
+shasum -a 256 "dist/jp-ru-kolobok-400k-yomitan.zip"
 
 unset PGOPTIONS
 ~~~

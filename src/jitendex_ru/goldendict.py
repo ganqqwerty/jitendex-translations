@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, quote, urlsplit
 
 from PIL import Image, ImageOps
 
-from .attribution import DICTIONARY_AUTHORS
+from .attribution import DICTIONARY_AUTHORS, PRODUCT_ID, PRODUCT_NAME
 from .build_dictionary import FIXED_ZIP_TIME, _frequency_metadata, _paths, materialize_run
 from .database import ConnectionLike
 from .db import audit
@@ -28,7 +28,7 @@ from .jitendex_tags import (
 from .util import canonical_json, sha256_bytes, sha256_file
 
 
-BASENAME = "jitendex-ru"
+BASENAME = PRODUCT_ID
 ALLOWED_TAGS = {
     "a", "br", "details", "div", "img", "li", "ol", "rp", "rt", "ruby",
     "span", "summary", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul",
@@ -392,7 +392,7 @@ def build_goldendict(
                         raise ValueError("reading contains NUL")
                     synonym_file.write(encoded + b"\0" + struct.pack(">I", entry_index))
         frequency_metadata = _frequency_metadata(connection, run_id)
-        title = frequency_metadata[0] if frequency_metadata else "Jitendex Kaishi 1.5k — русский"
+        title = frequency_metadata[0] if frequency_metadata else PRODUCT_NAME
         description = frequency_metadata[2] if frequency_metadata else (
             "Производный русскоязычный словарь на основе Jitendex. "
             "Атрибуция Jitendex/JMdict/Tatoeba и условия CC BY-SA 4.0 сохранены."
@@ -405,7 +405,7 @@ def build_goldendict(
             ifo_lines.append(f"synwordcount={len(synonyms)}")
         ifo_lines.extend([
             "sametypesequence=h", f"author={DICTIONARY_AUTHORS}",
-            "website=https://jitendex.org", f"description={_ifo_value(description)}",
+            "website=https://ganqqwerty.github.io/jitendex-translations/", f"description={_ifo_value(description)}",
         ])
         (root / f"{BASENAME}.ifo").write_text("\n".join(ifo_lines) + "\n", encoding="utf-8", newline="\n")
         bundle_paths = sorted(

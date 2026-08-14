@@ -20,7 +20,7 @@ from xml.etree import ElementTree
 from mdict_utils import reader as mdict_reader
 from mdict_utils import writer as mdict_writer
 
-from .attribution import ATTRIBUTION
+from .attribution import ATTRIBUTION, PRODUCT_ID
 from .database import ConnectionLike
 from .export_model import (
     ExportCorpus,
@@ -43,7 +43,7 @@ from .export_render import (
     zip_member_sha256,
 )
 
-BASENAME = "jitendex-ru"
+BASENAME = PRODUCT_ID
 CAPABILITY_PROFILE = "mdict-2.0-experimental-v1"
 WRITER_VERSION = "mdict-utils-1.3.14"
 ALLOWED_TAGS = {
@@ -63,7 +63,7 @@ CSS = """.jr-entry{font-family:system-ui,-apple-system,sans-serif;line-height:1.
 """
 INSTALLATION = (
     "Experimental unencrypted MDict 2.0 package. Official clients are not yet verified.\n"
-    "Keep jitendex-ru.mdx and jitendex-ru.mdd together when importing them.\n"
+    f"Keep {PRODUCT_ID}.mdx and {PRODUCT_ID}.mdd together when importing them.\n"
 )
 _LOCALE_LOCK = threading.Lock()
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .apply_translations import apply_article
-from .attribution import DICTIONARY_AUTHORS
+from .attribution import DICTIONARY_AUTHORS, PRODUCT_ID, PRODUCT_NAME
 from .db import audit
 from .jitendex_tags import (
     TAG_CATALOG_VERSION, load_approved_tag_catalog, localize_embedded_tags,
@@ -42,15 +42,15 @@ def _frequency_metadata(connection: ConnectionLike, run_id: int) -> tuple[str, s
               SELECT jitendex_snapshot_id FROM run WHERE id=?)""", (run_id,),
         ).fetchone()[0]
         complete = run_articles == total_articles
-        label = "полный" if complete else f"{run_articles:,} статей".replace(",", " ")
-        suffix = "full-ru" if complete else f"articles-{run_articles}-ru"
+        label = PRODUCT_NAME if complete else f"{PRODUCT_NAME} — {run_articles:,} статей".replace(",", " ")
+        suffix = PRODUCT_ID if complete else f"{PRODUCT_ID}-articles-{run_articles}"
         description = (
-            "Полный производный русскоязычный словарь на основе Jitendex. "
+            f"{PRODUCT_NAME} — полный производный русскоязычный словарь на основе Jitendex. "
             if complete else
-            f"Производный русскоязычный словарь на основе Jitendex; кумулятивная выборка содержит {run_articles:,} статей. "
+            f"{PRODUCT_NAME} — производный русскоязычный словарь на основе Jitendex; кумулятивная выборка содержит {run_articles:,} статей. "
         )
         return (
-            f"Jitendex {label} — русский",
+            label,
             suffix,
             description + "Атрибуция Jitendex/JMdict/Tatoeba и условия CC BY-SA 4.0 сохранены.",
         )
@@ -179,7 +179,7 @@ def build(
     with zipfile.ZipFile(source_row["local_path"]) as source:
         index = json.loads(source.read("index.json"))
         frequency_metadata = _frequency_metadata(connection, run_id)
-        index["title"] = frequency_metadata[0] if frequency_metadata else "Jitendex Kaishi 1.5k — русский"
+        index["title"] = frequency_metadata[0] if frequency_metadata else PRODUCT_NAME
         suffix = frequency_metadata[1] if frequency_metadata else (
             "kaishi-ru-lexicographer-v2" if run["pipeline_version"] == "lexicographer-v2" else "kaishi-ru-v1"
         )

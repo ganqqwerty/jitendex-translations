@@ -1,6 +1,6 @@
-# README — Jitendex Russian translation pipeline
+# README — Колобок 400k translation pipeline
 
-README-1 — This repository translates the frozen Jitendex dictionary into Russian with Luna, stores every attempt and accepted result in PostgreSQL, and builds verified Yomitan, GoldenDict, MDict, PocketBook, and Apple Dictionary archives.
+README-1 — This repository builds `Колобок 400k`, a Russian dictionary derived from the frozen Jitendex corpus with Luna. It stores every attempt and accepted result in PostgreSQL and exports verified Yomitan, GoldenDict, MDict, PocketBook, and Apple Dictionary archives.
 
 README-2 — PostgreSQL is authoritative. SQLite files and old pilot scripts are migration evidence only. Never direct production writes back to SQLite.
 
@@ -61,17 +61,17 @@ README-ARCH-5 — Approved tag terminology is applied during export instead of r
 
 | ID | Format | Export | SHA-256 |
 |---|---|---|---|
-| README-STATE-1 | Yomitan `tags-ru-v1` | 73 | `c5c012e3d77c714785881c0f67b7c76cb79e1902c8b73c7d0e8232c23ec2208e` |
-| README-STATE-2 | GoldenDict | 74 | `eb13c6eed1903e7771b90a55a9553ba2e3812562956961cd1b2a068c74977594` |
-| README-STATE-3 | MDict | 75 | `069f0bebbfe21a0c015e3ac565e4cc7253c88f6e9b7f933fc3c6d164168af269` |
-| README-STATE-4 | PocketBook | 76 | `8c9bcdbc7de13bfe5271ad1a2ff57baf367f134eaab39e90022f56265188f008` |
-| README-STATE-5 | Apple Dictionary | 77 | `0cfb5198b2ad502db3b4c76f78d0c8293e0c94a1dc1a1c6ce2828b27f607f482` |
+| README-STATE-1 | Yomitan `tags-ru-v1` | 78 | `063893f6d9453de4fec184b17860ea7e7608f9875a667e45d6046029e7736723` |
+| README-STATE-2 | GoldenDict | 79 | `c3180d533c3f472eed1e1d91004591117d9d40701aa4e25d19a2dbaaade923a0` |
+| README-STATE-3 | MDict | 80 | `2dd86064af2fbd62d4e40ad2a24a8b1f19b7e229260acc0a2d998b2ddc3de36d` |
+| README-STATE-4 | PocketBook | 81 | `be97c6bd3d3b49ec24bd08fe2e7ad45343994fa3d2832e295208daefdd2664ee` |
+| README-STATE-5 | Apple Dictionary | 82 | `1b1116b61db7369621de8cf443f42de26d1ad39c03715f0aeaed4d0ecfd42b64` |
 
 README-STATE-6 — Export 65 is the immutable pre-tag-unification Yomitan checkpoint. Export records 68 and 69 are reproducibility evidence, not release archives.
 
 README-STATE-7 — PocketBook, MDict, and Apple Dictionary pass structural archive verification but remain experimental until their real-client gates in `reports/exporters/` pass. The Yomitan clean-profile hover test is also still manual.
 
-README-STATE-8 — Every current archive credits Yuri Katkov as co-author of the Russian edition. The five archives are published in release `run59-tags-ru-v1`.
+README-STATE-8 — Every current `Колобок 400k` archive credits Yuri Katkov as co-author of the Russian edition. The five archives use the Latin base name `jp-ru-kolobok-400k` and are published in release `run59-tags-ru-v1`.
 
 ## README-TEST — Verification
 

@@ -198,9 +198,9 @@ TOOL-YOMITAN-1 — Yomitan needs no external compiler. The build validates banks
 ~~~bash
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   build --run-id 59 \
-  --output dist/jitendex-articles-433885-ru-luna-v4-tags-ru-v1.zip
+  --output dist/jp-ru-kolobok-400k-yomitan.zip
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
-  verify dist/jitendex-articles-433885-ru-luna-v4-tags-ru-v1.zip
+  verify dist/jp-ru-kolobok-400k-yomitan.zip
 ~~~
 
 TOOL-YOMITAN-2 — After the clean-profile test, copy `dist/yomitan-smoke-template.json` to a new report, insert the verified archive hash, mark only checks actually observed, and identify the tested Yomitan version and profile in `notes`. The notes must also confirm embedded part-of-speech, field, dialect, and tag-bank hover text. Then record the report in PostgreSQL.
@@ -220,9 +220,9 @@ TOOL-GD-1 — GoldenDict needs no external compiler. It emits a reproducible Sta
 ~~~bash
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   export-goldendict --run-id 59 \
-  --output dist/jitendex-articles-433885-ru-goldendict-tags-ru-v1.zip
+  --output dist/jp-ru-kolobok-400k-goldendict.zip
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
-  verify-goldendict dist/jitendex-articles-433885-ru-goldendict-tags-ru-v1.zip
+  verify-goldendict dist/jp-ru-kolobok-400k-goldendict.zip
 ~~~
 
 ### TOOL-MDICT — MDict
@@ -232,9 +232,9 @@ TOOL-MDICT-1 — MDict uses the Python dependency `mdict-utils==1.3.14`. It emit
 ~~~bash
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   export-mdict --run-id 59 \
-  --output dist/jitendex-articles-433885-ru-mdict-tags-ru-v1.zip
+  --output dist/jp-ru-kolobok-400k-mdict.zip
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
-  verify-mdict dist/jitendex-articles-433885-ru-mdict-tags-ru-v1.zip
+  verify-mdict dist/jp-ru-kolobok-400k-mdict.zip
 ~~~
 
 ### TOOL-PB — PocketBook
@@ -265,12 +265,12 @@ TOOL-PB-4 — Build and verify with the pinned hash.
 ~~~bash
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   export-pocketbook --run-id 59 \
-  --output dist/jitendex-articles-433885-ru-pocketbook-tags-ru-v1.zip \
+  --output dist/jp-ru-kolobok-400k-pocketbook.zip \
   --compiler "$JITENDEX_EXPORT_TOOL_ROOT/LanguageFilesPocketbookConverter/converter.exe" \
   --compiler-sha256 9eda24d32a9bb76697c8c0ca713d6299c7881ade76bfb317b9ac7bf95d06936f \
   --language-dir "$JITENDEX_EXPORT_TOOL_ROOT/LanguageFilesPocketbookConverter/jaK"
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
-  verify-pocketbook dist/jitendex-articles-433885-ru-pocketbook-tags-ru-v1.zip
+  verify-pocketbook dist/jp-ru-kolobok-400k-pocketbook.zip
 ~~~
 
 ### TOOL-APPLE — Apple Dictionary
@@ -293,11 +293,11 @@ TOOL-APPLE-4 — Build and verify the native bundle archive.
 ~~~bash
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   export-apple-dictionary --run-id 59 \
-  --output dist/jitendex-articles-433885-ru-apple-dictionary-tags-ru-v1.zip \
+  --output dist/jp-ru-kolobok-400k-apple-dictionary.zip \
   --build-tool "$JITENDEX_EXPORT_TOOL_ROOT/Dictionary Development Kit/bin/build_dict.sh" \
   --build-tool-sha256 96c60abedd89f1932bf5a54fe65ed03f739423b0434a1afe9e0cec9aae124ffc
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
-  verify-apple-dictionary dist/jitendex-articles-433885-ru-apple-dictionary-tags-ru-v1.zip
+  verify-apple-dictionary dist/jp-ru-kolobok-400k-apple-dictionary.zip
 ~~~
 
 ## TOOL-CLIENT — Manual client gates

@@ -201,7 +201,10 @@ def test_translation_review_and_reproducible_build(tmp_path):
     assert first_result["zip_sha256"] == second_result["zip_sha256"]
     assert verify(connection, first)["verified"]
     with zipfile.ZipFile(first) as archive:
-        assert json.loads(archive.read("index.json"))["author"] == "Stephen Kraus; Yuri Katkov"
+        index = json.loads(archive.read("index.json"))
+        assert index["title"].startswith("Колобок 400k")
+        assert index["author"] == "Stephen Kraus; Yuri Katkov"
+        assert "jp-ru-kolobok-400k" in index["revision"]
         emitted = json.loads(archive.read("term_bank_1.json"))[0]
         assert emitted[5]["content"]["content"][0]["content"] == "есть"
         assert emitted[5]["content"]["content"][0]["lang"] == "ru"
@@ -223,11 +226,14 @@ def test_translation_review_and_reproducible_build(tmp_path):
     assert verify_goldendict(connection, golden_one)["verified"]
     with zipfile.ZipFile(golden_one) as archive:
         assert {
-            "jitendex-ru.ifo", "jitendex-ru.idx", "jitendex-ru.dict",
-            "jitendex-ru.syn", "res/jitendex-ru.css",
+            "jp-ru-kolobok-400k.ifo", "jp-ru-kolobok-400k.idx",
+            "jp-ru-kolobok-400k.dict", "jp-ru-kolobok-400k.syn",
+            "res/jp-ru-kolobok-400k.css",
         } <= set(archive.namelist())
-        assert "author=Stephen Kraus; Yuri Katkov" in archive.read("jitendex-ru.ifo").decode()
-        golden_article = archive.read("jitendex-ru.dict").decode()
+        ifo = archive.read("jp-ru-kolobok-400k.ifo").decode()
+        assert "bookname=Колобок 400k" in ifo
+        assert "author=Stephen Kraus; Yuri Katkov" in ifo
+        golden_article = archive.read("jp-ru-kolobok-400k.dict").decode()
         assert "есть" in golden_article
         assert '<span class="jr-tag" title="Запись с высоким приоритетом">★</span>' in golden_article
         assert 'data-rules="v1" data-score="0" data-sequence="42"' in golden_article
@@ -237,8 +243,8 @@ def test_translation_review_and_reproducible_build(tmp_path):
         with Image.open(BytesIO(archive.read("res/jitendex/graphics/example.png"))) as converted:
             assert converted.format == "PNG"
             assert converted.size == (2, 2)
-        assert "たべる" in archive.read("jitendex-ru.syn").decode(errors="ignore")
-        assert "span {}" in archive.read("res/jitendex-ru.css").decode()
+        assert "たべる" in archive.read("jp-ru-kolobok-400k.syn").decode(errors="ignore")
+        assert "span {}" in archive.read("res/jp-ru-kolobok-400k.css").decode()
     smoke_path = tmp_path / "smoke.json"
     smoke_path.write_text(json.dumps({
         "schema_version": 1, "zip_sha256": first_result["zip_sha256"],
