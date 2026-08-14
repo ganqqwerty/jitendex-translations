@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Сто примеров новых статей из проверенного словаря: 70,001–80,000.">
+  <title>Jitendex English × русский — 70,001–80,000 — 100 примеров</title>
+  <style>
+:root { color-scheme: light; --canvas: #f1f3f5; --fg: #222; --text-color: #222; --background-color: #fff; --font-size-no-units: 14; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--canvas); color: var(--fg); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", sans-serif; }
+.page { width: min(1800px, calc(100% - 24px)); margin: 0 auto; padding: 24px 0 48px; }
+.page-title { margin: 0 0 14px; font-size: 18px; font-weight: 600; }
+.demo-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+.demo-nav a { padding: 6px 10px; border: 1px solid #b8bec5; border-radius: 999px; background: #fff; color: #384047; text-decoration: none; }
+.demo-nav a:hover { border-color: #1a73e8; color: #1a73e8; }
+.demo-nav a[aria-current="page"] { border-color: #1a73e8; background: #e8f0fe; color: #174ea6; font-weight: 600; }
+.term-search { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
+.term-search label { color: #4b5157; font-size: 13px; font-weight: 600; }
+.term-search input { width: min(360px, 100%); padding: 8px 10px; border: 1px solid #b8bec5; border-radius: 6px; background: #fff; color: #222; font: inherit; }
+.term-search input:focus, .pagination select:focus, .pagination button:focus { outline: 2px solid #1a73e8; outline-offset: 1px; }
+.term-search-status { color: #70757a; font-size: 12px; white-space: nowrap; }
+.column-picker { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 0 0 14px; padding: 10px 12px; border: 1px solid #cfd3d8; border-radius: 6px; background: #fff; }
+.column-picker legend { padding: 0 5px; color: #60666c; font-size: 12px; font-weight: 600; }
+.column-picker label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+.column-picker input { margin: 0; accent-color: #1a73e8; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 14px 0; }
+.pagination button, .pagination select { min-height: 36px; padding: 7px 11px; border: 1px solid #b8bec5; border-radius: 6px; background: #fff; color: #222; font: inherit; }
+.pagination button { cursor: pointer; }
+.pagination button:disabled { cursor: default; opacity: .45; }
+.pagination[hidden] { display: none; }
+.table-shell { min-height: 180px; overflow-x: auto; border: 1px solid #cfd3d8; border-radius: 6px; background: #fff; }
+.comparison-table { display: block; width: 100%; border-collapse: collapse; }
+.comparison-table > thead, .comparison-table > tbody { display: block; }
+.comparison-table > thead > tr, .comparison-table > tbody > tr.comparison-row { display: grid; grid-template-columns: repeat(var(--visible-columns), minmax(0, 1fr)); }
+.comparison-table > thead > tr > th { position: sticky; top: 0; z-index: 2; padding: 9px 14px; border-bottom: 1px solid #cfd3d8; background: #e9ecef; color: #4b5157; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.comparison-table > thead > tr > th + th, .comparison-table > tbody > tr > td + td { border-left: 1px solid #cfd3d8; }
+.comparison-table > tbody > tr > td { padding: 14px 16px 18px; vertical-align: top; border-top: 1px solid #dfe2e5; }
+.comparison-table > tbody > tr:first-child > td { border-top: 0; }
+.comparison-table > tbody > tr:nth-child(even) > td { background: #fafbfc; }
+.comparison-table [hidden] { display: none !important; }
+.entry-heading { display: flex; align-items: baseline; gap: .65em; margin: 0 0 .45em; padding-bottom: .35em; border-bottom: 1px solid #e4e6e8; }
+.expression { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif; font-size: 1.65em; font-weight: 500; }
+.entry-reading { color: #60666c; font-size: 1.05em; }
+.definition-list { overflow-wrap: anywhere; }
+.definition-list > div { margin-bottom: .3em; }
+.missing-entry { color: #777; font-style: italic; }
+.loading-row td { padding: 44px 16px !important; color: #70757a; text-align: center; }
+.yomitan-entry a { color: #1a73e8; text-decoration: none; }
+.yomitan-entry a:hover { text-decoration: underline; }
+.yomitan-entry table { border-collapse: collapse; }
+.yomitan-entry th, .yomitan-entry td { border: 1px solid #b9bec4; padding: .15em .35em; }
+@media (max-width: 700px) { .page { width: calc(100% - 12px); padding-top: 10px; } .comparison-table > tbody > tr > td { padding: 10px; } }
+
+span[title] {
+    cursor: help;
+}
+
+ul[data-sc-content="sense-groups"] {
+    list-style-type: "＊";
+}
+
+li[data-sc-content="sense-group"],
+li[data-sc-content="forms"] {
+    padding-left: 0.25em;
+}
+
+div[data-sc-content="sense-group"],
+li[data-sc-content="sense-group"]:first-child {
+    margin-top: 0.1em;
+}
+
+li[data-sc-content="sense-group"] + li[data-sc-content="sense-group"],
+div[data-sc-content="forms"],
+li[data-sc-content="forms"] {
+    margin-top: 0.5em;
+}
+
+li[data-sc-content="sense"] {
+    padding-left: 0.25em;
+    & ul[data-sc-content="glossary"] {
+        list-style-type: none;
+        padding-left: 0.25em;
+    }
+}
+
+span[data-sc-class="tag"] {
+    border-radius: 0.3em;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-right: 0.5em;
+    padding: 0.2em 0.3em;
+    vertical-align: text-bottom;
+    word-break: keep-all;
+}
+
+span[data-sc-content="part-of-speech-info"] {
+    background-color: #565656;
+    color: white;
+}
+
+span[data-sc-content="misc-info"] {
+    background-color: brown;
+    color: white;
+}
+
+span[data-sc-content="field-info"] {
+    background-color: purple;
+    color: white;
+}
+
+span[data-sc-content="dialect-info"] {
+    background-color: green;
+    color: white;
+}
+
+span[data-sc-content="lang-source-wasei"] {
+    background-color: orange;
+    color: black;
+    margin-left: 0.5em;
+    margin-right: 0;
+}
+
+span[data-sc-content="forms-label"] {
+    background-color: #565656;
+    color: white;
+}
+
+ul[data-sc-content="glossary"] {
+    list-style-type: disc;
+}
+
+span[data-sc-content="registered-trademark"] {
+    vertical-align: super;
+    font-size: 0.6em;
+}
+
+div[data-sc-class="extra-box"] {
+    border-radius: 0.4rem;
+    border-style: none none none solid;
+    border-width: calc(3em / var(--font-size-no-units, 14));
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    width: fit-content;
+}
+
+div[data-sc-class="extra-content"] {
+    margin-left: 0.5rem;
+}
+
+div[data-sc-content="info-gloss"] {
+    border-color: green;
+    background-color: color-mix(in srgb, green 5%, transparent);
+}
+
+div[data-sc-content="sense-note"] {
+    border-color: goldenrod;
+    background-color: color-mix(in srgb, goldenrod 5%, transparent);
+}
+
+div[data-sc-content="lang-source"] {
+    border-color: purple;
+    background-color: color-mix(in srgb, purple 5%, transparent);
+}
+
+div[data-sc-content="xref"] {
+    border-color: #1A73E8;
+    background-color: color-mix(in srgb, #1A73E8 5%, transparent);
+    & span[data-sc-content="reference-label"] {
+        color: #1A73E8;
+    }
+}
+
+div[data-sc-content="antonym"] {
+    border-color: brown;
+    background-color: color-mix(in srgb, brown 5%, transparent);
+    & span[data-sc-content="reference-label"] {
+        color: brown;
+    }
+}
+
+div[data-sc-content="example-sentence"] {
+    border-color: var(--text-color, var(--fg, #333));
+    background-color: color-mix(in srgb, var(--text-color, var(--fg, #333)) 5%, transparent);
+}
+
+div[data-sc-content="extra-info"] {
+    margin-left: 0.5em;
+}
+
+div[data-sc-class="extra-label"] {
+    color: #777;
+    font-size: 0.8em;
+    font-style: italic;
+}
+
+span[data-sc-content="reference-label"] {
+    font-size: 0.8em;
+    margin-right: 0.5rem;
+}
+
+div[data-sc-content="xref-content"],
+div[data-sc-content="antonym-content"] {
+    font-size: 1.3em;
+}
+
+div[data-sc-content="xref-glossary"],
+div[data-sc-content="antonym-glossary"] {
+    font-size: 0.8rem;
+}
+
+div[data-sc-content="example-sentence-a"] {
+    font-size: 1.3em;
+}
+
+div[data-sc-content="example-sentence-b"] {
+    font-size: 0.8em;
+}
+
+span[data-sc-content="example-keyword"] {
+    color: color-mix(in srgb, lime, var(--text-color, var(--fg, #333)));
+}
+
+span[data-sc-content="attribution-footnote"] {
+    color: #777;
+    font-size: 0.8em;
+    margin-left: 0.25rem;
+    vertical-align: top;
+}
+
+div[data-sc-content="graphic"] {
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    & .gloss-image-container {
+        border: solid calc(42em / var(--font-size-no-units, 14)) var(--text-color, var(--fg, #333));
+        border-radius: 3%;
+    }
+}
+
+div[data-sc-content="graphic-attribution"] {
+    font-size: 70%;
+    margin-top: 0.25rem;
+}
+
+/* The "forms" section may be contained in a <div> or a <li> depending on the content of the entry. */
+div[data-sc-content="forms"],
+li[data-sc-content="forms"] {
+    & ul {
+        font-size: 1.2em;
+        list-style-type: circle;
+    }
+    & table {
+        margin-top: 0.2em;
+    }
+    & tr {
+        border-width: 1px;
+    }
+    & th {
+        border-width: 1px;
+        font-weight: normal;
+        text-align: left;
+    }
+    & td {
+        border-width: 1px;
+        text-align: center;
+        & span {
+            clip-path: circle();
+            display: block;
+            font-weight: bold;
+            padding: 0 0.5em;
+        }
+    }
+}
+
+/* For the display of sense number restrictions in forms tables */
+th[data-sc-content="forms-row-senses"],
+tr[data-sc-content="forms-col-senses-row"] th {
+    text-align: center;
+}
+
+tr[data-sc-content="forms-header-row"] th {
+    font-size: 1.2em;
+    text-align: center;
+    vertical-align: text-bottom;
+    & span[data-sc-class="old-character"] {
+        text-emphasis-style: dot;
+    }
+}
+
+span[data-sc-class="form-special"] {
+    color: crimson;
+}
+
+td[data-sc-class="form-pri"] > span {
+    color: white;
+    background: radial-gradient(green 50%, white 100%);
+    &::before {
+        content: "△";
+    }
+}
+
+td[data-sc-class="form-irr"] > span {
+    color: white;
+    background: radial-gradient(crimson 50%, white 100%);
+    &::before {
+        content: "✕";
+    }
+}
+
+td[data-sc-class="form-out"] > span {
+    color: white;
+    background: radial-gradient(blue 50%, white 100%);
+    &::before {
+        content: "古";
+    }
+}
+
+td[data-sc-class="form-old"] > span {
+    color: white;
+    background: radial-gradient(blue 50%, white 100%);
+    &::before {
+        content: "旧";
+    }
+}
+
+td[data-sc-class="form-rare"] > span {
+    color: white;
+    background: radial-gradient(purple 50%, white 100%);
+    &::before {
+        content: "▽";
+    }
+}
+
+td[data-sc-class="form-valid"] > span {
+    color: var(--background-color, var(--canvas, #f8f9fa));
+    background: radial-gradient(var(--text-color, var(--fg, #333)) 50%, white 100%);
+    &::before {
+        content: "◇";
+    }
+}
+
+div[data-sc-content="attribution"] {
+    font-size: 0.7em;
+    text-align: right;
+}
+
+div[data-sc-content="redirect-glossary"] {
+    font-size: 180%;
+    margin-top: 0.2em;
+}
+</style>
+</head>
+<body>
+  <main class="page">
+    <h1 class="page-title">Jitendex English × русский — 70,001–80,000 — 100 примеров</h1>
+    <nav class="demo-nav" aria-label="Наборы слов"><a href="/">Kaishi 1.5k</a><a href="/jpdb-top-5k/">JPDB top 5k</a><a href="/jpdb-5k-to-10k/">JPDB 5k–10k</a><a href="/jpdb-10k-to-20k/">JPDB 10k–20k</a><a href="/jpdb-20k-to-30k/">JPDB 20k–30k</a><a href="/jpdb-30k-to-40k/">JPDB 30k–40k</a><a href="/jpdb-40k-to-50k/">JPDB 40k–50k</a><a href="/jpdb-50k-to-60k/">JPDB 50k–60k</a><a href="/jpdb-60k-to-70k/">JPDB 60k–70k</a><a href="/jpdb-70k-to-80k/" aria-current="page">JPDB 70k–80k</a><a href="/jpdb-80k-to-90k/">JPDB 80k–90k</a><a href="/jpdb-90k-to-100k/">JPDB 90k–100k</a><a href="/jpdb-100k-to-110k/">JPDB 100k–110k</a><a href="/jpdb-110k-to-120k/">JPDB 110k–120k</a><a href="/jpdb-120k-to-130k/">JPDB 120k–130k</a><a href="/jpdb-130k-to-140k/">JPDB 130k–140k</a><a href="/jpdb-140k-to-150k/">JPDB 140k–150k</a><a href="/jpdb-150k-to-160k/">JPDB 150k–160k</a><a href="/jpdb-160k-to-170k/">JPDB 160k–170k</a><a href="/jpdb-170k-to-180k/">JPDB 170k–180k</a><a href="/jpdb-180k-to-190k/">JPDB 180k–190k</a><a href="/jpdb-190k-to-200k/">JPDB 190k–200k</a><a href="/jpdb-200k-to-210k/">JPDB 200k–210k</a><a href="/jpdb-210k-to-220k/">JPDB 210k–220k</a><a href="/jpdb-220k-to-230k/">JPDB 220k–230k</a><a href="/jpdb-230k-to-240k/">JPDB 230k–240k</a><a href="/jpdb-240k-to-250k/">JPDB 240k–250k</a><a href="/jpdb-250k-to-260k/">JPDB 250k–260k</a><a href="/jpdb-260k-to-270k/">JPDB 260k–270k</a><a href="/jpdb-270k-to-280k/">JPDB 270k–280k</a><a href="/jpdb-280k-to-290k/">JPDB 280k–290k</a><a href="/jpdb-290k-to-300k/">JPDB 290k–300k</a><a href="/articles-216368-to-226368/">Статьи 216,368–226,368</a></nav>
+    <div class="term-search">
+      <label for="term-search-input">Поиск</label>
+      <input id="term-search-input" type="search" placeholder="Слово или чтение" autocomplete="off">
+      <span class="term-search-status" id="term-search-status" aria-live="polite">1–100 / 100</span>
+    </div>
+    <fieldset class="column-picker">
+      <legend>Показывать столбцы</legend>
+      <label><input type="checkbox" data-column-toggle="original" checked> Original Jitendex (English)</label><label><input type="checkbox" data-column-toggle="russian" checked> Jitendex — русский</label>
+    </fieldset>
+    <nav class="pagination" aria-label="Навигация по страницам">
+      <button type="button" data-page-prev>← Назад</button>
+      <select aria-label="Текущая страница"></select>
+      <button type="button" data-page-next>Вперёд →</button>
+    </nav>
+    <div class="table-shell">
+      <table class="comparison-table" style="--visible-columns:2;min-width:840px">
+        <thead><tr><th scope="col" data-compare-column="original">Original Jitendex (English)</th><th scope="col" data-compare-column="russian">Jitendex — русский</th></tr></thead>
+        <tbody><tr class="loading-row"><td colspan="2">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+    <nav class="pagination" aria-label="Навигация по страницам">
+      <button type="button" data-page-prev>← Назад</button>
+      <select aria-label="Текущая страница"></select>
+      <button type="button" data-page-next>Вперёд →</button>
+    </nav>
+  </main>
+  <script>
+(() => {
+  const PAGE_SIZE = 100;
+  const pageCount = 1;
+  const totalCount = 100;
+  const terms = [{"id":"sample-1","page":1,"search":"ヾ ヾ"},{"id":"sample-2","page":1,"search":"ゝ ゝ"},{"id":"sample-3","page":1,"search":"阿呆陀羅 あほんだら"},{"id":"sample-4","page":1,"search":"阿呆陀羅 あほだら"},{"id":"sample-5","page":1,"search":"弄りまわす"},{"id":"sample-6","page":1,"search":"鯔背 いなせ"},{"id":"sample-7","page":1,"search":"うぞうぞ うぞうぞ"},{"id":"sample-8","page":1,"search":"お陰様 おかげさま"},{"id":"sample-9","page":1,"search":"お蔭様 おかげさま"},{"id":"sample-10","page":1,"search":"おかげ様 おかげさま"},{"id":"sample-11","page":1,"search":"お陰さま おかげさま"},{"id":"sample-12","page":1,"search":"お蔭さま"},{"id":"sample-13","page":1,"search":"御蔭様"},{"id":"sample-14","page":1,"search":"おばけ屋敷"},{"id":"sample-15","page":1,"search":"御見えになる"},{"id":"sample-16","page":1,"search":"お見舞 おみまい"},{"id":"sample-17","page":1,"search":"御見舞い"},{"id":"sample-18","page":1,"search":"御見舞"},{"id":"sample-19","page":1,"search":"御守 おまもり"},{"id":"sample-20","page":1,"search":"お守"},{"id":"sample-21","page":1,"search":"お奨め おすすめ"},{"id":"sample-22","page":1,"search":"お待ち遠様 おまちどおさま"},{"id":"sample-23","page":1,"search":"お待ちどうさま おまちどおさま"},{"id":"sample-24","page":1,"search":"御待ち遠様"},{"id":"sample-25","page":1,"search":"お待ち遠さま"},{"id":"sample-26","page":1,"search":"お待ちどお様"},{"id":"sample-27","page":1,"search":"御茶"},{"id":"sample-28","page":1,"search":"御猪口"},{"id":"sample-29","page":1,"search":"御猪口"},{"id":"sample-30","page":1,"search":"御付き"},{"id":"sample-31","page":1,"search":"御別れ"},{"id":"sample-32","page":1,"search":"御盆"},{"id":"sample-33","page":1,"search":"カジキ カジキ"},{"id":"sample-34","page":1,"search":"かちこち かちこち"},{"id":"sample-35","page":1,"search":"がちん がちん"},{"id":"sample-36","page":1,"search":"キイキイ キイキイ"},{"id":"sample-37","page":1,"search":"キチキチ キチキチ"},{"id":"sample-38","page":1,"search":"ぎごちない ぎごちない"},{"id":"sample-39","page":1,"search":"ギックリ腰 ギックリごし"},{"id":"sample-40","page":1,"search":"くさくさ くさくさ"},{"id":"sample-41","page":1,"search":"ゲロゲロ ゲロゲロ"},{"id":"sample-42","page":1,"search":"このおかげで このおかげで"},{"id":"sample-43","page":1,"search":"ごろんごろん ごろんごろん"},{"id":"sample-44","page":1,"search":"ジュージュー ジュージュー"},{"id":"sample-45","page":1,"search":"そうでない場合は そうでないばあいは"},{"id":"sample-46","page":1,"search":"ちゃきちゃき ちゃきちゃき"},{"id":"sample-47","page":1,"search":"チャリンコ チャリンコ"},{"id":"sample-48","page":1,"search":"ちょび髭 ちょびひげ"},{"id":"sample-49","page":1,"search":"ツツジ ツツジ"},{"id":"sample-50","page":1,"search":"と仮定しても とかていしても"},{"id":"sample-51","page":1,"search":"なおこ なおこ"},{"id":"sample-52","page":1,"search":"はっくしょん はっくしょん"},{"id":"sample-53","page":1,"search":"ぴっかぴか ぴっかぴか"},{"id":"sample-54","page":1,"search":"ぴかぴか光る ぴかぴかひかる"},{"id":"sample-55","page":1,"search":"フゥフゥ フゥフゥ"},{"id":"sample-56","page":1,"search":"ふわーっと ふわーっと"},{"id":"sample-57","page":1,"search":"打付ける うちつける"},{"id":"sample-58","page":1,"search":"ホッケ ホッケ"},{"id":"sample-59","page":1,"search":"殆どの人 ほとんどのひと"},{"id":"sample-60","page":1,"search":"呆け ぼけ"},{"id":"sample-61","page":1,"search":"ぱかん ぱかん"},{"id":"sample-62","page":1,"search":"パカン パカン"},{"id":"sample-63","page":1,"search":"みんみん みんみん"},{"id":"sample-64","page":1,"search":"向きになる むきになる"},{"id":"sample-65","page":1,"search":"碌 ろく"},{"id":"sample-66","page":1,"search":"アルカイックスマイル アルカイックスマイル"},{"id":"sample-67","page":1,"search":"アーレ アーレ"},{"id":"sample-68","page":1,"search":"アイシャドウ アイシャドウ"},{"id":"sample-69","page":1,"search":"アイヌ アイヌ"},{"id":"sample-70","page":1,"search":"アウター アウター"},{"id":"sample-71","page":1,"search":"アコースティックギター アコースティックギター"},{"id":"sample-72","page":1,"search":"アシンメトリー アシンメトリー"},{"id":"sample-73","page":1,"search":"アジャスト アジャスト"},{"id":"sample-74","page":1,"search":"アステカ アステカ"},{"id":"sample-75","page":1,"search":"アセンブラ アセンブラ"},{"id":"sample-76","page":1,"search":"アップリケ アップリケ"},{"id":"sample-77","page":1,"search":"アデュー アデュー"},{"id":"sample-78","page":1,"search":"アドバンス アドバンス"},{"id":"sample-79","page":1,"search":"アナクロ アナクロ"},{"id":"sample-80","page":1,"search":"アナグラム アナグラム"},{"id":"sample-81","page":1,"search":"アナリスト アナリスト"},{"id":"sample-82","page":1,"search":"アフターサービス アフターサービス"},{"id":"sample-83","page":1,"search":"アムール アムール"},{"id":"sample-84","page":1,"search":"アメシスト アメシスト"},{"id":"sample-85","page":1,"search":"アルカリ性 アルカリせい"},{"id":"sample-86","page":1,"search":"アルゴン アルゴン"},{"id":"sample-87","page":1,"search":"アルバトロス アルバトロス"},{"id":"sample-88","page":1,"search":"アレキサンドライト アレキサンドライト"},{"id":"sample-89","page":1,"search":"アロエ アロエ"},{"id":"sample-90","page":1,"search":"アングロサクソン アングロサクソン"},{"id":"sample-91","page":1,"search":"アンタッチャブル アンタッチャブル"},{"id":"sample-92","page":1,"search":"アンチョビ アンチョビ"},{"id":"sample-93","page":1,"search":"アンモナイト アンモナイト"},{"id":"sample-94","page":1,"search":"アンロック アンロック"},{"id":"sample-95","page":1,"search":"イズム イズム"},{"id":"sample-96","page":1,"search":"イット イット"},{"id":"sample-97","page":1,"search":"イメージチェンジ イメージチェンジ"},{"id":"sample-98","page":1,"search":"インスタント食品 インスタントしょくひん"},{"id":"sample-99","page":1,"search":"インスト インスト"},{"id":"sample-100","page":1,"search":"インター インター"}];
+  const table = document.querySelector('.comparison-table');
+  const tableBody = table.querySelector('tbody');
+  const searchInput = document.querySelector('#term-search-input');
+  const searchStatus = document.querySelector('#term-search-status');
+  const pagers = [...document.querySelectorAll('.pagination')];
+  const toggles = [...document.querySelectorAll('[data-column-toggle]')];
+  const cache = new Map();
+  let currentPage = Math.min(pageCount, Math.max(1, Number(new URL(location.href).searchParams.get('page')) || 1));
+  let requestVersion = 0;
+
+  const normalize = (value) => value.normalize('NFKC').trim().toLocaleLowerCase('ja');
+  const htmlEscape = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[character]);
+  const pagePath = (page) => `data/page-${String(page).padStart(3, '0')}.html`;
+  const setLoading = () => { tableBody.innerHTML = '<tr class="loading-row"><td colspan="2">Загрузка…</td></tr>'; };
+  const getPage = async (page) => {
+    if (!cache.has(page)) cache.set(page, fetch(pagePath(page)).then((response) => {
+      if (!response.ok) throw new Error(`Page ${page} failed: ${response.status}`);
+      return response.text();
+    }));
+    return cache.get(page);
+  };
+  const syncColumns = () => {
+    const visible = toggles.filter((toggle) => toggle.checked);
+    if (!visible.length) { toggles[0].checked = true; return syncColumns(); }
+    table.style.setProperty('--visible-columns', String(visible.length));
+    table.style.minWidth = `${Math.max(420, visible.length * 420)}px`;
+    toggles.forEach((toggle) => {
+      document.querySelectorAll(`[data-compare-column="${toggle.dataset.columnToggle}"]`)
+        .forEach((cell) => { cell.hidden = !toggle.checked; });
+    });
+  };
+  const syncPagers = () => pagers.forEach((pager) => {
+    pager.hidden = Boolean(searchInput.value.trim());
+    const select = pager.querySelector('select');
+    select.value = String(currentPage);
+    pager.querySelector('[data-page-prev]').disabled = currentPage === 1;
+    pager.querySelector('[data-page-next]').disabled = currentPage === pageCount;
+  });
+  const showPage = async (page, pushState = true) => {
+    const version = ++requestVersion;
+    currentPage = Math.min(pageCount, Math.max(1, page));
+    searchInput.value = '';
+    setLoading();
+    syncPagers();
+    const content = await getPage(currentPage);
+    if (version !== requestVersion) return;
+    tableBody.innerHTML = content;
+    const first = (currentPage - 1) * PAGE_SIZE + 1;
+    const last = Math.min(totalCount, currentPage * PAGE_SIZE);
+    searchStatus.textContent = `${first}–${last} / ${totalCount}`;
+    syncColumns();
+    if (pushState) history.pushState({page: currentPage}, '', `?page=${currentPage}`);
+    scrollTo({top: 0, behavior: 'smooth'});
+  };
+  const showSearch = async () => {
+    const version = ++requestVersion;
+    const query = normalize(searchInput.value);
+    syncPagers();
+    if (!query) return showPage(currentPage, false);
+    const matches = terms.filter((term) => term.search.includes(query));
+    if (!matches.length) {
+      tableBody.innerHTML = '<tr class="loading-row"><td colspan="2">Ничего не найдено.</td></tr>';
+      searchStatus.textContent = `0 / ${totalCount}`;
+      return;
+    }
+    setLoading();
+    const shown = matches.slice(0, PAGE_SIZE);
+    const pages = [...new Set(shown.map((term) => term.page))];
+    const documents = await Promise.all(pages.map(async (page) => {
+      const template = document.createElement('template');
+      template.innerHTML = await getPage(page);
+      return template.content;
+    }));
+    if (version !== requestVersion) return;
+    const ids = new Set(shown.map((term) => String(term.id)));
+    const rows = documents.flatMap((document) => [...document.querySelectorAll('.comparison-row')])
+      .filter((row) => ids.has(row.dataset.termId));
+    const byId = new Map(rows.map((row) => [row.dataset.termId, row]));
+    tableBody.replaceChildren(...shown.map((term) => byId.get(String(term.id))).filter(Boolean));
+    searchStatus.textContent = matches.length > PAGE_SIZE
+      ? `${PAGE_SIZE} из ${matches.length} совпадений`
+      : `${matches.length} / ${totalCount}`;
+    syncColumns();
+  };
+
+  pagers.forEach((pager) => {
+    const select = pager.querySelector('select');
+    for (let page = 1; page <= pageCount; page += 1) {
+      const option = document.createElement('option');
+      option.value = String(page);
+      option.textContent = `Страница ${page} из ${pageCount}`;
+      select.append(option);
+    }
+    select.addEventListener('change', () => showPage(Number(select.value)));
+    pager.querySelector('[data-page-prev]').addEventListener('click', () => showPage(currentPage - 1));
+    pager.querySelector('[data-page-next]').addEventListener('click', () => showPage(currentPage + 1));
+  });
+  toggles.forEach((toggle) => toggle.addEventListener('change', syncColumns));
+  let searchTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(showSearch, 120);
+  });
+  addEventListener('popstate', () => showPage(Number(new URL(location.href).searchParams.get('page')) || 1, false));
+  showPage(currentPage, false).catch((error) => {
+    tableBody.innerHTML = `<tr class="loading-row"><td colspan="2">Не удалось загрузить страницу: ${htmlEscape(error.message)}</td></tr>`;
+  });
+})();
+</script>
+</body>
+</html>

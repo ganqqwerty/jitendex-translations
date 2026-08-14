@@ -1,0 +1,261 @@
+{
+  "sample_size": 100,
+  "datasets": [
+    {
+      "slug": "jpdb-top-5k",
+      "range": "1–5,000",
+      "increment_entries": 7194,
+      "samples": 100,
+      "archive": "jitendex-jpdb-5k-ru-luna-clean-v1.zip",
+      "archive_sha256": "752ad0919317b75764e5117a9e24ba62e9f9ee448b0336d8692da75885cd06fa"
+    },
+    {
+      "slug": "jpdb-5k-to-10k",
+      "range": "5,001–10,000",
+      "increment_entries": 5707,
+      "samples": 100,
+      "archive": "jitendex-jpdb-10k-ru-luna-clean-v1.zip",
+      "archive_sha256": "a13a670937df9c1ffecaab815e6fc51773bf1b276e4cc6de05c5c38fbc2aa113"
+    },
+    {
+      "slug": "jpdb-10k-to-20k",
+      "range": "10,001–20,000",
+      "increment_entries": 10531,
+      "samples": 100,
+      "archive": "jitendex-jpdb-20k-ru-luna-clean-v1.zip",
+      "archive_sha256": "cfe26fc8dd4177d4dffea667af8e27eef6df4fb5869eca4f79f4d237141a861a"
+    },
+    {
+      "slug": "jpdb-20k-to-30k",
+      "range": "20,001–30,000",
+      "increment_entries": 10171,
+      "samples": 100,
+      "archive": "jitendex-jpdb-30k-ru-luna-clean-v1.zip",
+      "archive_sha256": "f6334307b20eb69f80ecfa7932f3a8d76655c1acf389d573c91946ac741a4824"
+    },
+    {
+      "slug": "jpdb-30k-to-40k",
+      "range": "30,001–40,000",
+      "increment_entries": 9744,
+      "samples": 100,
+      "archive": "jitendex-jpdb-40k-ru-luna-clean-v1.zip",
+      "archive_sha256": "97b0414caf834589cf2750c05a83a9ada70b152671e1261d35ed8801ad228489"
+    },
+    {
+      "slug": "jpdb-40k-to-50k",
+      "range": "40,001–50,000",
+      "increment_entries": 9284,
+      "samples": 100,
+      "archive": "jitendex-jpdb-50k-ru-luna-clean-v1.zip",
+      "archive_sha256": "562b3f628c7fcbab03cb7701bfe8f127ef0a64629b26c1c15983ec7bfa3ee673"
+    },
+    {
+      "slug": "jpdb-50k-to-60k",
+      "range": "50,001–60,000",
+      "increment_entries": 9278,
+      "samples": 100,
+      "archive": "jitendex-jpdb-60k-ru-luna-clean-v1.zip",
+      "archive_sha256": "566507ed9ead96b130fc7785b82c58348d5dbc1df6e769dc64747fade04d9bd4"
+    },
+    {
+      "slug": "jpdb-60k-to-70k",
+      "range": "60,001–70,000",
+      "increment_entries": 8955,
+      "samples": 100,
+      "archive": "jitendex-jpdb-70k-ru-luna-clean-v1.zip",
+      "archive_sha256": "dde40d8265239f69fc394c2a8b110fe3b52877ee29ee2618bd7c6b619674c07f"
+    },
+    {
+      "slug": "jpdb-70k-to-80k",
+      "range": "70,001–80,000",
+      "increment_entries": 8533,
+      "samples": 100,
+      "archive": "jitendex-jpdb-80k-ru-luna-clean-v1.zip",
+      "archive_sha256": "1ff1147705bcb5f39bc2906c1b7f7669d33204cad344b5fe193d67c1370b5daa"
+    },
+    {
+      "slug": "jpdb-80k-to-90k",
+      "range": "80,001–90,000",
+      "increment_entries": 8475,
+      "samples": 100,
+      "archive": "jitendex-jpdb-90k-ru-luna-clean-v1.zip",
+      "archive_sha256": "e660db82617968ebc6e4ef63361609c9b34e9fab26c8c441cc5ce3834d7001c2"
+    },
+    {
+      "slug": "jpdb-90k-to-100k",
+      "range": "90,001–100,000",
+      "increment_entries": 8209,
+      "samples": 100,
+      "archive": "jitendex-jpdb-100k-ru-luna-clean-v1.zip",
+      "archive_sha256": "fe6024a2fa0ef1a1a589ec7ce94700f1810da40fb0c0049d9919c1a036cda622"
+    },
+    {
+      "slug": "jpdb-100k-to-110k",
+      "range": "100,001–110,000",
+      "increment_entries": 8097,
+      "samples": 100,
+      "archive": "jitendex-jpdb-110k-ru-luna-clean-v1.zip",
+      "archive_sha256": "1543ee99de2a78739988c178a1d212605caf61ab1e01827ed1a6205f02b6609c"
+    },
+    {
+      "slug": "jpdb-110k-to-120k",
+      "range": "110,001–120,000",
+      "increment_entries": 7817,
+      "samples": 100,
+      "archive": "jitendex-jpdb-120k-ru-luna-clean-v1.zip",
+      "archive_sha256": "1a2395c97876949f30a3d6771d0147645dca191af0860d3cd85684c3ec4b273d"
+    },
+    {
+      "slug": "jpdb-120k-to-130k",
+      "range": "120,001–130,000",
+      "increment_entries": 7816,
+      "samples": 100,
+      "archive": "jitendex-jpdb-130k-ru-luna-clean-v1.zip",
+      "archive_sha256": "42a2b0da404cac0d881f85f446ea429cb4c8f4beafcc18d0dc363028ddf6f806"
+    },
+    {
+      "slug": "jpdb-130k-to-140k",
+      "range": "130,001–140,000",
+      "increment_entries": 7132,
+      "samples": 100,
+      "archive": "jitendex-jpdb-140k-ru-luna-clean-v1.zip",
+      "archive_sha256": "73c13b9df09a24dd2af35763ff40aa29d515003131723208030e1ac972d91007"
+    },
+    {
+      "slug": "jpdb-140k-to-150k",
+      "range": "140,001–150,000",
+      "increment_entries": 7307,
+      "samples": 100,
+      "archive": "jitendex-jpdb-150k-ru-luna-v4.zip",
+      "archive_sha256": "beda96a529678131ff4159313670d90be8ff4986d35742d7c363ea02427e5bfa"
+    },
+    {
+      "slug": "jpdb-150k-to-160k",
+      "range": "150,001–160,000",
+      "increment_entries": 7200,
+      "samples": 100,
+      "archive": "jitendex-jpdb-160k-ru-luna-v4.zip",
+      "archive_sha256": "498ece41deafb92ff329e344d4d85b1061d7ac8ef92ae72dc46ec5b6fc34b20e"
+    },
+    {
+      "slug": "jpdb-160k-to-170k",
+      "range": "160,001–170,000",
+      "increment_entries": 6695,
+      "samples": 100,
+      "archive": "jitendex-jpdb-170k-ru-luna-v4.zip",
+      "archive_sha256": "9c348da6579f28fa6dcef8b39852e5e827e5095a0d561ce0622ac221cc8b9c24"
+    },
+    {
+      "slug": "jpdb-170k-to-180k",
+      "range": "170,001–180,000",
+      "increment_entries": 6530,
+      "samples": 100,
+      "archive": "jitendex-jpdb-180k-ru-luna-v4.zip",
+      "archive_sha256": "696af0c8d5e8a7086d8e70f9e3605da31e7eba2cbb4ac4556e22a3c1bdb19940"
+    },
+    {
+      "slug": "jpdb-180k-to-190k",
+      "range": "180,001–190,000",
+      "increment_entries": 6195,
+      "samples": 100,
+      "archive": "jitendex-jpdb-190k-ru-luna-v4.zip",
+      "archive_sha256": "8d632ea386915467eb6813b9c3aeba6bd665dbb6af2142ff247a2c607f6ae2e0"
+    },
+    {
+      "slug": "jpdb-190k-to-200k",
+      "range": "190,001–200,000",
+      "increment_entries": 5795,
+      "samples": 100,
+      "archive": "jitendex-jpdb-200k-ru-luna-v4.zip",
+      "archive_sha256": "1fe24f33db2b27d6c7b5f1125018763a1db297d78620963d8ea218bbf2a87ba0"
+    },
+    {
+      "slug": "jpdb-200k-to-210k",
+      "range": "200,001–210,000",
+      "increment_entries": 5638,
+      "samples": 100,
+      "archive": "jitendex-jpdb-210k-ru-luna-v4.zip",
+      "archive_sha256": "7f51c79783c7c2fc5a2038eef3c74c75bf80e45448003f3318da9cf28b1d1c7a"
+    },
+    {
+      "slug": "jpdb-210k-to-220k",
+      "range": "210,001–220,000",
+      "increment_entries": 5698,
+      "samples": 100,
+      "archive": "jitendex-jpdb-220k-ru-luna-v4.zip",
+      "archive_sha256": "8245e88c24cba5e7eb0e8671b3be1089cd4ff654fa9f76f2d5168640affbd54e"
+    },
+    {
+      "slug": "jpdb-220k-to-230k",
+      "range": "220,001–230,000",
+      "increment_entries": 8232,
+      "samples": 100,
+      "archive": "jitendex-jpdb-230k-ru-luna-v4.zip",
+      "archive_sha256": "889d11740c7e2c985a644d59f4ea72420a8c618bdb65e736e7f45813b8f36f33"
+    },
+    {
+      "slug": "jpdb-230k-to-240k",
+      "range": "230,001–240,000",
+      "increment_entries": 3951,
+      "samples": 100,
+      "archive": "jitendex-jpdb-240k-ru-luna-v4.zip",
+      "archive_sha256": "92f7703efd152c7ae156bef96fdf61b9ecf8c21e8ce54ab0fc10ebf2ec09f4d3"
+    },
+    {
+      "slug": "jpdb-240k-to-250k",
+      "range": "240,001–250,000",
+      "increment_entries": 3690,
+      "samples": 100,
+      "archive": "jitendex-jpdb-250k-ru-luna-v4.zip",
+      "archive_sha256": "42de9a154ba6bd5b2fb85d40d6e0d77499d723411d5ed3de8eed08b75c45edba"
+    },
+    {
+      "slug": "jpdb-250k-to-260k",
+      "range": "250,001–260,000",
+      "increment_entries": 4091,
+      "samples": 100,
+      "archive": "jitendex-jpdb-260k-ru-luna-v4.zip",
+      "archive_sha256": "f394eea111e952eb1d7d05131672249618633e9080f8efaa14badd990cbf70ad"
+    },
+    {
+      "slug": "jpdb-260k-to-270k",
+      "range": "260,001–270,000",
+      "increment_entries": 4359,
+      "samples": 100,
+      "archive": "jitendex-jpdb-270k-ru-luna-v4.zip",
+      "archive_sha256": "5206d936ef4aa01f36e3841f0174888a81e755bdecd135aade0c424af2332769"
+    },
+    {
+      "slug": "jpdb-270k-to-280k",
+      "range": "270,001–280,000",
+      "increment_entries": 4161,
+      "samples": 100,
+      "archive": "jitendex-jpdb-280k-ru-luna-v4.zip",
+      "archive_sha256": "5666b39dc51a9b5593a7373062033255521e60fa93a1a3b586fd7a8ee89a6b96"
+    },
+    {
+      "slug": "jpdb-280k-to-290k",
+      "range": "280,001–290,000",
+      "increment_entries": 4807,
+      "samples": 100,
+      "archive": "jitendex-jpdb-290k-ru-luna-v4.zip",
+      "archive_sha256": "e9bf1a8f25e34cf6724b83152463b8457523f4a115f87e46815bb8568733326a"
+    },
+    {
+      "slug": "jpdb-290k-to-300k",
+      "range": "290,001–300,000",
+      "increment_entries": 5076,
+      "samples": 100,
+      "archive": "jitendex-jpdb-300k-ru-luna-v4.zip",
+      "archive_sha256": "8d8944228ff3c2f64b4630a3bf85474151755b5c84e9eaa8688182de54e977b3"
+    },
+    {
+      "slug": "articles-216368-to-226368",
+      "range": "216,369–226,368 статей",
+      "increment_entries": 10000,
+      "samples": 100,
+      "archive": "jitendex-articles-226368-ru-luna-v4.zip",
+      "archive_sha256": "75fe600adc4790363ac28da54a4547a42196a15e7ea4a274af4b8b62d5e6cfaa"
+    }
+  ]
+}
