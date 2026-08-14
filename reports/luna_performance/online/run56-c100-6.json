@@ -1,0 +1,804 @@
+{
+  "commit": "486b0b572342da4aa0a1de74c598c46ac6c8c955",
+  "configuration": {
+    "concurrency": 100,
+    "database_backend": "postgresql",
+    "database_driver_version": "3.2.9",
+    "database_name": "jitendex",
+    "database_schema_version": 9,
+    "database_server_version": "170010",
+    "database_workers": 1,
+    "dry_run": false,
+    "limits_sha256": "c1fa009e350a241e272640a342e85c79d389c3c264c7697026c0f7a187d27a7e",
+    "minimum_completed": 60,
+    "model": "gpt-5.6-luna",
+    "pipeline_version": "lexicographer-v2",
+    "pool_max": 4,
+    "prompt_sha256": "fbd0e0c92914b4654b8ae8aaa7063b893d7d02eb8caf6b10cb015c72beb0c9b5",
+    "ramp_seconds": 30.0,
+    "reasoning_effort": "medium",
+    "request_timeout_seconds": 180.0,
+    "run_id": 56,
+    "steady_seconds": 90.0,
+    "window_id": "run56-c100-6"
+  },
+  "counters": {
+    "after": {
+      "articles": 404609,
+      "headwords": 402317,
+      "source_characters": 55942565,
+      "units": 1933868
+    },
+    "average_claim_milliseconds": 4.611736842105264,
+    "average_ingestion_milliseconds": 76.54498684210526,
+    "before": {
+      "articles": 404165,
+      "headwords": 401873,
+      "source_characters": 55872893,
+      "units": 1931247
+    },
+    "cached_input_tokens": 0,
+    "claim_collisions": 0,
+    "claim_milliseconds": 350.4920000000001,
+    "complete": true,
+    "completed": 76,
+    "database_checkouts": 154,
+    "database_duty_cycle": 0.06822658816717803,
+    "database_retries": 0,
+    "deltas": {
+      "articles": 444,
+      "headwords": 444,
+      "source_characters": 69672,
+      "units": 2621
+    },
+    "drain_completed": 100,
+    "error_rates": {
+      "claim_collisions": 0.0,
+      "failed_attempts": 0.013157894736842105,
+      "rate_limits": 0.0,
+      "stale_lease_rejections": 0.0,
+      "timeouts": 0.0,
+      "transport_failures": 0.0,
+      "validation_rejections": 0.013157894736842105
+    },
+    "failed_attempts": 1,
+    "first_batch_id": "b-a8c0d4bc2ca5cdc0a7c81656",
+    "ingestion_milliseconds": 5817.419,
+    "input_tokens": 1701421,
+    "last_batch_id": "b-bb2976cc2470510725b1e09b",
+    "latency_p50_ms": 79682.0,
+    "latency_p95_ms": 100413.0,
+    "latency_p99_ms": 105955.0,
+    "measured_seconds": 90.005512,
+    "ordered_batch_sha256": "7265b4d20809da112230a5df0717f8ab95c73255e18bd1fc3301ee867a2fadb9",
+    "output_tokens": 241288,
+    "pool_wait_milliseconds": 2.940999999999999,
+    "postflight": {
+      "duplicate_translations": 0,
+      "global_claimed_attempts": 0,
+      "leased_batches": 0,
+      "missing_units": 0,
+      "source_hash_mismatches": 0,
+      "unresolved_blocking_errors": 9,
+      "window_claimed_attempts": 0
+    },
+    "progress_query_seconds": 10.44737,
+    "rate_limits": 0,
+    "rates": {
+      "articles_per_minute": 295.98187275463755,
+      "headwords_per_minute": 295.98187275463755,
+      "source_characters_per_minute": 46445.155492254744,
+      "units_per_minute": 1747.226325427714
+    },
+    "retries": 0,
+    "splits": 1,
+    "stale_lease_rejections": 0,
+    "submitted": 76,
+    "timeouts": 0,
+    "transaction_milliseconds": 6140.769,
+    "transport_failures": 0,
+    "validation_rejections": 1,
+    "worker_peak_memory_bytes": 199507968,
+    "workload_profile": {
+      "batch_articles": 450,
+      "batch_units": 2657,
+      "protected_token_units": 88,
+      "request_batch_count": 76,
+      "role_counts": {
+        "example": 7,
+        "glossary_set": 470,
+        "label": 302,
+        "note": 112,
+        "pos": 528,
+        "register": 89,
+        "tooltip": 1003,
+        "xref_gloss": 146
+      },
+      "serialized_bytes": 1225602,
+      "source_characters": 70758,
+      "unique_batch_count": 76,
+      "validation_issue_codes": {
+        "protected_token_missing": 2
+      }
+    }
+  },
+  "ended_at": "2026-08-14T07:31:07.415208Z",
+  "machine_monitoring": [
+    {
+      "captured_at": "2026-08-14T07:26:38.925571Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 82%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; (no estimate) present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 726.50M  free = 1321.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   117394.\nPages active:                                1170692.\nPages inactive:                              1067764.\nPages speculative:                            202457.\nPages throttled:                                   0.\nPages wired down:                             287459.\nPages purgeable:                               56326.\n\"Translation faults\":                     1066793062.\nPages copy-on-write:                       177710317.\nPages zero filled:                         360596204.\nPages reactivated:                          15337476.\nPages purged:                                 585857.\nFile-backed pages:                           1433182.\nAnonymous pages:                             1007731.\nPages stored in compressor:                   636354.\nPages occupied by compressor:                 237533.\nDecompressions:                              4350360.\nCompressions:                                7485032.\nPageins:                                    46423659.\nPageouts:                                    1414632.\nSwapins:                                       32238.\nSwapouts:                                      78768.\nPages tagged:                                 105653.\nPages tagged resident:                         82413.\nPages tagged compressed:                       23240.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3565.\nPages tag-storage free:                          412.\nPages tag-storage non-tag pageable:            94178.\nPages tag-storage non-tag wired:                 149.\nBytes of compressed tags:                    3248704.\nTagged compressions:                           89032.\nTagged decompressions:                         60026."
+    },
+    {
+      "captured_at": "2026-08-14T07:27:08.983212Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 82%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; (no estimate) present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 726.50M  free = 1321.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     4172.\nPages active:                                1276096.\nPages inactive:                              1256729.\nPages speculative:                             17208.\nPages throttled:                                   0.\nPages wired down:                             291343.\nPages purgeable:                               48465.\n\"Translation faults\":                     1073326078.\nPages copy-on-write:                       179284552.\nPages zero filled:                         362038097.\nPages reactivated:                          15341057.\nPages purged:                                 587024.\nFile-backed pages:                           1244988.\nAnonymous pages:                             1305045.\nPages stored in compressor:                   636941.\nPages occupied by compressor:                 238182.\nDecompressions:                              4351204.\nCompressions:                                7486464.\nPageins:                                    46442542.\nPageouts:                                    1414942.\nSwapins:                                       32250.\nSwapouts:                                      78768.\nPages tagged:                                 105306.\nPages tagged resident:                         82064.\nPages tagged compressed:                       23242.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3565.\nPages tag-storage free:                          230.\nPages tag-storage non-tag pageable:            94359.\nPages tag-storage non-tag wired:                 150.\nBytes of compressed tags:                    3248768.\nTagged compressions:                           89034.\nTagged decompressions:                         60026."
+    },
+    {
+      "captured_at": "2026-08-14T07:27:39.027195Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 81%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; (no estimate) present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 726.50M  free = 1321.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    25064.\nPages active:                                1238698.\nPages inactive:                              1235327.\nPages speculative:                              2384.\nPages throttled:                                   0.\nPages wired down:                             304284.\nPages purgeable:                               40307.\n\"Translation faults\":                     1077249797.\nPages copy-on-write:                       180108392.\nPages zero filled:                         363206439.\nPages reactivated:                          15540838.\nPages purged:                                 588582.\nFile-backed pages:                           1057923.\nAnonymous pages:                             1418486.\nPages stored in compressor:                   728182.\nPages occupied by compressor:                 278035.\nDecompressions:                              4365676.\nCompressions:                                7598618.\nPageins:                                    46457061.\nPageouts:                                    1415467.\nSwapins:                                       32580.\nSwapouts:                                      78768.\nPages tagged:                                 105393.\nPages tagged resident:                         82133.\nPages tagged compressed:                       23260.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3564.\nPages tag-storage free:                          156.\nPages tag-storage non-tag pageable:            94430.\nPages tag-storage non-tag wired:                 154.\nBytes of compressed tags:                    3254336.\nTagged compressions:                           89146.\nTagged decompressions:                         60118."
+    },
+    {
+      "captured_at": "2026-08-14T07:28:09.064151Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 81%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; 2:01 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 726.50M  free = 1321.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     8605.\nPages active:                                1254058.\nPages inactive:                              1253259.\nPages speculative:                              3347.\nPages throttled:                                   0.\nPages wired down:                             296348.\nPages purgeable:                               32857.\n\"Translation faults\":                     1079461365.\nPages copy-on-write:                       180514157.\nPages zero filled:                         363940275.\nPages reactivated:                          15556358.\nPages purged:                                 589261.\nFile-backed pages:                           1045357.\nAnonymous pages:                             1465307.\nPages stored in compressor:                   707252.\nPages occupied by compressor:                 268012.\nDecompressions:                              4381702.\nCompressions:                                7607860.\nPageins:                                    46465590.\nPageouts:                                    1415743.\nSwapins:                                       32592.\nSwapouts:                                      78768.\nPages tagged:                                 105556.\nPages tagged resident:                         82328.\nPages tagged compressed:                       23228.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3563.\nPages tag-storage free:                          190.\nPages tag-storage non-tag pageable:            94397.\nPages tag-storage non-tag wired:                 154.\nBytes of compressed tags:                    3249792.\nTagged compressions:                           89162.\nTagged decompressions:                         60165."
+    },
+    {
+      "captured_at": "2026-08-14T07:28:39.101406Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 82%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; 2:01 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 726.50M  free = 1321.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    21880.\nPages active:                                1259645.\nPages inactive:                              1241834.\nPages speculative:                             18162.\nPages throttled:                                   0.\nPages wired down:                             292691.\nPages purgeable:                               21168.\n\"Translation faults\":                     1084593703.\nPages copy-on-write:                       181625772.\nPages zero filled:                         365349821.\nPages reactivated:                          15578125.\nPages purged:                                 609205.\nFile-backed pages:                           1045675.\nAnonymous pages:                             1473966.\nPages stored in compressor:                   657273.\nPages occupied by compressor:                 249297.\nDecompressions:                              4406944.\nCompressions:                                7613925.\nPageins:                                    46478199.\nPageouts:                                    1415887.\nSwapins:                                       32594.\nSwapouts:                                      78768.\nPages tagged:                                 105724.\nPages tagged resident:                         82499.\nPages tagged compressed:                       23225.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3563.\nPages tag-storage free:                          200.\nPages tag-storage non-tag pageable:            94387.\nPages tag-storage non-tag wired:                 154.\nBytes of compressed tags:                    3249152.\nTagged compressions:                           89162.\nTagged decompressions:                         60167."
+    },
+    {
+      "captured_at": "2026-08-14T07:29:09.135942Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 82%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; 1:56 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 726.50M  free = 1321.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    73157.\nPages active:                                1237974.\nPages inactive:                              1203353.\nPages speculative:                             40433.\nPages throttled:                                   0.\nPages wired down:                             293258.\nPages purgeable:                               23267.\n\"Translation faults\":                     1086718798.\nPages copy-on-write:                       181983574.\nPages zero filled:                         366215488.\nPages reactivated:                          15578263.\nPages purged:                                 610215.\nFile-backed pages:                           1078271.\nAnonymous pages:                             1403489.\nPages stored in compressor:                   622755.\nPages occupied by compressor:                 235451.\nDecompressions:                              4425067.\nCompressions:                                7613925.\nPageins:                                    46504607.\nPageouts:                                    1415887.\nSwapins:                                       32697.\nSwapouts:                                      78768.\nPages tagged:                                 107741.\nPages tagged resident:                         86072.\nPages tagged compressed:                       21669.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3564.\nPages tag-storage free:                          168.\nPages tag-storage non-tag pageable:            94423.\nPages tag-storage non-tag wired:                 149.\nBytes of compressed tags:                    2993344.\nTagged compressions:                           89162.\nTagged decompressions:                         61723."
+    },
+    {
+      "captured_at": "2026-08-14T07:29:39.174070Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 82%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; 1:56 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 726.50M  free = 1321.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   245187.\nPages active:                                1151583.\nPages inactive:                              1110309.\nPages speculative:                             49396.\nPages throttled:                                   0.\nPages wired down:                             292266.\nPages purgeable:                               20442.\n\"Translation faults\":                     1087186810.\nPages copy-on-write:                       181995159.\nPages zero filled:                         366590694.\nPages reactivated:                          15578409.\nPages purged:                                 610746.\nFile-backed pages:                           1092957.\nAnonymous pages:                             1218331.\nPages stored in compressor:                   620551.\nPages occupied by compressor:                 234516.\nDecompressions:                              4426264.\nCompressions:                                7613925.\nPageins:                                    46509213.\nPageouts:                                    1415887.\nSwapins:                                       32701.\nSwapouts:                                      78768.\nPages tagged:                                 107802.\nPages tagged resident:                         86148.\nPages tagged compressed:                       21654.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3564.\nPages tag-storage free:                          506.\nPages tag-storage non-tag pageable:            94084.\nPages tag-storage non-tag wired:                 150.\nBytes of compressed tags:                    2990848.\nTagged compressions:                           89162.\nTagged decompressions:                         61738."
+    },
+    {
+      "captured_at": "2026-08-14T07:30:09.213576Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 83%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; 2:06 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 718.50M  free = 1329.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   405003.\nPages active:                                1077317.\nPages inactive:                              1041794.\nPages speculative:                             51821.\nPages throttled:                                   0.\nPages wired down:                             271613.\nPages purgeable:                               30375.\n\"Translation faults\":                     1087483618.\nPages copy-on-write:                       182005754.\nPages zero filled:                         366835153.\nPages reactivated:                          15578535.\nPages purged:                                 611642.\nFile-backed pages:                           1100913.\nAnonymous pages:                             1070019.\nPages stored in compressor:                   619642.\nPages occupied by compressor:                 234201.\nDecompressions:                              4427080.\nCompressions:                                7613925.\nPageins:                                    46515024.\nPageouts:                                    1415887.\nSwapins:                                       32703.\nSwapouts:                                      78768.\nPages tagged:                                 107617.\nPages tagged resident:                         86176.\nPages tagged compressed:                       21441.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3566.\nPages tag-storage free:                         1849.\nPages tag-storage non-tag pageable:            92742.\nPages tag-storage non-tag wired:                 147.\nBytes of compressed tags:                    2967872.\nTagged compressions:                           89162.\nTagged decompressions:                         61951."
+    },
+    {
+      "captured_at": "2026-08-14T07:30:39.264403Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 83%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; 2:06 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 718.50M  free = 1329.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   430875.\nPages active:                                1072010.\nPages inactive:                              1017947.\nPages speculative:                             55340.\nPages throttled:                                   0.\nPages wired down:                             273351.\nPages purgeable:                               32536.\n\"Translation faults\":                     1087740296.\nPages copy-on-write:                       182017680.\nPages zero filled:                         367000272.\nPages reactivated:                          15578684.\nPages purged:                                 613434.\nFile-backed pages:                           1111503.\nAnonymous pages:                             1033794.\nPages stored in compressor:                   616090.\nPages occupied by compressor:                 232637.\nDecompressions:                              4429153.\nCompressions:                                7613925.\nPageins:                                    46521897.\nPageouts:                                    1415887.\nSwapins:                                       32707.\nSwapouts:                                      78768.\nPages tagged:                                 107412.\nPages tagged resident:                         85974.\nPages tagged compressed:                       21438.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3566.\nPages tag-storage free:                         1439.\nPages tag-storage non-tag pageable:            93148.\nPages tag-storage non-tag wired:                 151.\nBytes of compressed tags:                    2967232.\nTagged compressions:                           89162.\nTagged decompressions:                         61954."
+    },
+    {
+      "captured_at": "2026-08-14T07:30:59.188744Z",
+      "memory_pressure": "The system has 51539607552 (3145728 pages with a page size of 16384).\nSystem-wide memory free percentage: 83%",
+      "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+      "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=7471203)\t80%; discharging; 2:06 remaining present: true",
+      "swap_usage": "vm.swapusage: total = 2048.00M  used = 718.50M  free = 1329.50M  (encrypted)",
+      "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   420032.\nPages active:                                1069894.\nPages inactive:                              1017368.\nPages speculative:                             56377.\nPages throttled:                                   0.\nPages wired down:                             287391.\nPages purgeable:                               22740.\n\"Translation faults\":                     1087942099.\nPages copy-on-write:                       182025170.\nPages zero filled:                         367153452.\nPages reactivated:                          15578844.\nPages purged:                                 613818.\nFile-backed pages:                           1117169.\nAnonymous pages:                             1026470.\nPages stored in compressor:                   614140.\nPages occupied by compressor:                 231781.\nDecompressions:                              4430603.\nCompressions:                                7613925.\nPageins:                                    46526928.\nPageouts:                                    1415887.\nSwapins:                                       32899.\nSwapouts:                                      78768.\nPages tagged:                                 107470.\nPages tagged resident:                         86083.\nPages tagged compressed:                       21387.\nPages tag-storage:                             98304.\nPages tag-storage holding tags:                 3566.\nPages tag-storage free:                         1161.\nPages tag-storage non-tag pageable:            93426.\nPages tag-storage non-tag wired:                 151.\nBytes of compressed tags:                    2962688.\nTagged compressions:                           89162.\nTagged decompressions:                         62005."
+    }
+  ],
+  "monitoring_summary": {
+    "lock_wait_sample_count": 0,
+    "max_duplicate_claimed_batches": 0,
+    "max_lock_waiting_sessions": 0,
+    "max_ungranted_locks": 0,
+    "postgresql_active_time_delta_milliseconds": 116502.98600000143,
+    "postgresql_statement_exec_delta_milliseconds": 116125.5591379907,
+    "sample_count": 10
+  },
+  "phases": [
+    {
+      "elapsed_seconds": 0.0,
+      "event": "phase",
+      "phase": "startup"
+    },
+    {
+      "elapsed_seconds": 30.012106,
+      "event": "phase",
+      "metrics": {
+        "cached_input_tokens": 0,
+        "claim_milliseconds": 808.247,
+        "completed": 0,
+        "connections_in_use": 0,
+        "database_checkouts": 102,
+        "database_retries": 0,
+        "failed_attempts": 0,
+        "ingestion_milliseconds": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "pool_wait_milliseconds": 16.617,
+        "progress_query_seconds": 9.73838,
+        "rate_limits": 0,
+        "retries": 0,
+        "splits": 0,
+        "submitted": 100,
+        "timeouts": 0,
+        "transaction_milliseconds": 774.513,
+        "transport_failures": 0,
+        "validation_rejections": 0
+      },
+      "phase": "measurement",
+      "workload": {
+        "articles": 404165,
+        "headwords": 401873,
+        "source_characters": 55872893,
+        "units": 1931247
+      }
+    },
+    {
+      "elapsed_seconds": 120.017618,
+      "event": "phase",
+      "metrics": {
+        "cached_input_tokens": 0,
+        "claim_milliseconds": 1158.739,
+        "completed": 76,
+        "connections_in_use": 0,
+        "database_checkouts": 256,
+        "database_retries": 0,
+        "failed_attempts": 1,
+        "ingestion_milliseconds": 5817.419,
+        "input_tokens": 1701421,
+        "output_tokens": 241288,
+        "pool_wait_milliseconds": 19.558,
+        "progress_query_seconds": 20.18575,
+        "rate_limits": 0,
+        "retries": 0,
+        "splits": 1,
+        "submitted": 176,
+        "timeouts": 0,
+        "transaction_milliseconds": 6915.282,
+        "transport_failures": 0,
+        "validation_rejections": 1
+      },
+      "phase": "drain",
+      "reason": "productive_window_complete",
+      "workload": {
+        "articles": 404609,
+        "headwords": 402317,
+        "source_characters": 55942565,
+        "units": 1933868
+      }
+    },
+    {
+      "elapsed_seconds": 220.737094,
+      "event": "phase",
+      "metrics": {
+        "cached_input_tokens": 0,
+        "claim_milliseconds": 1158.739,
+        "completed": 176,
+        "connections_in_use": 0,
+        "database_checkouts": 359,
+        "database_retries": 0,
+        "failed_attempts": 7,
+        "ingestion_milliseconds": 12598.456,
+        "input_tokens": 3921859,
+        "output_tokens": 561020,
+        "pool_wait_milliseconds": 20.778,
+        "progress_query_seconds": 40.378141,
+        "rate_limits": 0,
+        "retries": 6,
+        "splits": 1,
+        "submitted": 176,
+        "timeouts": 2,
+        "transaction_milliseconds": 13685.259,
+        "transport_failures": 0,
+        "validation_rejections": 5
+      },
+      "phase": "shutdown",
+      "reason": "productive_drain",
+      "workload": {
+        "articles": 405164,
+        "headwords": 402872,
+        "source_characters": 56036244,
+        "units": 1937244
+      }
+    }
+  ],
+  "postgresql_monitoring": [
+    {
+      "activity": [
+        [
+          "active",
+          null,
+          null,
+          1
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          1
+        ]
+      ],
+      "captured_at": "2026-08-14T07:26:38.977345Z",
+      "database": [
+        1494065.0,
+        533.0,
+        1031492245.0,
+        11081563751.0,
+        33191.0,
+        207063463925.0,
+        0.0,
+        31319143.303,
+        9462973.928,
+        3414923.035
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          2
+        ]
+      ],
+      "statements": [
+        389.0,
+        9780494.0,
+        9437836.022224002,
+        901072107.0,
+        1018018321.0,
+        11075235045.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          null,
+          null,
+          1
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          2
+        ]
+      ],
+      "captured_at": "2026-08-14T07:27:09.021286Z",
+      "database": [
+        1494148.0,
+        534.0,
+        1032674960.0,
+        11094071983.0,
+        33209.0,
+        207487472097.0,
+        0.0,
+        31348308.679,
+        9472864.936,
+        3415176.022
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          2
+        ]
+      ],
+      "statements": [
+        389.0,
+        9780979.0,
+        9447685.961947002,
+        901072382.0,
+        1019200596.0,
+        11087740496.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          "IO",
+          "DataFileRead",
+          1
+        ],
+        [
+          "active",
+          null,
+          null,
+          1
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          1
+        ]
+      ],
+      "captured_at": "2026-08-14T07:27:39.057583Z",
+      "database": [
+        1494203.0,
+        534.0,
+        1032675878.0,
+        11094083028.0,
+        33209.0,
+        207487472097.0,
+        0.0,
+        31358024.965,
+        9472950.334,
+        3415310.487
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          28
+        ]
+      ],
+      "statements": [
+        389.0,
+        9781220.0,
+        9457833.158207994,
+        901072523.0,
+        1019735318.0,
+        11109438634.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          null,
+          null,
+          1
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          2
+        ]
+      ],
+      "captured_at": "2026-08-14T07:28:09.099992Z",
+      "database": [
+        1494268.0,
+        536.0,
+        1035706216.0,
+        11140806298.0,
+        33245.0,
+        208335488441.0,
+        0.0,
+        31407870.641,
+        9504250.516,
+        3415888.33
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          2
+        ]
+      ],
+      "statements": [
+        389.0,
+        9782966.0,
+        9479044.976580992,
+        901074606.0,
+        1022239439.0,
+        11134472738.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          "IO",
+          "DataFileRead",
+          1
+        ],
+        [
+          "active",
+          null,
+          null,
+          1
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          1
+        ]
+      ],
+      "captured_at": "2026-08-14T07:28:39.130150Z",
+      "database": [
+        1494430.0,
+        536.0,
+        1036072762.0,
+        11140969085.0,
+        33245.0,
+        208335488441.0,
+        0.0,
+        31439028.062,
+        9505817.762,
+        3418069.228
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          10
+        ],
+        [
+          "RowExclusiveLock",
+          true,
+          8
+        ],
+        [
+          "RowShareLock",
+          true,
+          7
+        ]
+      ],
+      "statements": [
+        389.0,
+        9789078.0,
+        9480553.74411799,
+        901081980.0,
+        1022611319.0,
+        11134640251.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          null,
+          null,
+          2
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          1
+        ]
+      ],
+      "captured_at": "2026-08-14T07:29:09.168263Z",
+      "database": [
+        1494490.0,
+        536.0,
+        1036162555.0,
+        11141037170.0,
+        33245.0,
+        208335488441.0,
+        0.0,
+        31446842.799,
+        9506252.487,
+        3418677.779
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          28
+        ]
+      ],
+      "statements": [
+        389.0,
+        9790917.0,
+        9491259.255978988,
+        901084187.0,
+        1023234946.0,
+        11156398147.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          null,
+          null,
+          1
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          2
+        ]
+      ],
+      "captured_at": "2026-08-14T07:29:39.207905Z",
+      "database": [
+        1494653.0,
+        538.0,
+        1039599970.0,
+        11187946144.0,
+        33281.0,
+        209183504785.0,
+        0.0,
+        31496424.373,
+        9538878.579,
+        3421156.656
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          2
+        ]
+      ],
+      "statements": [
+        389.0,
+        9798542.0,
+        9513468.499934992,
+        901093734.0,
+        1026130380.0,
+        11181608754.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          null,
+          null,
+          1
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          2
+        ]
+      ],
+      "captured_at": "2026-08-14T07:30:09.258621Z",
+      "database": [
+        1494722.0,
+        538.0,
+        1039764883.0,
+        11188072210.0,
+        33281.0,
+        209183504785.0,
+        0.0,
+        31527401.463,
+        9539668.903,
+        3422190.804
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          2
+        ]
+      ],
+      "statements": [
+        389.0,
+        9801797.0,
+        9514221.375365997,
+        901097776.0,
+        1026294421.0,
+        11181735286.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          null,
+          null,
+          2
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          1
+        ]
+      ],
+      "captured_at": "2026-08-14T07:30:39.296030Z",
+      "database": [
+        1494754.0,
+        539.0,
+        1040976775.0,
+        11200608042.0,
+        33299.0,
+        209607512957.0,
+        0.0,
+        31549773.57,
+        9549761.247,
+        3422519.537
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          20
+        ]
+      ],
+      "statements": [
+        389.0,
+        9802697.0,
+        9529256.854055993,
+        901098892.0,
+        1027772224.0,
+        11205094403.0
+      ]
+    },
+    {
+      "activity": [
+        [
+          "active",
+          null,
+          null,
+          1
+        ],
+        [
+          "idle",
+          "Client",
+          "ClientRead",
+          1
+        ]
+      ],
+      "captured_at": "2026-08-14T07:30:59.224001Z",
+      "database": [
+        1494775.0,
+        541.0,
+        1043894080.0,
+        11247307167.0,
+        33335.0,
+        210455529301.0,
+        0.0,
+        31579571.798,
+        9579476.914,
+        3422577.659
+      ],
+      "duplicate_claimed_batches": 0,
+      "locks": [
+        [
+          "AccessShareLock",
+          true,
+          2
+        ]
+      ],
+      "statements": [
+        389.0,
+        9802713.0,
+        9553961.581361992,
+        901098905.0,
+        1030416866.0,
+        11240961286.0
+      ]
+    }
+  ],
+  "runner_exit": 0,
+  "runner_log_sha256": "6321318cc60cc5ec5c5ba4618f78e8bb168c4c19c0450d4cf1b3e56568b5fc9c",
+  "runner_revision_sha256": "09539432456031383a89e3ad861b1fa990831ff0234afc4d678627f2b19c2205",
+  "schema_version": 1,
+  "started_at": "2026-08-14T07:26:38.924993Z"
+}

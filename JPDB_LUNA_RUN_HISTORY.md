@@ -2296,3 +2296,26 @@ SHA-256: 11ef06cb29b77dd24370789f01c3ad546209dd3644094e6be83fd168b9e4b8c4
 ~~~
 
 HIST-ALL-396368-6 — Export 61 was verified. Run 55 is the latest completed checkpoint. The next 10,000-article continuation targets 406,368 articles at concurrency 100.
+
+## HIST-ALL-406368 — 406,368-article continuation results
+
+HIST-ALL-406368-1 — Run 56 retained Run 55, added 10,000 source-ordered articles, reused 1,907,124 units, and translated 37,260 new units from 1,052 initial batches. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-406368.dump`, SHA-256 `2353e5cbcf4ad0b0a5031f4e1ac91654144eda076c097e3d62aea44f43fc5bb1`.
+
+HIST-ALL-406368-2 — Preparation took 215.53 seconds: source preflight 21.33, scope selection 16.07, extraction 42.85, reuse 95.65, batching 10.32, and verification 29.32 seconds. It passed all pre-Luna gates. The time was close to the prior optimized 10,000-article runs and needed no database investigation.
+
+HIST-ALL-406368-3 — Six full concurrency-100 windows completed 478 measured requests and 598 drain requests. Mean measured throughput was 301.64 headwords per minute, ranging from 279.97 to 317.27. Peak runner memory was 205 MB and maximum database duty cycle was 6.84%. They recorded 17 measured validation rejections, 19 retries, four splits, one timeout, five transport failures, and zero rate limits, database retries, claim collisions, stale leases, or lock waits.
+
+HIST-ALL-406368-4 — The final 37-batch tail recursively isolated one singleton note for `チンチン`. Four Latin comparison spellings repeatedly failed `too_much_english`. The audited targeted path kept Italian `cincin`, transliterated the other forms, and passed validation without another Luna request. Its first saved repair still had three validator-counted ASCII words; the exact lease was marked interrupted and requeued before the corrected target was ingested. The short-window wrapper then reported no measurement phase because productive work finished outside a full measured phase. PostgreSQL proved zero unfinished work, terminal leaves, unresolved errors, or active leases. Thirteen blocked rows remain split-parent provenance.
+
+HIST-ALL-406368-5 — Acceptance took 12.00 seconds and validation took 24.59 seconds. All 1,944,384 units were accepted with zero membership mismatches or blocking issues. Build took 114.57 seconds and independent verification took 216.26 seconds with session-only 512 MB `work_mem` and parallel gather disabled. The first test command omitted `PYTHONPATH=src` and stopped during collection; the corrected full suite passed all 113 tests with two expected PostgreSQL integration skips. Run 56 took about 49 minutes from preparation through verified export and tests.
+
+~~~text
+ZIP members:                349
+schema-validated banks:     123
+archive articles:       406,368
+translated headwords:   404,076
+headwords remaining:     27,469
+SHA-256: f711d12be4b504511a42eb9f4a94ca1c7eb2dc1562bfb5bcc098107313d52474
+~~~
+
+HIST-ALL-406368-6 — Export 62 was verified. Run 56 is the latest completed checkpoint. Work paused here at the user's request; no Run 57 scope or batch was created.
