@@ -2342,3 +2342,26 @@ SHA-256: fdae199fe1e9f584c61904325a4ca44f0dbeecca95ee8e31c04959710ded9470
 ~~~
 
 HIST-ALL-416368-6 — Export 63 was verified. Run 57 is the latest completed checkpoint. The next 10,000-article continuation targets 426,368 articles at concurrency 100.
+
+## HIST-ALL-426368 — 426,368-article continuation results
+
+HIST-ALL-426368-1 — Run 58 retained Run 57, added 10,000 source-ordered articles, reused 1,983,628 units, and translated 40,898 new units from 1,071 initial batches. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-426368.dump`, SHA-256 `3f5e0419a3c33a9faf8f29a61335c5bc1a1448820b4470ecb8156255285e3215`. Backup creation and validation took 4 minutes 24 seconds.
+
+HIST-ALL-426368-2 — Preparation took 243.76 seconds: source preflight 23.27, scope selection 20.72, extraction 39.09, reuse 109.16, batching 11.81, and verification 39.70 seconds. It passed all pre-Luna gates and remained within the normal optimized range.
+
+HIST-ALL-426368-3 — Six full concurrency-100 windows completed 504 measured requests and 599 drain requests. Mean measured throughput was 323.37 headwords per minute, ranging from 307.98 to 334.65. Peak runner memory was 196 MB and maximum database duty cycle was 15.23%. They recorded 14 measured validation rejections, 12 retries, two splits, one recovered rate limit, and zero timeouts, transport failures, database retries, claim collisions, stale leases, or lock waits.
+
+HIST-ALL-426368-4 — The final 11-batch tail took 7 minutes 7 seconds while several failing branches split. It isolated one singleton `JavaScript` xref gloss for `ジャバスク`; three unchanged Latin responses failed `no_cyrillic`. The audited targeted-leaf path reused the previously validated Russian form `Джаваскрипт` without another Luna request. PostgreSQL then proved zero unfinished work, terminal leaves, unresolved errors, or active leases. Twelve blocked rows remain split-parent provenance. The short-window wrapper reported no measurement phase after productive tail work completed outside a full measured phase.
+
+HIST-ALL-426368-5 — Acceptance took 5.88 seconds and validation took 22.65 seconds. All 2,024,526 units were accepted with zero membership mismatches or blocking issues. Build took 118.17 seconds and independent verification took 222.74 seconds with session-only 512 MB `work_mem` and parallel gather disabled. All 113 tests passed with two expected PostgreSQL integration skips. Run 58 took about 65 minutes from backup start through verified export and tests.
+
+~~~text
+ZIP members:                367
+schema-validated banks:     128
+archive articles:       426,368
+translated headwords:   424,032
+headwords remaining:      7,513
+SHA-256: d192baef6c43cf0c3f30f5b304e2b73a97d082a9a74e8a03204390deb222dd35
+~~~
+
+HIST-ALL-426368-6 — Export 64 was verified. Run 58 is the latest completed checkpoint. The final continuation adds the remaining 7,517 source articles to reach all 433,885 articles.
