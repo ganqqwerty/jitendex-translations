@@ -1,7 +1,10 @@
 import json
+import pytest
 
 from jitendex_ru.db import connect, initialize
-from jitendex_ru.validate_response import _plain_text_issues, allows_japanese_grammar_label, validate_worker_payload
+from jitendex_ru.validate_response import (
+    _plain_text_issues, allows_japanese_grammar_label, ingest_response, validate_worker_payload,
+)
 
 
 def fixture_db(tmp_path):
@@ -29,6 +32,28 @@ def test_valid_response(tmp_path):
         {"unit_id": "u1", "source_sha256": "sh", "target_text": "привет JMdict", "confidence": "high", "review_reason": None}
     ]}
     assert validate_worker_payload(connection, attempt, payload) == []
+
+
+def test_stale_attempt_cannot_ingest_after_lease_changes(tmp_path):
+    connection, _ = fixture_db(tmp_path)
+    response_path = tmp_path / "stale.json"
+    connection.execute(
+        "UPDATE attempt SET response_path=?,lease_token='old' WHERE id='a1'", (str(response_path),)
+    )
+    connection.execute(
+        "UPDATE batch SET state='leased',lease_token='new' WHERE id='b1'"
+    )
+    connection.commit()
+    response_path.write_text(json.dumps({
+        "schema_version": 1, "batch_id": "b1", "manifest_sha256": "f" * 64,
+        "translations": [{
+            "unit_id": "u1", "source_sha256": "sh", "target_text": "привет JMdict",
+            "confidence": "high", "review_reason": None,
+        }],
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="stale attempt"):
+        ingest_response(connection, response_path)
+    assert connection.execute("SELECT COUNT(*) FROM translation").fetchone()[0] == 0
 
 
 def test_source_acronyms_are_required_but_not_counted_as_english(tmp_path):

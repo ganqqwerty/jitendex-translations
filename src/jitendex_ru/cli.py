@@ -13,8 +13,9 @@ from .batch import claim, make_batches, retry_or_split
 from .build_dictionary import build, record_yomitan_smoke, verify
 from .canonicalize import canonicalize_final_run
 from .config import Config
+from .database import Database
 from .combined_frequency_scope import combined_coverage_report, select_combined_scope
-from .db import audit, connect, initialize
+from .db import audit
 from .extract_units import extract_selected
 from .import_jitendex import import_jitendex
 from .jitendex_tags import import_jitendex_tags
@@ -23,6 +24,7 @@ from .jpdb_scope import (
     accept_deterministic_translations, coverage_report, reuse_accepted_translations, select_top_terms,
 )
 from .pilot import build_pilot_selection, load_pilot_selection, verify_pilot_batches, write_pilot_selection
+from .prep_metrics import PrepMetrics
 from .openai_requests import audit_run_input_tokens, write_token_audit
 from .resolve_selection import apply_resolutions, generate_candidates, make_resolution_batches, selection_manifest_hash, unresolved_report
 from .review import apply_adjudication, ingest_review, make_review_batches
@@ -76,6 +78,7 @@ def _parser() -> argparse.ArgumentParser:
     report.add_argument("topic", choices=("scope", "progress"))
     extract = commands.add_parser("extract-units")
     extract.add_argument("--run-id", type=int)
+    extract.add_argument("--source-run-id", type=int)
     batches = commands.add_parser("make-batches")
     batches.add_argument("--run-id", type=int)
     batches.add_argument("--max-articles", type=int)
@@ -138,8 +141,8 @@ def _print(value: Any) -> None:
 def _snapshot(connection, config: Config, kind: str, local_path: Path) -> int:
     spec = config.raw[kind]
     connection.execute(
-        """INSERT OR IGNORE INTO source_snapshot(kind,version,url,sha256,local_path,extractor_version)
-        VALUES (?,?,?,?,?,?)""",
+        """INSERT INTO source_snapshot(kind,version,url,sha256,local_path,extractor_version)
+        VALUES (?,?,?,?,?,?) ON CONFLICT(kind,sha256) DO NOTHING""",
         (kind, spec["version"], spec["url"], spec["sha256"], str(local_path), config.raw["versions"]["extractor"]),
     )
     row = connection.execute("SELECT id FROM source_snapshot WHERE kind=? AND sha256=?", (kind, spec["sha256"])).fetchone()
@@ -156,6 +159,15 @@ def _active_run(connection, explicit: int | None = None) -> int:
     if row is None:
         raise ValueError("no active run; run extract-units first")
     return row["id"]
+
+
+def _analyze_run_prep(connection, *tables: str) -> None:
+    if connection.backend != "postgresql":
+        return
+    allowed = {"article", "run_article", "translation_unit", "translation", "batch", "batch_item"}
+    if not tables or any(table not in allowed for table in tables):
+        raise ValueError("invalid RUN-PREP table for ANALYZE")
+    connection.execute(f"ANALYZE {','.join(tables)}")
 
 
 def _versioned_prompt(config: Config, key: str) -> Path:
@@ -196,8 +208,9 @@ def _create_run(connection, config: Config) -> int:
         sha256_bytes(terminology), canonical_json(limits).decode(), pipeline_version,
     )
     connection.execute(
-        """INSERT OR IGNORE INTO run(jitendex_snapshot_id,kaishi_snapshot_id,selection_sha256,extractor_version,prompt_sha256,review_prompt_sha256,terminology_sha256,limits_json,pipeline_version)
-        VALUES (?,?,?,?,?,?,?,?,?)""", values,
+        """INSERT INTO run(jitendex_snapshot_id,kaishi_snapshot_id,selection_sha256,extractor_version,prompt_sha256,review_prompt_sha256,terminology_sha256,limits_json,pipeline_version)
+        VALUES (?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(jitendex_snapshot_id,kaishi_snapshot_id,selection_sha256,extractor_version,prompt_sha256,review_prompt_sha256,terminology_sha256,limits_json) DO NOTHING""", values,
     )
     row = connection.execute(
         """SELECT id FROM run WHERE jitendex_snapshot_id=? AND kaishi_snapshot_id=?
@@ -238,12 +251,12 @@ def _validation_report(connection, run_id: int) -> dict[str, Any]:
     total = connection.execute("SELECT COUNT(*) FROM translation_unit WHERE run_id=?", (run_id,)).fetchone()[0]
     accepted = connection.execute(
         """SELECT COUNT(*) FROM translation_unit tu WHERE tu.run_id=? AND EXISTS (
-        SELECT 1 FROM translation t WHERE t.unit_id=tu.id AND t.run_id=tu.run_id AND t.accepted=1)""", (run_id,)
+        SELECT 1 FROM translation t WHERE t.unit_id=tu.id AND t.accepted=1)""", (run_id,)
     ).fetchone()[0]
     reviewed = connection.execute(
         """SELECT COUNT(*) FROM translation_unit tu WHERE tu.run_id=? AND EXISTS (
         SELECT 1 FROM translation t JOIN review r ON r.translation_id=t.id
-        WHERE t.unit_id=tu.id AND t.run_id=tu.run_id AND r.decision IN ('accept','replace'))""", (run_id,)
+        WHERE t.unit_id=tu.id AND r.decision IN ('accept','replace'))""", (run_id,)
     ).fetchone()[0]
     blocking = connection.execute(
         "SELECT COUNT(*) FROM validation_issue WHERE run_id=? AND severity='error' AND resolved_at IS NULL", (run_id,)
@@ -261,11 +274,18 @@ def _validation_report(connection, run_id: int) -> dict[str, Any]:
 
 def execute(args: argparse.Namespace) -> Any:
     config = Config.load(args.config)
+    database = Database(config)
     if args.command == "init-db":
-        initialize(config.db_path)
-        return {"database": str(config.db_path), "initialized": True}
-    initialize(config.db_path)
-    connection = connect(config.db_path)
+        database.migrate()
+        database.close()
+        return {"database_backend": config.db_backend, "initialized": True}
+    # Keep the historical convenience for ephemeral SQLite databases.  A
+    # production PostgreSQL database must only be migrated by the explicit
+    # init-db command so an ordinary report/accept/build invocation cannot
+    # change its schema mid-run.
+    if config.db_backend == "sqlite":
+        database.migrate()
+    connection = database.connect()
     try:
         if args.command == "acquire":
             return {"files": [str(path) for path in acquire(config)]}
@@ -293,9 +313,13 @@ def execute(args: argparse.Namespace) -> Any:
         if args.command == "report-jpdb-coverage":
             return coverage_report(connection, args.run_id)
         if args.command == "select-all-article-scope":
-            result = select_all_article_scope(connection, args.source_run_id, args.add_articles)
+            metrics = PrepMetrics("select_scope")
+            with metrics.phase("statistics_update"):
+                _analyze_run_prep(connection, "article", "run_article")
+            with metrics.phase("scope_selection"):
+                result = select_all_article_scope(connection, args.source_run_id, args.add_articles)
             connection.commit()
-            return result
+            return {**result, "phase_metrics": metrics.phases}
         if args.command == "select-combined-frequency-scope":
             result = select_combined_scope(
                 connection,
@@ -318,7 +342,11 @@ def execute(args: argparse.Namespace) -> Any:
         if args.command == "reuse-translations":
             result = reuse_accepted_translations(connection, args.source_run_id, args.target_run_id)
             connection.commit()
-            return result
+            metrics = PrepMetrics("reuse_translations")
+            with metrics.phase("statistics_update"):
+                _analyze_run_prep(connection, "translation_unit", "translation")
+            connection.commit()
+            return {**result, "phase_metrics": {**result["phase_metrics"], **metrics.phases}}
         if args.command == "accept-translations":
             result = accept_deterministic_translations(connection, args.run_id)
             connection.commit()
@@ -338,10 +366,18 @@ def execute(args: argparse.Namespace) -> Any:
         if args.command == "report":
             return _scope_report(connection) if args.topic == "scope" else _progress_report(connection)
         if args.command == "extract-units":
-            run_id = args.run_id or _create_run(connection, config)
-            result = {"run_id": run_id, **extract_selected(connection, run_id)}
+            metrics = PrepMetrics("extract_units")
+            if args.run_id:
+                run_id = args.run_id
+            else:
+                with metrics.phase("run_creation"):
+                    run_id = _create_run(connection, config)
+            result = {"run_id": run_id, **extract_selected(connection, run_id, args.source_run_id)}
             connection.commit()
-            return result
+            with metrics.phase("statistics_update"):
+                _analyze_run_prep(connection, "run_article", "translation_unit")
+            connection.commit()
+            return {**result, "phase_metrics": {**metrics.phases, **result["phase_metrics"]}}
         if args.command == "make-batches":
             run_id = _active_run(connection, args.run_id)
             limits = config.raw["batch"]
@@ -355,7 +391,11 @@ def execute(args: argparse.Namespace) -> Any:
                 limits["hard_max_article_bytes"], limits["hard_max_article_units"],
             )
             connection.commit()
-            return result
+            metrics = PrepMetrics("make_batches")
+            with metrics.phase("statistics_update"):
+                _analyze_run_prep(connection, "batch", "batch_item")
+            connection.commit()
+            return {**result, "phase_metrics": {**result["phase_metrics"], **metrics.phases}}
         if args.command == "claim":
             model = config.model(args.kind)
             return claim(
@@ -462,6 +502,7 @@ def execute(args: argparse.Namespace) -> Any:
         raise AssertionError(args.command)
     finally:
         connection.close()
+        database.close()
 
 
 def main(argv: list[str] | None = None) -> int:

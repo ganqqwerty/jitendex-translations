@@ -49,6 +49,68 @@ def _pack(envelopes: list[dict], **overrides: int) -> list[list[dict]]:
     return _pack_envelopes(envelopes, {}, **limits)
 
 
+def _legacy_pack(envelopes: list[dict], **overrides: int) -> list[list[dict]]:
+    limits = {
+        "soft_max_articles": 6, "soft_max_bytes": 24_576, "soft_max_units": 100,
+        "singleton_threshold_bytes": 16_384, "hard_max_article_bytes": 49_152,
+        "hard_max_article_units": 200,
+    }
+    limits.update(overrides)
+    batches = []
+    current = []
+
+    def measured(candidate):
+        return (
+            len(_manifest("b-" + "0" * 24, candidate, {})[1]),
+            sum(len(article["units"]) for article in candidate),
+        )
+
+    for envelope in envelopes:
+        article_bytes, article_units = measured([envelope])
+        if article_bytes > limits["hard_max_article_bytes"] or article_units > limits["hard_max_article_units"]:
+            raise ValueError
+        force_singleton = (
+            article_bytes > limits["singleton_threshold_bytes"]
+            or article_bytes > limits["soft_max_bytes"]
+            or article_units > limits["soft_max_units"]
+        )
+        candidate = current + [envelope]
+        byte_count, unit_count = measured(candidate)
+        if current and (
+            force_singleton or len(candidate) > limits["soft_max_articles"]
+            or byte_count > limits["soft_max_bytes"] or unit_count > limits["soft_max_units"]
+        ):
+            batches.append(current)
+            current = []
+        if force_singleton:
+            batches.append([envelope])
+        else:
+            current.append(envelope)
+    if current:
+        batches.append(current)
+    return batches
+
+
+def test_cached_size_packing_matches_legacy_groups_and_manifest_bytes():
+    envelopes = [
+        _article(f"a-{index}", ["definition " * (index % 11 + 1)] * (index % 7 + 1))
+        for index in range(1, 250)
+    ]
+    optimized = _pack(envelopes, soft_max_articles=5, soft_max_bytes=4_500, soft_max_units=18)
+    legacy = _legacy_pack(envelopes, soft_max_articles=5, soft_max_bytes=4_500, soft_max_units=18)
+
+    assert [
+        [article["article_id"] for article in batch] for batch in optimized
+    ] == [
+        [article["article_id"] for article in batch] for batch in legacy
+    ]
+    assert [
+        _manifest("b-" + "0" * 24, batch, {})[1] for batch in optimized
+    ] == [
+        _manifest("b-" + "0" * 24, batch, {})[1] for batch in legacy
+    ]
+
+
 def test_approved_tag_terminology_selects_compact_label_and_full_tooltip():
     source = [None, None, None, None, None, [{
         "data": {"class": "tag", "content": "part-of-speech-info", "code": "v5b"},

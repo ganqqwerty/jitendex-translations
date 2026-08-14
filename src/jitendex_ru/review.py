@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
-import sqlite3
 import uuid
 from collections import defaultdict
 from pathlib import Path
@@ -52,10 +53,10 @@ def _split_review_envelope(
 
 
 def make_review_batches(
-    connection: sqlite3.Connection, run_id: int, inbox: Path,
+    connection: ConnectionLike, run_id: int, inbox: Path,
     max_articles: int = 6, max_bytes: int = 49152, max_units: int = 120,
 ) -> dict[str, int]:
-    grouped: dict[int, list[sqlite3.Row]] = defaultdict(list)
+    grouped: dict[int, list[RowLike]] = defaultdict(list)
     for row in connection.execute(
         """SELECT tu.*,t.id translation_id,t.target_text,t.confidence,t.review_reason
         FROM translation t JOIN translation_unit tu ON tu.id=t.unit_id
@@ -116,13 +117,23 @@ def make_review_batches(
     return {"review_batches_created": len(groups), "units": sum(len(group) for group in grouped.values())}
 
 
-def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
+def ingest_review(connection: ConnectionLike, path: Path) -> dict[str, int]:
     attempt = connection.execute(
         """SELECT a.*,b.run_id,b.manifest_sha256,b.kind FROM attempt a JOIN batch b ON b.id=a.batch_id
         WHERE a.response_path=?""", (str(path),)
     ).fetchone()
     if attempt is None or attempt["kind"] != "review":
         raise ValueError(f"no review attempt expects {path}")
+    lock = " FOR UPDATE" if getattr(connection, "backend", "sqlite") == "postgresql" else ""
+    owned_batch = connection.execute(
+        "SELECT state,lease_token FROM batch WHERE id=?" + lock, (attempt["batch_id"],),
+    ).fetchone()
+    if (
+        attempt["outcome"] != "claimed" or owned_batch is None
+        or owned_batch["state"] != "leased"
+        or not attempt["lease_token"] or owned_batch["lease_token"] != attempt["lease_token"]
+    ):
+        raise ValueError(f"stale review attempt no longer owns batch lease: {attempt['id']}")
     payload = json.loads(path.read_text(encoding="utf-8"))
     if set(payload) != {"schema_version", "batch_id", "manifest_sha256", "reviews"}:
         raise ValueError("unexpected review response fields")
@@ -205,8 +216,17 @@ def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
                 (attempt["run_id"], source["id"], attempt["id"], json.dumps({"reason": item.get("reason")}, ensure_ascii=False)),
             )
             adjudication += 1
-    connection.execute("UPDATE attempt SET outcome='accepted',completed_at=CURRENT_TIMESTAMP WHERE id=?", (attempt["id"],))
-    connection.execute("UPDATE batch SET state=? WHERE id=?", ("complete" if not adjudication else "blocked", attempt["batch_id"]))
+    accepted_attempt = connection.execute(
+        """UPDATE attempt SET outcome='accepted',completed_at=CURRENT_TIMESTAMP
+        WHERE id=? AND outcome='claimed' AND lease_token=?""",
+        (attempt["id"], attempt["lease_token"]),
+    ).rowcount
+    completed_batch = connection.execute(
+        """UPDATE batch SET state=? WHERE id=? AND state='leased' AND lease_token=?""",
+        ("complete" if not adjudication else "blocked", attempt["batch_id"], attempt["lease_token"]),
+    ).rowcount
+    if accepted_attempt != 1 or completed_batch != 1:
+        raise ValueError(f"review lease ownership changed during ingestion: {attempt['id']}")
     connection.execute(
         """UPDATE batch SET state='complete' WHERE run_id=? AND kind='translation'
         AND state='deterministic_validated' AND NOT EXISTS (
@@ -221,7 +241,7 @@ def ingest_review(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
     return {"accepted": accepted, "already_reviewed": already_reviewed, "needs_adjudication": adjudication}
 
 
-def apply_adjudication(connection: sqlite3.Connection, path: Path, actor: str) -> dict[str, Any]:
+def apply_adjudication(connection: ConnectionLike, path: Path, actor: str) -> dict[str, Any]:
     """Resolve one review conflict while retaining the original review record."""
     payload = json.loads(path.read_text(encoding="utf-8"))
     required = {"batch_id", "unit_id", "decision", "target_text", "reason"}

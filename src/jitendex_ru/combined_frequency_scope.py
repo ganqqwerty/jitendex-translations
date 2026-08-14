@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
 import re
-import sqlite3
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -99,7 +100,7 @@ def _load_terms(spec: FrequencySpec) -> tuple[list[tuple[int, str]], dict[str, A
 
 
 def select_combined_scope(
-    connection: sqlite3.Connection,
+    connection: ConnectionLike,
     jpdb_path: Path,
     jpdb_limit: int,
     frequency_paths: dict[str, Path],
@@ -215,7 +216,7 @@ def select_combined_scope(
     return result
 
 
-def combined_coverage_report(connection: sqlite3.Connection, run_id: int) -> dict[str, Any]:
+def combined_coverage_report(connection: ConnectionLike, run_id: int) -> dict[str, Any]:
     if connection.execute("SELECT 1 FROM run WHERE id=?", (run_id,)).fetchone() is None:
         raise ValueError(f"unknown run {run_id}")
     sources = connection.execute("SELECT * FROM frequency_source ORDER BY source").fetchall()
@@ -229,6 +230,8 @@ def combined_coverage_report(connection: sqlite3.Connection, run_id: int) -> dic
             FROM frequency_term WHERE source=? AND source_sha256=?""",
             (source["source"], source["source_sha256"]),
         ).fetchone()
+        terms = int(counts["terms"])
+        matched = int(counts["matched_terms"] or 0)
         covered = connection.execute(
             """SELECT COUNT(*) FROM frequency_term ft
             WHERE ft.source=? AND ft.source_sha256=? AND ft.matched=1
@@ -245,9 +248,9 @@ def combined_coverage_report(connection: sqlite3.Connection, run_id: int) -> dic
             "source": source["source"],
             "source_sha256": source["source_sha256"],
             "rank_limit": source["rank_limit"],
-            "unique_terms": counts["terms"],
-            "matched_terms": counts["matched_terms"] or 0,
-            "skipped_terms": counts["terms"] - (counts["matched_terms"] or 0),
+            "unique_terms": terms,
+            "matched_terms": matched,
+            "skipped_terms": terms - matched,
             "covered_terms": covered,
         })
 

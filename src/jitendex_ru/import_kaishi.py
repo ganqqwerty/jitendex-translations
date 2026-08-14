@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .database import ConnectionLike
+
 import sqlite3
 import subprocess
 import tempfile
@@ -36,7 +38,7 @@ def _collection_from_apkg(apkg: Path, temporary: Path) -> Path:
     return compressed
 
 
-def import_kaishi(connection: sqlite3.Connection, snapshot_id: int, apkg: Path) -> int:
+def import_kaishi(connection: ConnectionLike, snapshot_id: int, apkg: Path) -> int:
     with tempfile.TemporaryDirectory(prefix="kaishi-import-") as directory:
         collection = _collection_from_apkg(apkg, Path(directory))
         source = sqlite3.connect(f"file:{collection}?mode=ro", uri=True)
@@ -65,14 +67,14 @@ def import_kaishi(connection: sqlite3.Connection, snapshot_id: int, apkg: Path) 
             ):
                 continue
             payload = {name: fields[name] for name in REQUIRED_FIELDS}
-            connection.execute(
-                """INSERT OR IGNORE INTO kaishi_note
+            cursor = connection.execute(
+                """INSERT INTO kaishi_note
                 (snapshot_id,note_id,word,reading,meaning_en,sentence_ja,sentence_en,source_sha256)
-                VALUES (?,?,?,?,?,?,?,?)""",
+                VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(snapshot_id,note_id) DO NOTHING""",
                 (snapshot_id, row["id"], payload["Word"], payload["Word Reading"], payload["Word Meaning"],
                  payload["Sentence"], payload["Sentence Meaning"], sha256_bytes(canonical_json(payload))),
             )
-            count += connection.execute("SELECT changes()").fetchone()[0]
+            count += cursor.rowcount
         source.close()
     audit(connection, "import", "source_snapshot", snapshot_id, {"kind": "kaishi", "notes_added": count})
     return count

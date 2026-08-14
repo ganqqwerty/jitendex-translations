@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
-import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,7 @@ def _structured_tag_requirement(
     return target, {"category": category, "code": code, "field": field}
 
 
-def _manifest_requirements(connection: sqlite3.Connection, run_id: int) -> dict[str, tuple[str, dict[str, Any]]]:
+def _manifest_requirements(connection: ConnectionLike, run_id: int) -> dict[str, tuple[str, dict[str, Any]]]:
     requirements: dict[str, tuple[str, dict[str, Any]]] = {}
     paths = connection.execute(
         "SELECT manifest_path FROM batch WHERE run_id=? AND kind='translation' ORDER BY id", (run_id,),
@@ -64,7 +65,7 @@ def _manifest_requirements(connection: sqlite3.Connection, run_id: int) -> dict[
     return requirements
 
 
-def canonicalize_final_run(connection: sqlite3.Connection, run_id: int) -> dict[str, int | str]:
+def canonicalize_final_run(connection: ConnectionLike, run_id: int) -> dict[str, int | str]:
     run = connection.execute("SELECT * FROM run WHERE id=?", (run_id,)).fetchone()
     if run is None:
         raise ValueError(f"unknown run {run_id}")
@@ -78,17 +79,28 @@ def canonicalize_final_run(connection: sqlite3.Connection, run_id: int) -> dict[
     catalog = _approved_tag_catalog(connection, run["jitendex_snapshot_id"])
     requirements = _manifest_requirements(connection, run_id)
     rows = connection.execute(
-        """SELECT tu.id unit_id,tu.role,tu.json_pointer,a.raw_json,
-        t.id translation_id,t.target_text,t.target_sha256
-        FROM translation_unit tu JOIN article a ON a.id=tu.article_id
-        JOIN translation t ON t.run_id=tu.run_id AND t.unit_id=tu.id AND t.accepted=1
-        WHERE tu.run_id=? ORDER BY tu.id""", (run_id,),
+        """WITH selected AS (
+          SELECT tu.id unit_id,tu.article_id,tu.role,tu.json_pointer,
+          t.id translation_id,t.target_text,t.target_sha256,
+          ROW_NUMBER() OVER (PARTITION BY tu.article_id ORDER BY tu.id) article_row
+          FROM translation_unit tu
+          JOIN translation t ON t.unit_id=tu.id AND t.accepted=1
+          WHERE tu.run_id=?
+        )
+        SELECT selected.*,
+        CASE WHEN selected.article_row=1 THEN a.raw_json ELSE NULL END raw_json
+        FROM selected JOIN article a ON a.id=selected.article_id
+        ORDER BY selected.article_id,selected.unit_id""", (run_id,),
     ).fetchall()
 
-    replacements: list[tuple[sqlite3.Row, str, str, dict[str, Any]]] = []
+    replacements: list[tuple[RowLike, str, str, dict[str, Any]]] = []
     structured = 0
+    source: dict[str, Any] | None = None
     for row in rows:
-        source = json.loads(row["raw_json"])
+        if row["raw_json"] is not None:
+            source = json.loads(row["raw_json"])
+        if source is None:
+            raise ValueError(f"missing article JSON for {row['unit_id']}")
         tag = _structured_tag_requirement(source, row["json_pointer"], catalog)
         manifest = requirements.get(row["unit_id"])
         if tag is not None:

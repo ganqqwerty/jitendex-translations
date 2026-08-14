@@ -125,8 +125,15 @@ def test_translation_review_and_reproducible_build(tmp_path):
         "INSERT INTO run(jitendex_snapshot_id,kaishi_snapshot_id,selection_sha256,extractor_version,prompt_sha256,review_prompt_sha256,terminology_sha256,limits_json) VALUES (1,2,'s','e','p','rp','t','{}')"
     )
     extract_selected(connection, 1)
+    untranslated = canonical_json(["月", "つき", "", "", 0, [], 43, ""]).decode()
+    connection.execute(
+        """INSERT INTO article(snapshot_id,bank_number,entry_ordinal,expression,reading,
+        sequence,raw_json,source_sha256,selected) VALUES (1,1,1,'月','つき',43,?,?,1)""",
+        (untranslated, sha256_bytes(untranslated.encode())),
+    )
     made = make_batches(connection, 1, tmp_path / "inbox", {}, 12, 49152, 200, 16384)
     assert made["batches_created"] == 1
+    assert made["phase_metrics"]["article_loading"]["output_rows"] == 1
     connection.commit()
 
     task = claim(

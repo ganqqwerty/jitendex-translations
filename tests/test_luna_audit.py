@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from jitendex_ru.db import connect, initialize, record_attempt_cost, record_attempt_usage
+from jitendex_ru.db import SCHEMA_VERSION, connect, initialize, record_attempt_cost, record_attempt_usage
 
 
 def _insert_attempt(connection, attempt_id="att-audit"):
@@ -57,7 +57,7 @@ def test_initialize_migrates_attempt_audit_columns_without_rewriting_history(tmp
         } <= columns
         assert row["model"] == "gpt-5.6-terra"
         assert row["effective_model_id"] is None
-        assert connection.execute("SELECT MAX(version) FROM schema_meta").fetchone()[0] == 8
+        assert connection.execute("SELECT MAX(version) FROM schema_meta").fetchone()[0] == SCHEMA_VERSION
         assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
 
 

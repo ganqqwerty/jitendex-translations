@@ -1,19 +1,21 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
-import sqlite3
 import zipfile
 from pathlib import Path
 from typing import Any
 
 from .db import audit
+from .prep_metrics import PrepMetrics
 from .util import nfc, sha256_file
 
 
 SOURCE = "jpdb"
 
 
-def select_top_terms(connection: sqlite3.Connection, archive_path: Path, limit: int = 5000) -> dict[str, Any]:
+def select_top_terms(connection: ConnectionLike, archive_path: Path, limit: int = 5000) -> dict[str, Any]:
     """Persist and select the Jitendex articles reachable from JPDB's top rows.
 
     JPDB's Yomitan metadata contains spellings but no lexical sequence or sense.
@@ -107,7 +109,7 @@ def select_top_terms(connection: sqlite3.Connection, archive_path: Path, limit: 
     return result
 
 
-def coverage_report(connection: sqlite3.Connection, run_id: int) -> dict[str, Any]:
+def coverage_report(connection: ConnectionLike, run_id: int) -> dict[str, Any]:
     source_row = connection.execute(
         "SELECT source_sha256 FROM frequency_term WHERE source=? ORDER BY rank LIMIT 1", (SOURCE,)
     ).fetchone()
@@ -118,6 +120,8 @@ def coverage_report(connection: sqlite3.Connection, run_id: int) -> dict[str, An
         "SELECT COUNT(*),SUM(matched) FROM frequency_term WHERE source=? AND source_sha256=?",
         (SOURCE, source_hash),
     ).fetchone()
+    total_terms = int(totals[0])
+    matched_terms = int(totals[1] or 0)
     covered = connection.execute(
         """SELECT COUNT(DISTINCT ft.term) FROM frequency_term ft
         JOIN frequency_article fa ON fa.source=ft.source AND fa.source_sha256=ft.source_sha256 AND fa.term=ft.term
@@ -135,52 +139,62 @@ def coverage_report(connection: sqlite3.Connection, run_id: int) -> dict[str, An
     return {
         "run_id": run_id,
         "source_sha256": source_hash,
-        "unique_terms": totals[0],
-        "matched_terms": totals[1],
-        "skipped_terms": totals[0] - totals[1],
+        "unique_terms": total_terms,
+        "matched_terms": matched_terms,
+        "skipped_terms": total_terms - matched_terms,
         "covered_terms": covered,
         "selected_articles": selected_articles,
         "fully_accepted_articles": accepted_articles,
-        "complete": covered == totals[1] and accepted_articles == selected_articles,
+        "complete": covered == matched_terms and accepted_articles == selected_articles,
     }
 
 
 def reuse_accepted_translations(
-    connection: sqlite3.Connection, source_run_id: int, target_run_id: int,
-) -> dict[str, int]:
+    connection: ConnectionLike, source_run_id: int, target_run_id: int,
+) -> dict[str, Any]:
     """Reuse byte-identical accepted Luna targets for the expanded run."""
     if source_run_id == target_run_id:
         raise ValueError("source and target runs must differ")
     for run_id in (source_run_id, target_run_id):
         if connection.execute("SELECT 1 FROM run WHERE id=?", (run_id,)).fetchone() is None:
             raise ValueError(f"unknown run {run_id}")
-    rows = connection.execute(
-        """SELECT target.id unit_id,source.attempt_id,source.target_text,source.confidence,
-        source.review_reason,source.target_sha256
-        FROM translation_unit target
-        JOIN translation_unit old ON old.run_id=? AND old.article_id=target.article_id
-          AND old.json_pointer=target.json_pointer AND old.role=target.role
-          AND old.source_sha256=target.source_sha256
-        JOIN translation source ON source.unit_id=old.id AND source.run_id=old.run_id AND source.accepted=1
-        WHERE target.run_id=? AND target.status='ready'
-        ORDER BY target.id""",
-        (source_run_id, target_run_id),
-    ).fetchall()
-    connection.executemany(
-        """INSERT INTO translation(run_id,unit_id,attempt_id,target_text,confidence,review_reason,target_sha256,accepted)
-        VALUES (?,?,?,?,?,?,?,1)""",
-        ((target_run_id, row["unit_id"], row["attempt_id"], row["target_text"], row["confidence"],
-          row["review_reason"], row["target_sha256"]) for row in rows),
-    )
-    connection.executemany(
-        "UPDATE translation_unit SET status='translated' WHERE id=?", ((row["unit_id"],) for row in rows),
-    )
-    result = {"source_run_id": source_run_id, "target_run_id": target_run_id, "units_reused": len(rows)}
-    audit(connection, "reuse_accepted_translations", "run", target_run_id, result)
-    return result
+    metrics = PrepMetrics("reuse_translations")
+    with metrics.phase("translation_reuse") as phase:
+        inserted = connection.execute(
+            """INSERT INTO translation
+            (run_id,unit_id,attempt_id,target_text,confidence,review_reason,target_sha256,accepted)
+            SELECT ?,target.id,source.attempt_id,source.target_text,source.confidence,
+            source.review_reason,source.target_sha256,1
+            FROM translation_unit target
+            JOIN translation_unit old ON old.run_id=? AND old.article_id=target.article_id
+              AND old.json_pointer=target.json_pointer AND old.role=target.role
+              AND old.source_sha256=target.source_sha256
+            JOIN translation source ON source.unit_id=old.id AND source.accepted=1
+            WHERE target.run_id=? AND target.status='ready'
+              AND NOT EXISTS (SELECT 1 FROM translation existing
+                              WHERE existing.unit_id=target.id AND existing.accepted=1)
+            ON CONFLICT(unit_id,attempt_id) DO NOTHING""",
+            (target_run_id, source_run_id, target_run_id),
+        ).rowcount
+        phase.update(input_rows=inserted, output_rows=inserted)
+    with metrics.phase("status_update", input_rows=inserted) as phase:
+        updated = connection.execute(
+            """UPDATE translation_unit SET status='translated'
+            WHERE run_id=? AND status='ready' AND EXISTS (
+              SELECT 1 FROM translation accepted
+              WHERE accepted.unit_id=translation_unit.id AND accepted.accepted=1)""",
+            (target_run_id,),
+        ).rowcount
+        phase.update(output_rows=updated)
+    audit_result = {
+        "source_run_id": source_run_id, "target_run_id": target_run_id,
+        "units_reused": inserted,
+    }
+    audit(connection, "reuse_accepted_translations", "run", target_run_id, audit_result)
+    return {**audit_result, "phase_metrics": metrics.phases}
 
 
-def accept_deterministic_translations(connection: sqlite3.Connection, run_id: int) -> dict[str, int]:
+def accept_deterministic_translations(connection: ConnectionLike, run_id: int) -> dict[str, int]:
     """Promote deterministically valid Luna responses when no review pass is requested."""
     candidates = connection.execute(
         """SELECT t.id,t.unit_id FROM translation t JOIN attempt a ON a.id=t.attempt_id
@@ -188,7 +202,7 @@ def accept_deterministic_translations(connection: sqlite3.Connection, run_id: in
         WHERE t.run_id=? AND t.accepted=0 AND a.outcome='accepted'
           AND b.kind='translation' AND b.state='deterministic_validated'
           AND NOT EXISTS (SELECT 1 FROM translation accepted
-                          WHERE accepted.run_id=t.run_id AND accepted.unit_id=t.unit_id AND accepted.accepted=1)
+                          WHERE accepted.unit_id=t.unit_id AND accepted.accepted=1)
           AND NOT EXISTS (SELECT 1 FROM validation_issue vi
                           WHERE vi.attempt_id=t.attempt_id AND vi.severity='error' AND vi.resolved_at IS NULL)
         ORDER BY t.unit_id,t.created_at DESC,t.id DESC""",

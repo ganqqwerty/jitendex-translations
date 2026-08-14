@@ -9,7 +9,7 @@ from pathlib import Path
 
 from jitendex_ru.batch import claim
 from jitendex_ru.config import Config
-from jitendex_ru.db import connect, transaction
+from jitendex_ru.database import Database, transaction
 from jitendex_ru.validate_response import ingest_response
 
 
@@ -58,7 +58,8 @@ def main() -> int:
     args = parser.parse_args()
 
     config = Config.load(args.config)
-    connection = connect(config.db_path)
+    database = Database(config)
+    connection = database.connect()
     try:
         repairs = []
         for row in connection.execute(LEAF_SQL, (args.run_id,)).fetchall():
@@ -77,7 +78,7 @@ def main() -> int:
     model = config.model("translation")
     repaired = 0
     for batch_id, payload in repairs:
-        connection = connect(config.db_path)
+        connection = database.connect()
         try:
             item = claim(
                 connection, args.worker_id, config.work_dir / "outbox",
@@ -98,6 +99,7 @@ def main() -> int:
         finally:
             connection.close()
 
+    database.close()
     print(json.dumps({"run_id": args.run_id, "repaired_batches": repaired}, sort_keys=True))
     return 0
 

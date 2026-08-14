@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
 import math
-import sqlite3
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -103,7 +104,7 @@ def _percentile(sorted_values: list[int], fraction: float) -> int:
 
 
 def audit_run_input_tokens(
-    connection: sqlite3.Connection, run_id: int, *, prompt: str, model: str,
+    connection: ConnectionLike, run_id: int, *, prompt: str, model: str,
     reasoning_effort: str, api_key: str, counter: Callable[[Mapping[str, Any], str], int] = count_input_tokens,
 ) -> dict[str, Any]:
     batches = connection.execute(

@@ -4,9 +4,9 @@ services:
     container_name: jitendex-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: jitendex
-      POSTGRES_USER: jitendex
-      POSTGRES_PASSWORD: jitendex-local-dev
+      POSTGRES_DB: ${POSTGRES_DB:-jitendex}
+      POSTGRES_USER: ${POSTGRES_USER:-jitendex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the environment}
       POSTGRES_INITDB_ARGS: --data-checksums --encoding=UTF8
     ports:
       - "127.0.0.1:5433:5432"
@@ -18,6 +18,7 @@ services:
       timeout: 3s
       retries: 15
     shm_size: 1gb
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
 
 volumes:
   jitendex-postgres-data:

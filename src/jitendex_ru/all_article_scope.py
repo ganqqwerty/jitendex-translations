@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import sqlite3
+from .database import ConnectionLike, RowLike
+
 from typing import Any
 
 from .db import audit
 
 
 def select_all_article_scope(
-    connection: sqlite3.Connection, source_run_id: int, add_articles: int = 10_000,
+    connection: ConnectionLike, source_run_id: int, add_articles: int = 10_000,
 ) -> dict[str, Any]:
     if add_articles < 1:
         raise ValueError("add_articles must be positive")

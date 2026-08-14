@@ -9,7 +9,7 @@ from pathlib import Path
 
 from jitendex_ru.batch import claim
 from jitendex_ru.config import Config
-from jitendex_ru.db import connect, transaction
+from jitendex_ru.database import Database, transaction
 from jitendex_ru.validate_response import ingest_response
 
 
@@ -22,13 +22,14 @@ def main() -> int:
     args = parser.parse_args()
 
     config = Config.load(args.config)
+    database = Database(config)
     targets = json.loads(args.targets.read_text(encoding="utf-8"))
     model = config.model("translation")
     repaired = 0
 
     for entry in targets:
         batch_id = entry["batch_id"]
-        connection = connect(config.db_path)
+        connection = database.connect()
         try:
             with transaction(connection, immediate=True):
                 updated = connection.execute(
@@ -74,6 +75,7 @@ def main() -> int:
         finally:
             connection.close()
 
+    database.close()
     print(json.dumps({"run_id": args.run_id, "repaired_batches": repaired}, sort_keys=True))
     return 0
 

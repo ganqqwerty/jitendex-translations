@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import copy
 import json
 import re
-import sqlite3
 from typing import Any
 
 from .extract_units import NON_TRANSLATABLE_KEYS
@@ -89,28 +90,40 @@ def _compose_glossary(source_items: Any, serialized_target: str, pointer: str) -
     return output
 
 
-def apply_article(connection: sqlite3.Connection, run_id: int, article: sqlite3.Row) -> list[Any]:
+def apply_article(
+    connection: ConnectionLike, run_id: int, article: RowLike,
+    unit_rows: list[RowLike] | None = None,
+) -> list[Any]:
     if sha256_bytes(article["raw_json"].encode()) != article["source_sha256"]:
         raise ValueError(f"article {article['id']} source hash changed")
     source = json.loads(article["raw_json"])
-    rows = connection.execute(
-        """SELECT tu.json_pointer,tu.role,tu.source_text,t.target_text,t.target_sha256
-        FROM translation_unit tu JOIN translation t ON t.unit_id=tu.id AND t.run_id=tu.run_id
-        WHERE tu.run_id=? AND tu.article_id=? AND t.accepted=1 ORDER BY tu.json_pointer""",
-        (run_id, article["id"]),
-    ).fetchall()
-    all_units = connection.execute(
-        "SELECT json_pointer FROM translation_unit WHERE run_id=? AND article_id=? ORDER BY json_pointer",
-        (run_id, article["id"]),
-    ).fetchall()
-    if len(rows) != len(all_units):
+    if unit_rows is None:
+        rows = connection.execute(
+            """SELECT tu.json_pointer,tu.role,tu.source_text,t.target_text,t.target_sha256
+            FROM translation_unit tu JOIN translation t ON t.unit_id=tu.id
+            WHERE tu.run_id=? AND tu.article_id=? AND t.accepted=1 ORDER BY tu.json_pointer""",
+            (run_id, article["id"]),
+        ).fetchall()
+        all_units = connection.execute(
+            "SELECT json_pointer FROM translation_unit WHERE run_id=? AND article_id=? ORDER BY json_pointer",
+            (run_id, article["id"]),
+        ).fetchall()
+        accepted_complete = len(rows) == len(all_units)
+    else:
+        rows = unit_rows
+        all_units = unit_rows
+        accepted_complete = all(row["translation_id"] is not None for row in rows)
+    if not accepted_complete:
         raise ValueError(f"article {article['id']} has unaccepted translation units")
     pointers = {row["json_pointer"] for row in all_units}
-    run_article = connection.execute(
-        "SELECT structural_fingerprint FROM run_article WHERE run_id=? AND article_id=?",
-        (run_id, article["id"]),
-    ).fetchone()
-    expected_fingerprint = run_article["structural_fingerprint"] if run_article else article["structural_fingerprint"]
+    if unit_rows is None:
+        run_article = connection.execute(
+            "SELECT structural_fingerprint FROM run_article WHERE run_id=? AND article_id=?",
+            (run_id, article["id"]),
+        ).fetchone()
+        expected_fingerprint = run_article["structural_fingerprint"] if run_article else article["structural_fingerprint"]
+    else:
+        expected_fingerprint = article["run_structural_fingerprint"]
     if structural_fingerprint(source, pointers) != expected_fingerprint:
         raise ValueError(f"article {article['id']} source structural fingerprint changed")
     output = copy.deepcopy(source)

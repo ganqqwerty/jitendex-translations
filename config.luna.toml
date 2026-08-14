@@ -3,6 +3,12 @@ work_dir = "work"
 dist_dir = "dist"
 target_language = "ru"
 
+[database]
+backend = "postgresql"
+url_env = "JITENDEX_POSTGRES_URL"
+pool_max = 4
+checkout_timeout_seconds = 10
+
 [jitendex]
 version = "2026.07.09.0"
 url = "https://github.com/stephenmk/stephenmk.github.io/releases/download/2026.07.09.0/jitendex-yomitan.zip"

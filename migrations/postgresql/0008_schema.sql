@@ -1,9 +1,10 @@
 SET client_encoding = 'UTF8';
 SET timezone = 'UTC';
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
 CREATE TABLE schema_meta (
   version BIGINT NOT NULL,
-  applied_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE source_snapshot (
@@ -15,7 +16,7 @@ CREATE TABLE source_snapshot (
   local_path TEXT NOT NULL,
   extractor_version TEXT NOT NULL,
   metadata_json TEXT NOT NULL DEFAULT '{}',
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE kaishi_note (
@@ -61,7 +62,7 @@ CREATE TABLE selection_decision (
   actor TEXT NOT NULL,
   reason TEXT NOT NULL,
   review_status TEXT NOT NULL CHECK (review_status IN ('pending', 'accepted', 'rejected')),
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE run (
@@ -75,7 +76,7 @@ CREATE TABLE run (
   terminology_sha256 TEXT NOT NULL,
   limits_json TEXT NOT NULL,
   state TEXT NOT NULL DEFAULT 'active',
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   pipeline_version TEXT NOT NULL DEFAULT 'scalar-v1'
 );
 
@@ -102,10 +103,10 @@ CREATE TABLE batch (
   unit_count BIGINT NOT NULL,
   state TEXT NOT NULL DEFAULT 'ready',
   lease_token TEXT,
-  lease_expires_at TEXT,
+  lease_expires_at TIMESTAMPTZ,
   attempt_count BIGINT NOT NULL DEFAULT 0,
   manifest_path TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE batch_item (
@@ -125,8 +126,8 @@ CREATE TABLE attempt (
   response_path TEXT,
   outcome TEXT NOT NULL DEFAULT 'claimed',
   error_json TEXT,
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text),
-  completed_at TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMPTZ,
   effective_model_id TEXT,
   reasoning_effort TEXT,
   transport TEXT CHECK (transport IS NULL OR transport IN ('responses-sync', 'batch-api', 'codex-agent')),
@@ -152,7 +153,7 @@ CREATE TABLE translation (
   review_reason TEXT,
   target_sha256 TEXT NOT NULL,
   accepted BIGINT NOT NULL DEFAULT 0 CHECK (accepted IN (0, 1)),
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE review (
@@ -162,7 +163,7 @@ CREATE TABLE review (
   decision TEXT NOT NULL CHECK (decision IN ('accept', 'replace', 'needs_adjudication')),
   replacement_target TEXT,
   reason TEXT,
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE validation_issue (
@@ -174,9 +175,9 @@ CREATE TABLE validation_issue (
   severity TEXT NOT NULL,
   code TEXT NOT NULL,
   details_json TEXT NOT NULL,
-  resolved_at TEXT,
+  resolved_at TIMESTAMPTZ,
   waiver_reason TEXT,
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE audit_event (
@@ -185,7 +186,7 @@ CREATE TABLE audit_event (
   entity_type TEXT NOT NULL,
   entity_id TEXT NOT NULL,
   details_json TEXT NOT NULL DEFAULT '{}',
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE export (
@@ -195,7 +196,7 @@ CREATE TABLE export (
   manifest_sha256 TEXT NOT NULL,
   zip_sha256 TEXT NOT NULL,
   verified BIGINT NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE export_file (
@@ -224,7 +225,7 @@ CREATE TABLE attempt_cost_report (
   cached_input_tokens BIGINT NOT NULL,
   output_tokens BIGINT NOT NULL,
   computed_cost TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE jitendex_tag (
@@ -246,11 +247,11 @@ CREATE TABLE jitendex_tag (
   translation_model TEXT,
   reasoning_effort TEXT,
   prompt_sha256 TEXT,
-  translated_at TEXT,
+  translated_at TIMESTAMPTZ,
   translation_source TEXT,
   translation_source_sha256 TEXT,
   translation_source_path TEXT,
-  approved_at TEXT
+  approved_at TIMESTAMPTZ
 );
 
 CREATE TABLE jitendex_tag_translation_history (
@@ -266,8 +267,8 @@ CREATE TABLE jitendex_tag_translation_history (
   translation_source TEXT,
   translation_source_sha256 TEXT,
   translation_source_path TEXT,
-  translated_at TEXT,
-  archived_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text),
+  translated_at TIMESTAMPTZ,
+  archived_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   replacement_source_sha256 TEXT NOT NULL
 );
 
@@ -311,5 +312,5 @@ CREATE TABLE translation_canonicalization_history (
   mapping_source TEXT NOT NULL,
   mapping_identity_json TEXT NOT NULL,
   canonicalizer_version TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::text)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

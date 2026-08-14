@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
 import re
-import sqlite3
 import zipfile
 from collections import Counter
 from pathlib import Path
@@ -115,7 +116,7 @@ def extract_jitendex_tags(archive_path: Path) -> list[dict[str, Any]]:
 
 
 def import_jitendex_tags(
-    connection: sqlite3.Connection, snapshot_id: int, archive_path: Path,
+    connection: ConnectionLike, snapshot_id: int, archive_path: Path,
 ) -> dict[str, int]:
     snapshot = connection.execute(
         "SELECT id FROM source_snapshot WHERE id=? AND kind='jitendex'", (snapshot_id,),
@@ -165,7 +166,7 @@ def import_jitendex_tags(
     }
 
 
-def translation_manifest(rows: list[sqlite3.Row], batch_id: str) -> dict[str, Any]:
+def translation_manifest(rows: list[RowLike], batch_id: str) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "batch_id": batch_id,
@@ -183,9 +184,9 @@ def translation_manifest(rows: list[sqlite3.Row], batch_id: str) -> dict[str, An
 
 
 def ingest_tag_translations(
-    connection: sqlite3.Connection,
+    connection: ConnectionLike,
     payload: Mapping[str, Any],
-    expected_rows: list[sqlite3.Row],
+    expected_rows: list[RowLike],
     *,
     model: str,
     reasoning_effort: str,
@@ -234,7 +235,7 @@ def ingest_tag_translations(
             confidence != "high" and (not isinstance(reason, str) or not reason.strip())
         ):
             raise ValueError(f"confidence/review_reason mismatch for {item.get('tag_id')}")
-        connection.execute(
+        cursor = connection.execute(
             """UPDATE jitendex_tag SET
               label_ru=?,description_ru=?,confidence=?,review_reason=?,translation_model=?,
               reasoning_effort=?,prompt_sha256=?,translated_at=CURRENT_TIMESTAMP
@@ -242,7 +243,7 @@ def ingest_tag_translations(
             (label.strip(), description.strip(), confidence, reason, model, reasoning_effort,
              prompt_sha256, item["tag_id"], item["source_sha256"]),
         )
-        if connection.execute("SELECT changes()").fetchone()[0] != 1:
+        if cursor.rowcount != 1:
             raise ValueError(f"tag {item['tag_id']} changed before ingestion")
     audit(connection, "translate", "jitendex_tag_batch", payload.get("batch_id", "unknown"), {
         "model": model, "reasoning_effort": reasoning_effort, "tags": len(translations),
@@ -252,7 +253,7 @@ def ingest_tag_translations(
 
 
 def ingest_approved_tag_rows(
-    connection: sqlite3.Connection,
+    connection: ConnectionLike,
     snapshot_id: int,
     rows: Sequence[Mapping[str, Any]],
     *,
@@ -291,7 +292,7 @@ def ingest_approved_tag_rows(
             f"approved workbook does not exactly match the catalog: missing={len(missing)}, extra={len(extra)}"
         )
 
-    replacements: list[tuple[sqlite3.Row, str, str, str, str | None]] = []
+    replacements: list[tuple[RowLike, str, str, str, str | None]] = []
     for key, database_row in database_by_identity.items():
         approved = approved_by_identity[key]
         label = approved.get("label_ru")
@@ -359,7 +360,7 @@ def ingest_approved_tag_rows(
     }
 
 
-def translated_tag_notes(connection: sqlite3.Connection, snapshot_id: int) -> dict[str, str]:
+def translated_tag_notes(connection: ConnectionLike, snapshot_id: int) -> dict[str, str]:
     rows = connection.execute(
         """SELECT description_en,description_ru FROM jitendex_tag
         WHERE snapshot_id=? AND source_kind='tag_bank' ORDER BY id""", (snapshot_id,),

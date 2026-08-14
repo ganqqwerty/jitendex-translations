@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import sqlite3
+from .database import ConnectionLike, RowLike
+
 from typing import Any
 
 from .util import canonical_json, sha256_bytes
@@ -18,8 +19,74 @@ EXPECTED_LEXICOGRAPHER_V2_ROLES = {
 }
 
 
+def headword_progress(connection: ConnectionLike, run_id: int) -> tuple[int, int]:
+    """Return fully translated headwords and the complete source-headword total."""
+    row = connection.execute(
+        """WITH selected_run AS (
+          SELECT id AS run_id,jitendex_snapshot_id FROM run WHERE id=?
+        ), source_articles AS (
+          SELECT a.id,a.expression,a.reading,sr.run_id
+          FROM selected_run sr JOIN article a
+            ON a.snapshot_id=sr.jitendex_snapshot_id
+        ), all_headwords AS (
+          SELECT expression,reading FROM source_articles GROUP BY expression,reading
+        ), incomplete_headwords AS (
+          SELECT a.expression,a.reading FROM source_articles a
+          LEFT JOIN run_article ra
+            ON ra.article_id=a.id AND ra.run_id=a.run_id
+          WHERE ra.article_id IS NULL
+          UNION
+          SELECT a.expression,a.reading FROM source_articles a
+          JOIN run_article ra ON ra.article_id=a.id AND ra.run_id=a.run_id
+          JOIN translation_unit tu
+            ON tu.run_id=ra.run_id AND tu.article_id=ra.article_id
+          WHERE NOT EXISTS (
+            SELECT 1 FROM translation t
+            WHERE t.run_id=tu.run_id AND t.unit_id=tu.id AND t.accepted=1
+          ) AND NOT EXISTS (
+            SELECT 1 FROM batch_item bi WHERE bi.unit_id=tu.id AND EXISTS (
+              SELECT 1 FROM batch b WHERE b.id=bi.batch_id AND b.run_id=tu.run_id
+                AND b.state='deterministic_validated')
+          )
+        )
+        SELECT (SELECT COUNT(*) FROM all_headwords)
+                 -(SELECT COUNT(*) FROM incomplete_headwords),
+               (SELECT COUNT(*) FROM all_headwords)""",
+        (run_id,),
+    ).fetchone()
+    return row[0], row[1]
+
+
+def workload_progress(connection: ConnectionLike, run_id: int) -> dict[str, int]:
+    """Return production-complete workload counts for one exact metric snapshot."""
+    complete = """(
+      EXISTS (SELECT 1 FROM translation t WHERE t.run_id=tu.run_id AND t.unit_id=tu.id
+              AND t.accepted=1)
+      OR EXISTS (SELECT 1 FROM batch_item bi WHERE bi.unit_id=tu.id AND EXISTS (
+                 SELECT 1 FROM batch b WHERE b.id=bi.batch_id AND b.run_id=tu.run_id
+                   AND b.state='deterministic_validated'))
+    )"""
+    unit_row = connection.execute(
+        f"""SELECT COUNT(*),COALESCE(SUM(LENGTH(source_text)),0)
+        FROM translation_unit tu WHERE tu.run_id=? AND {complete}""",
+        (run_id,),
+    ).fetchone()
+    units, source_characters = unit_row[0], unit_row[1]
+    articles = connection.execute(
+        f"""SELECT (SELECT COUNT(*) FROM run_article WHERE run_id=?)
+        - COUNT(DISTINCT tu.article_id)
+        FROM translation_unit tu WHERE tu.run_id=? AND NOT {complete}""",
+        (run_id, run_id),
+    ).fetchone()[0]
+    headwords, _ = headword_progress(connection, run_id)
+    return {
+        "headwords": int(headwords), "articles": int(articles), "units": int(units),
+        "source_characters": int(source_characters),
+    }
+
+
 def source_identity_report(
-    connection: sqlite3.Connection, candidate_run_id: int, baseline_run_id: int = 2,
+    connection: ConnectionLike, candidate_run_id: int, baseline_run_id: int = 2,
 ) -> dict[str, Any]:
     """Compare a new run with the immutable source-unit identity of a baseline run."""
     for run_id in (candidate_run_id, baseline_run_id):
@@ -64,7 +131,7 @@ def source_identity_report(
     }
 
 
-def run_history_fingerprint(connection: sqlite3.Connection, run_id: int) -> dict[str, Any]:
+def run_history_fingerprint(connection: ConnectionLike, run_id: int) -> dict[str, Any]:
     """Hash every row owned by a run without including unrelated database state."""
     queries = {
         "run": ("SELECT * FROM run WHERE id=? ORDER BY id", (run_id,)),

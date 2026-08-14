@@ -1,5 +1,8 @@
 import importlib.util
+import json
+import os
 import sqlite3
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -125,6 +128,36 @@ def test_progress_tracker_reports_headwords_per_minute():
     }
 
 
+def test_first_launch_measurement_starts_on_actual_first_submission_only():
+    assert MODULE.measurement_starts_on_launch("first-launch", 1)
+    assert not MODULE.measurement_starts_on_launch("first-launch", 2)
+    assert not MODULE.measurement_starts_on_launch("measurement", 1)
+
+
+def test_productive_deadline_drains_without_requesting_interruption():
+    assert MODULE.window_deadline_action(100.0, None, 100.0, False, False) == "drain"
+    assert MODULE.window_deadline_action(100.0, 100.0, None, False, False) == "interrupt"
+    assert MODULE.window_deadline_action(100.0, None, 100.0, False, True) is None
+
+
+def test_usage_boundary_matches_codex_credit_exhaustion():
+    result = MODULE.DispatchResult(
+        claim={}, returncode=1, stdout="You've hit your usage limit. Purchase more credits.",
+        stderr="", thread_id=None, usage=None, latency_ms=1,
+    )
+    assert MODULE.usage_boundary(result)
+
+
+def test_fake_codex_override_is_restricted_to_explicit_sqlite_test_mode(monkeypatch):
+    monkeypatch.setenv("JITENDEX_TEST_CODEX_EXECUTABLE", "/tmp/fake-codex")
+    with pytest.raises(RuntimeError, match="test mode and SQLite"):
+        MODULE.codex_executable(SimpleNamespace(db_backend="sqlite"))
+    monkeypatch.setenv("JITENDEX_RUNNER_TEST_MODE", "1")
+    with pytest.raises(RuntimeError, match="test mode and SQLite"):
+        MODULE.codex_executable(SimpleNamespace(db_backend="postgresql"))
+    assert MODULE.codex_executable(SimpleNamespace(db_backend="sqlite")) == Path("/tmp/fake-codex")
+
+
 def test_sqlite_retry_retries_only_transient_lock_errors(monkeypatch):
     calls = 0
 
@@ -175,6 +208,37 @@ def test_interrupted_claim_is_requeued_only_with_its_exact_lease(tmp_path):
     connection.close()
 
 
+def test_transport_rejection_cannot_change_a_newer_lease(tmp_path):
+    db_path = _progress_database(tmp_path)
+    connection = connect(db_path)
+    connection.execute(
+        """INSERT INTO batch(id,run_id,manifest_sha256,serialized_bytes,article_count,
+        unit_count,state,lease_token,manifest_path) VALUES
+        ('b1',1,'m',1,1,0,'leased','new-lease','m')"""
+    )
+    connection.execute(
+        """INSERT INTO attempt(id,batch_id,worker_id,model,prompt_sha256,lease_token,
+        request_path,outcome) VALUES ('a1','b1','w','m','p','old-lease','r','claimed')"""
+    )
+    connection.commit()
+    connection.close()
+    result = MODULE.DispatchResult(
+        claim={"attempt_id": "a1", "batch_id": "b1", "lease_token": "old-lease"},
+        returncode=1, stdout="", stderr="failed", thread_id=None, usage=None, latency_ms=1,
+    )
+
+    recovery = MODULE.reject_transport(
+        SimpleNamespace(db_path=db_path), "translation", result, "transport failed",
+    )
+
+    assert recovery["stale_lease"]
+    connection = connect(db_path)
+    assert connection.execute("SELECT outcome FROM attempt WHERE id='a1'").fetchone()[0] == "claimed"
+    assert tuple(connection.execute(
+        "SELECT state,lease_token FROM batch WHERE id='b1'"
+    ).fetchone()) == ("leased", "new-lease")
+    connection.close()
+
 def test_dispatch_does_not_start_a_child_after_stop(tmp_path):
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text(
@@ -195,6 +259,73 @@ def test_dispatch_does_not_start_a_child_after_stop(tmp_path):
     assert not MODULE.CHILDREN
 
 
+def test_dispatch_reports_worker_process_launch_time(tmp_path, monkeypatch):
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        '{"batch_id":"b1","manifest_sha256":"m","articles":[]}', encoding="utf-8",
+    )
+
+    class Process:
+        pid = 123
+        returncode = 0
+
+        @staticmethod
+        def communicate(_input):
+            return "", ""
+
+        @staticmethod
+        def poll():
+            return 0
+
+    monkeypatch.setattr(MODULE.subprocess, "Popen", lambda *args, **kwargs: Process())
+    launches = []
+    result = MODULE.dispatch_one({
+        "attempt_id": "a1", "batch_id": "b1", "request_path": str(manifest_path),
+        "response_path": str(tmp_path / "response.json"), "model_id": "m",
+        "reasoning_effort": "medium",
+    }, "prompt", "translation", launches.append)
+    assert result.returncode == 0
+    assert len(launches) == 1
+    assert isinstance(launches[0], float)
+
+
+def test_dispatch_terminates_and_reports_a_timed_out_child(tmp_path, monkeypatch):
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        '{"batch_id":"b1","manifest_sha256":"m","articles":[]}', encoding="utf-8",
+    )
+
+    class Process:
+        pid = 123
+        returncode = -MODULE.signal.SIGTERM
+        calls = 0
+
+        def communicate(self, _input=None, timeout=None):
+            self.calls += 1
+            if self.calls == 1:
+                raise subprocess.TimeoutExpired("codex", timeout, output=b"partial", stderr=b"")
+            return "", "terminated"
+
+        @staticmethod
+        def poll():
+            return None
+
+    process = Process()
+    signals = []
+    monkeypatch.setattr(MODULE.subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(MODULE.os, "killpg", lambda pid, signum: signals.append((pid, signum)))
+    result = MODULE.dispatch_one({
+        "attempt_id": "a1", "batch_id": "b1", "request_path": str(manifest_path),
+        "response_path": str(tmp_path / "response.json"), "model_id": "m",
+        "reasoning_effort": "medium",
+    }, "prompt", "translation", request_timeout_seconds=180)
+
+    assert result.returncode == -MODULE.signal.SIGTERM
+    assert result.stdout == "partial"
+    assert "request timed out after 180 seconds" in result.stderr
+    assert signals == [(123, MODULE.signal.SIGTERM)]
+
+
 def test_stop_terminates_registered_child_process_groups(monkeypatch):
     process = SimpleNamespace(pid=12345, poll=lambda: None)
     signals = []
@@ -208,3 +339,64 @@ def test_stop_terminates_registered_child_process_groups(monkeypatch):
         MODULE.STOP_REQUESTED.clear()
 
     assert signals == [(12345, MODULE.signal.SIGTERM)]
+
+
+def test_runner_quota_boundary_stops_and_recovers_every_exact_claim(tmp_path):
+    db_path = _progress_database(tmp_path)
+    manifests = tmp_path / "manifests"
+    manifests.mkdir()
+    connection = connect(db_path)
+    for number in range(4):
+        batch_id = f"quota-{number}"
+        manifest = manifests / f"{batch_id}.json"
+        manifest.write_text(json.dumps({
+            "batch_id": batch_id, "manifest_sha256": f"m{number}", "articles": [],
+        }), encoding="utf-8")
+        connection.execute(
+            """INSERT INTO batch(id,run_id,kind,manifest_sha256,serialized_bytes,
+            article_count,unit_count,state,manifest_path) VALUES (?,?,?,?,1,0,0,'ready',?)""",
+            (batch_id, 1, "translation", f"m{number}", str(manifest)),
+        )
+    connection.commit()
+    connection.close()
+
+    fake_codex = tmp_path / "fake-codex"
+    fake_codex.write_text(
+        "#!/bin/sh\nprintf '%s\\n' \"You've hit your usage limit. Purchase more credits.\" >&2\nexit 1\n",
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o700)
+    env = os.environ.copy()
+    env.update({
+        "JITENDEX_BENCHMARK_DATABASE_BACKEND": "sqlite",
+        "JITENDEX_BENCHMARK_DATABASE": str(db_path),
+        "JITENDEX_BENCHMARK_WORK_DIR": str(tmp_path / "work"),
+        "JITENDEX_BENCHMARK_DIST_DIR": str(tmp_path / "dist"),
+        "JITENDEX_RUNNER_TEST_MODE": "1",
+        "JITENDEX_TEST_CODEX_EXECUTABLE": str(fake_codex),
+    })
+    result = subprocess.run([
+        sys.executable, str(ROOT / "scripts/run_codex_batches.py"),
+        "--config", str(ROOT / "config.luna.toml"), "--run-id", "1",
+        "--kind", "translation", "--concurrency", "4",
+        "--worker-prefix", "quota-e2e", "--progress-interval", "1",
+    ], cwd=ROOT, env=env, capture_output=True, text=True, timeout=30)
+
+    events = [json.loads(line) for line in result.stdout.splitlines()]
+    assert result.returncode == 130, result.stderr
+    assert any(event.get("quota_boundary") for event in events)
+    connection = connect(db_path)
+    assert connection.execute(
+        "SELECT COUNT(*) FROM attempt WHERE outcome='claimed'"
+    ).fetchone()[0] == 0
+    assert connection.execute(
+        "SELECT COUNT(*) FROM attempt WHERE outcome='rejected'"
+    ).fetchone()[0] == 0
+    assert connection.execute(
+        "SELECT COUNT(*) FROM batch WHERE state='leased'"
+    ).fetchone()[0] == 0
+    assert connection.execute(
+        "SELECT COUNT(*) FROM batch WHERE state='ready'"
+    ).fetchone()[0] == 4
+    assert connection.execute("SELECT COUNT(*) FROM batch").fetchone()[0] == 4
+    connection.close()

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
 import re
-import sqlite3
+import time
 from dataclasses import dataclass
 from typing import Any, Iterator
 
 from .db import audit
+from .prep_metrics import PrepMetrics
 from .util import (
     KEY_CHORD_RE, LANGUAGE_ORIGIN_RE, canonical_json, json_pointer_escape,
     sha256_bytes, source_xref_taxa, structural_fingerprint,
@@ -28,6 +31,7 @@ NON_TRANSLATABLE_KEYS = {
     "imageRendering", "appearance", "verticalAlign", "border", "borderRadius", "sizeUnits",
 }
 PROTECTED_RE = re.compile(r"https?://\S+|\b(?:JMdict|Tatoeba)\b|[\u3040-\u30ff\u3400-\u9fff]+|\{[^{}]+\}|\b\d+(?:\.\d+)*\b")
+SOURCE_ACRONYM_RE = re.compile(r"\b[A-Z][A-Z0-9.+/-]{1,11}\b")
 
 
 @dataclass(frozen=True)
@@ -39,8 +43,10 @@ class ExtractedUnit:
 
 
 def protected_tokens(role: str, text: str) -> tuple[str, ...]:
-    tokens = list(PROTECTED_RE.findall(text))
-    tokens.extend(KEY_CHORD_RE.findall(text))
+    visible_text = " ".join(glossary_evidence(text)) if role == "glossary_set" else text
+    tokens = list(PROTECTED_RE.findall(visible_text))
+    tokens.extend(SOURCE_ACRONYM_RE.findall(visible_text))
+    tokens.extend(KEY_CHORD_RE.findall(visible_text))
     if role == "xref_gloss":
         tokens.extend(source_xref_taxa(text))
     if role == "note" and (match := LANGUAGE_ORIGIN_RE.fullmatch(text.strip())):
@@ -120,7 +126,7 @@ def _walk_lexicographer(node: Any, pointer: str = "", selectors: tuple[str, ...]
             glosses = [item for item in glosses if item]
             if glosses and any(re.search(r"[A-Za-z]", item) for item in glosses):
                 source = canonical_json(subtree).decode()
-                protected = tuple(dict.fromkeys(PROTECTED_RE.findall(" ".join(glosses))))
+                protected = protected_tokens("glossary_set", source)
                 yield ExtractedUnit(f"{pointer}/content", "glossary_set", source, protected)
             return
         role = next((ROLE_BY_SELECTOR[item] for item in reversed(active) if item in ROLE_BY_SELECTOR), None)
@@ -228,33 +234,234 @@ def semantic_context(row: list[Any]) -> dict[str, Any]:
     }
 
 
-def extract_selected(connection: sqlite3.Connection, run_id: int) -> dict[str, int]:
-    added = quarantined = 0
+_RUN_ARTICLE_COLUMNS = ("run_id", "article_id", "structural_fingerprint")
+_UNIT_COLUMNS = (
+    "id", "run_id", "article_id", "json_pointer", "role", "source_text", "source_sha256",
+    "protected_tokens_json", "byte_count", "status",
+)
+
+
+def _flush_postgres_extraction(
+    connection: ConnectionLike,
+    article_rows: list[tuple[Any, ...]],
+    unit_rows: list[tuple[Any, ...]],
+) -> int:
+    if article_rows:
+        connection.copy_rows("prep_run_article", _RUN_ARTICLE_COLUMNS, article_rows)
+        connection.execute(
+            """INSERT INTO run_article(run_id,article_id,structural_fingerprint)
+            SELECT run_id,article_id,structural_fingerprint FROM prep_run_article
+            ON CONFLICT(run_id,article_id) DO UPDATE
+            SET structural_fingerprint=excluded.structural_fingerprint"""
+        )
+        connection.execute("TRUNCATE prep_run_article")
+    added = 0
+    if unit_rows:
+        connection.copy_rows("prep_translation_unit", _UNIT_COLUMNS, unit_rows)
+        added = connection.execute(
+            """INSERT INTO translation_unit
+            (id,run_id,article_id,json_pointer,role,source_text,source_sha256,
+             protected_tokens_json,byte_count,status)
+            SELECT id,run_id,article_id,json_pointer,role,source_text,source_sha256,
+            protected_tokens_json,byte_count,status FROM prep_translation_unit
+            ON CONFLICT(run_id,article_id,json_pointer) DO NOTHING"""
+        ).rowcount
+        connection.execute("TRUNCATE prep_translation_unit")
+    article_rows.clear()
+    unit_rows.clear()
+    return added
+
+
+def _copy_source_units(connection: ConnectionLike, source_run_id: int, target_run_id: int) -> int:
+    source = connection.execute(
+        """SELECT jitendex_snapshot_id,extractor_version,pipeline_version
+        FROM run WHERE id=?""", (source_run_id,),
+    ).fetchone()
+    target = connection.execute(
+        """SELECT jitendex_snapshot_id,extractor_version,pipeline_version
+        FROM run WHERE id=?""", (target_run_id,),
+    ).fetchone()
+    if source is None:
+        raise ValueError(f"unknown source run {source_run_id}")
+    if target is None:
+        raise ValueError(f"unknown target run {target_run_id}")
+    identity = ("jitendex_snapshot_id", "extractor_version", "pipeline_version")
+    if any(source[key] != target[key] for key in identity):
+        raise ValueError("source and target runs do not share extraction identity")
+    missing = connection.execute(
+        """SELECT COUNT(*) FROM run_article ra
+        LEFT JOIN article a ON a.id=ra.article_id AND a.selected=1
+        WHERE ra.run_id=? AND a.id IS NULL""", (source_run_id,),
+    ).fetchone()[0]
+    if missing:
+        raise ValueError(f"target selection omits {missing} source-run articles")
+    malformed = connection.execute(
+        """SELECT COUNT(*) FROM translation_unit
+        WHERE run_id=? AND id NOT LIKE ?""",
+        (source_run_id, f"u-r{source_run_id}-%"),
+    ).fetchone()[0]
+    if malformed:
+        raise ValueError(f"source run has {malformed} non-deterministic unit IDs")
+    connection.execute(
+        """INSERT INTO run_article(run_id,article_id,structural_fingerprint)
+        SELECT ?,ra.article_id,ra.structural_fingerprint
+        FROM run_article ra JOIN article a ON a.id=ra.article_id AND a.selected=1
+        WHERE ra.run_id=?
+        ON CONFLICT(run_id,article_id) DO UPDATE
+        SET structural_fingerprint=excluded.structural_fingerprint""",
+        (target_run_id, source_run_id),
+    )
+    return connection.execute(
+        """INSERT INTO translation_unit
+        (id,run_id,article_id,json_pointer,role,source_text,source_sha256,
+         protected_tokens_json,byte_count,status)
+        SELECT 'u-r' || CAST(? AS TEXT) ||
+               SUBSTRING(old.id FROM LENGTH('u-r' || CAST(? AS TEXT)) + 1),
+        ?,old.article_id,old.json_pointer,old.role,old.source_text,old.source_sha256,
+        old.protected_tokens_json,old.byte_count,'ready'
+        FROM translation_unit old
+        JOIN article a ON a.id=old.article_id AND a.selected=1
+        WHERE old.run_id=?
+        ON CONFLICT(run_id,article_id,json_pointer) DO NOTHING""",
+        (target_run_id, source_run_id, target_run_id, source_run_id),
+    ).rowcount
+
+
+def extract_selected(
+    connection: ConnectionLike, run_id: int, source_run_id: int | None = None,
+) -> dict[str, Any]:
+    added = parsed_articles = copied_units = loaded_units = input_bytes = 0
+    parse_wall = parse_cpu = load_wall = load_cpu = 0.0
+    json_wall = structure_wall = hashing_wall = 0.0
+    metrics = PrepMetrics("extract_units")
     run = connection.execute("SELECT pipeline_version FROM run WHERE id=?", (run_id,)).fetchone()
     if run is None:
         raise ValueError(f"unknown run {run_id}")
+    if source_run_id == run_id:
+        raise ValueError("source and target runs must differ")
     pipeline_version = run["pipeline_version"]
-    for article in connection.execute("SELECT * FROM article WHERE selected=1 ORDER BY bank_number,entry_ordinal"):
+    backend = getattr(connection, "backend", "sqlite")
+    incremental = backend == "postgresql" and source_run_id is not None
+    if backend == "postgresql":
+        with metrics.phase("extraction_staging_setup"):
+            connection.execute(
+                "CREATE TEMP TABLE prep_run_article (LIKE run_article INCLUDING DEFAULTS) ON COMMIT DROP"
+            )
+            connection.execute(
+                "CREATE TEMP TABLE prep_translation_unit (LIKE translation_unit INCLUDING DEFAULTS) ON COMMIT DROP"
+            )
+    if incremental:
+        with metrics.phase("old_unit_copy") as phase:
+            copied_units = _copy_source_units(connection, source_run_id, run_id)
+            added += copied_units
+            phase.update(input_rows=copied_units, output_rows=copied_units)
+        articles = connection.execute(
+            """SELECT a.* FROM article a WHERE a.selected=1 AND NOT EXISTS (
+            SELECT 1 FROM run_article source WHERE source.run_id=? AND source.article_id=a.id)
+            ORDER BY a.bank_number,a.entry_ordinal""", (source_run_id,),
+        )
+    else:
+        articles = connection.execute(
+            "SELECT * FROM article WHERE selected=1 ORDER BY bank_number,entry_ordinal"
+        )
+    pending_articles: list[tuple[Any, ...]] = []
+    pending_units: list[tuple[Any, ...]] = []
+    for article in articles:
+        article_wall = time.monotonic()
+        article_cpu = time.process_time()
+        parsed_articles += 1
+        input_bytes += len(article["raw_json"].encode())
+        detail_started = time.monotonic()
         source = json.loads(article["raw_json"])
+        json_wall += time.monotonic() - detail_started
+        detail_started = time.monotonic()
         units = extract_article_units(source, pipeline_version)
         pointers = {unit.pointer for unit in units}
         fingerprint = structural_fingerprint(source, pointers)
-        connection.execute(
-            "INSERT OR REPLACE INTO run_article(run_id,article_id,structural_fingerprint) VALUES (?,?,?)",
-            (run_id, article["id"], fingerprint),
-        )
-        if not units:
-            quarantined += 1
+        structure_wall += time.monotonic() - detail_started
+        pending_articles.append((run_id, article["id"], fingerprint))
+        detail_started = time.monotonic()
         for unit in units:
             source_hash = sha256_bytes(unit.source_text.encode())
             unit_id = f"u-r{run_id}-{article['id']}-{sha256_bytes(unit.pointer.encode())[:12]}"
-            connection.execute(
-                """INSERT OR IGNORE INTO translation_unit
-                (id,run_id,article_id,json_pointer,role,source_text,source_sha256,protected_tokens_json,byte_count,status)
-                VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            pending_units.append(
                 (unit_id, run_id, article["id"], unit.pointer, unit.role, unit.source_text, source_hash,
-                 json.dumps(unit.protected_tokens, ensure_ascii=False), len(unit.source_text.encode()), "ready"),
+                 json.dumps(unit.protected_tokens, ensure_ascii=False), len(unit.source_text.encode()), "ready")
             )
-            added += connection.execute("SELECT changes()").fetchone()[0]
-    audit(connection, "extract_units", "run", run_id, {"added": added, "articles_without_units": quarantined})
-    return {"units_added": added, "articles_without_units": quarantined}
+        hashing_wall += time.monotonic() - detail_started
+        parse_wall += time.monotonic() - article_wall
+        parse_cpu += time.process_time() - article_cpu
+        if parsed_articles % 1_000 == 0:
+            metrics.progress(
+                "new_article_parsing", "busy_python", articles_parsed=parsed_articles,
+                units_buffered=len(pending_units), input_bytes=input_bytes,
+            )
+        if backend == "postgresql" and (
+            len(pending_articles) >= 1_000 or len(pending_units) >= 10_000
+        ):
+            flush_wall = time.monotonic()
+            flush_cpu = time.process_time()
+            flushed = _flush_postgres_extraction(connection, pending_articles, pending_units)
+            load_wall += time.monotonic() - flush_wall
+            load_cpu += time.process_time() - flush_cpu
+            loaded_units += flushed
+            added += flushed
+            metrics.progress(
+                "new_unit_loading", "waiting_postgresql", articles_parsed=parsed_articles,
+                units_loaded=loaded_units,
+            )
+    if backend == "postgresql":
+        flush_wall = time.monotonic()
+        flush_cpu = time.process_time()
+        flushed = _flush_postgres_extraction(connection, pending_articles, pending_units)
+        load_wall += time.monotonic() - flush_wall
+        load_cpu += time.process_time() - flush_cpu
+        loaded_units += flushed
+        added += flushed
+    else:
+        flush_wall = time.monotonic()
+        flush_cpu = time.process_time()
+        connection.executemany(
+            """INSERT INTO run_article(run_id,article_id,structural_fingerprint) VALUES (?,?,?)
+            ON CONFLICT(run_id,article_id) DO UPDATE
+            SET structural_fingerprint=excluded.structural_fingerprint""", pending_articles,
+        )
+        for values in pending_units:
+            added += connection.execute(
+                """INSERT INTO translation_unit
+                (id,run_id,article_id,json_pointer,role,source_text,source_sha256,
+                 protected_tokens_json,byte_count,status) VALUES (?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(run_id,article_id,json_pointer) DO NOTHING""", values,
+            ).rowcount
+        loaded_units = added
+        load_wall += time.monotonic() - flush_wall
+        load_cpu += time.process_time() - flush_cpu
+    metrics.record(
+        "new_article_parsing", parse_wall, parse_cpu, input_rows=parsed_articles,
+        output_rows=loaded_units, input_bytes=input_bytes, json_seconds=round(json_wall, 6),
+        structure_seconds=round(structure_wall, 6), hashing_seconds=round(hashing_wall, 6),
+    )
+    metrics.record(
+        "new_unit_loading", load_wall, load_cpu,
+        input_rows=loaded_units, output_rows=loaded_units,
+    )
+    # The composite foreign key guarantees that every unit article belongs to
+    # this run.  Counting both indexed sets avoids a correlated anti-join whose
+    # PostgreSQL estimate is stale inside the bulk-loading transaction.
+    with metrics.phase("extraction_final_checks") as phase:
+        quarantined = connection.execute(
+            """SELECT
+            (SELECT COUNT(*) FROM run_article WHERE run_id=?) -
+            (SELECT COUNT(DISTINCT article_id) FROM translation_unit WHERE run_id=?)""",
+            (run_id, run_id),
+        ).fetchone()[0]
+        phase.update(input_rows=added, articles_without_units=quarantined)
+    audit(connection, "extract_units", "run", run_id, {
+        "added": added, "articles_without_units": quarantined,
+        "source_run_id": source_run_id, "articles_parsed": parsed_articles,
+    })
+    return {
+        "units_added": added, "articles_without_units": quarantined,
+        "copied_units": copied_units, "parsed_articles": parsed_articles,
+        "loaded_new_units": loaded_units, "phase_metrics": metrics.phases,
+    }

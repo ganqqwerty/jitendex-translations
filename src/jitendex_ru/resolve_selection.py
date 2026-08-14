@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
-import sqlite3
 from collections import defaultdict
 from pathlib import Path
 
@@ -13,10 +14,10 @@ def _is_kana(value: str) -> bool:
     return bool(value) and all("ぁ" <= char <= "ゖ" or "ァ" <= char <= "ヺ" or char in "ー・" for char in value)
 
 
-def generate_candidates(connection: sqlite3.Connection) -> dict[str, int]:
+def generate_candidates(connection: ConnectionLike) -> dict[str, int]:
     articles = connection.execute("SELECT id,expression,reading,sequence,raw_json FROM article ORDER BY id").fetchall()
-    expression_index: dict[str, list[sqlite3.Row]] = defaultdict(list)
-    reading_index: dict[str, list[sqlite3.Row]] = defaultdict(list)
+    expression_index: dict[str, list[RowLike]] = defaultdict(list)
+    reading_index: dict[str, list[RowLike]] = defaultdict(list)
     for article in articles:
         expression_index[nfc(article["expression"])].append(article)
         for reading in reading_variants(article["reading"]):
@@ -26,7 +27,7 @@ def generate_candidates(connection: sqlite3.Connection) -> dict[str, int]:
     notes = connection.execute("SELECT * FROM kaishi_note ORDER BY id").fetchall()
     for note in notes:
         variants = set(reading_variants(note["reading"]))
-        matches: dict[int, tuple[sqlite3.Row, str]] = {}
+        matches: dict[int, tuple[RowLike, str]] = {}
         for article in expression_index.get(nfc(note["word"]), []):
             if not variants or variants.intersection(reading_variants(article["reading"])):
                 matches[article["id"]] = (article, "expression_reading")
@@ -43,22 +44,24 @@ def generate_candidates(connection: sqlite3.Connection) -> dict[str, int]:
                 "sentence_ja": note["sentence_ja"], "sentence_en": note["sentence_en"],
                 "article_expression": article["expression"], "article_reading": article["reading"],
             }
-            connection.execute(
-                """INSERT OR IGNORE INTO selection_candidate
-                (note_id,article_id,sequence,match_kind,evidence_json) VALUES (?,?,?,?,?)""",
+            cursor = connection.execute(
+                """INSERT INTO selection_candidate
+                (note_id,article_id,sequence,match_kind,evidence_json) VALUES (?,?,?,?,?)
+                ON CONFLICT(note_id,article_id) DO NOTHING""",
                 (note["id"], article["id"], article["sequence"], kind, json.dumps(evidence, ensure_ascii=False, sort_keys=True)),
             )
-            inserted += connection.execute("SELECT changes()").fetchone()[0]
+            inserted += cursor.rowcount
             sequences.add(article["sequence"])
 
         if len(sequences) == 1:
             sequence = next(iter(sequences))
-            connection.execute(
-                """INSERT OR IGNORE INTO selection_decision
-                (note_id,sequence,decision,actor,reason,review_status) VALUES (?,?,?,?,?,?)""",
+            cursor = connection.execute(
+                """INSERT INTO selection_decision
+                (note_id,sequence,decision,actor,reason,review_status) VALUES (?,?,?,?,?,?)
+                ON CONFLICT(note_id,sequence,actor) DO NOTHING""",
                 (note["id"], sequence, "included", "deterministic-v1", "single compatible sequence", "accepted"),
             )
-            auto += connection.execute("SELECT changes()").fetchone()[0]
+            auto += cursor.rowcount
         else:
             existing = connection.execute(
                 "SELECT 1 FROM selection_decision WHERE note_id=? AND sequence IS NULL AND actor='deterministic-v1'",
@@ -78,7 +81,7 @@ def generate_candidates(connection: sqlite3.Connection) -> dict[str, int]:
     return {"candidates_added": inserted, "auto_resolved": auto, "unresolved": unresolved}
 
 
-def _refresh_selected(connection: sqlite3.Connection) -> None:
+def _refresh_selected(connection: ConnectionLike) -> None:
     connection.execute("UPDATE article SET selected=0")
     connection.execute(
         """UPDATE article SET selected=1 WHERE id IN (
@@ -88,7 +91,7 @@ def _refresh_selected(connection: sqlite3.Connection) -> None:
     )
 
 
-def apply_resolutions(connection: sqlite3.Connection, path: Path, actor: str) -> int:
+def apply_resolutions(connection: ConnectionLike, path: Path, actor: str) -> int:
     payload = json.loads(path.read_text(encoding="utf-8"))
     count = 0
     for item in payload["resolutions"]:
@@ -113,7 +116,7 @@ def apply_resolutions(connection: sqlite3.Connection, path: Path, actor: str) ->
     return count
 
 
-def selection_manifest_hash(connection: sqlite3.Connection) -> str:
+def selection_manifest_hash(connection: ConnectionLike) -> str:
     decisions = connection.execute(
         """SELECT kn.note_id,sd.sequence,sd.decision,sd.actor,sd.reason,sd.review_status
         FROM selection_decision sd JOIN kaishi_note kn ON kn.id=sd.note_id
@@ -144,7 +147,7 @@ def selection_manifest_hash(connection: sqlite3.Connection) -> str:
     return sha256_bytes(canonical_json(payload))
 
 
-def unresolved_report(connection: sqlite3.Connection) -> list[dict[str, object]]:
+def unresolved_report(connection: ConnectionLike) -> list[dict[str, object]]:
     rows = connection.execute(
         """SELECT kn.id,kn.note_id,kn.word,kn.reading,kn.meaning_en,kn.sentence_ja,kn.sentence_en
         FROM kaishi_note kn WHERE NOT EXISTS (
@@ -165,7 +168,7 @@ def unresolved_report(connection: sqlite3.Connection) -> list[dict[str, object]]
     return result
 
 
-def make_resolution_batches(connection: sqlite3.Connection, inbox: Path, max_notes: int = 10) -> dict[str, object]:
+def make_resolution_batches(connection: ConnectionLike, inbox: Path, max_notes: int = 10) -> dict[str, object]:
     from .extract_units import semantic_context
 
     unresolved = unresolved_report(connection)

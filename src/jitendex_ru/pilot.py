@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
 import re
-import sqlite3
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -103,13 +104,13 @@ def _select_article_metrics(
 
 
 def build_pilot_selection(
-    connection: sqlite3.Connection, run_id: int, terminology: dict[str, str],
+    connection: ConnectionLike, run_id: int, terminology: dict[str, str],
     *, protocol_sha256: str, min_units: int = 1500,
 ) -> dict[str, Any]:
     run = connection.execute("SELECT * FROM run WHERE id=?", (run_id,)).fetchone()
     if run is None:
         raise ValueError(f"unknown run {run_id}")
-    grouped: dict[int, list[sqlite3.Row]] = defaultdict(list)
+    grouped: dict[int, list[RowLike]] = defaultdict(list)
     for unit in connection.execute(
         "SELECT * FROM translation_unit WHERE run_id=? ORDER BY article_id,json_pointer", (run_id,)
     ):
@@ -214,7 +215,7 @@ def load_pilot_selection(path: Path) -> dict[str, Any]:
 
 
 def verify_pilot_batches(
-    connection: sqlite3.Connection, run_id: int, selection: dict[str, Any],
+    connection: ConnectionLike, run_id: int, selection: dict[str, Any],
     limits: Mapping[str, Any],
 ) -> dict[str, Any]:
     selected_ids = {article["article_id"] for article in selection["articles"]}

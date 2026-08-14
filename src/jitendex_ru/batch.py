@@ -1,22 +1,24 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import datetime as dt
 import json
 import secrets
-import sqlite3
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Mapping
 
 from .db import audit, transaction
-from .extract_units import glossary_evidence, lexicographic_context, semantic_context
+from .extract_units import glossary_evidence, lexicographic_context, protected_tokens, semantic_context
+from .prep_metrics import PrepMetrics
 from .util import atomic_write, canonical_json, json_pointer_get, sha256_bytes
 
 
 TagCatalog = Mapping[tuple[str, str], Mapping[str, str]]
 
 
-def _approved_tag_catalog(connection: sqlite3.Connection, snapshot_id: int) -> dict[tuple[str, str], dict[str, str]]:
+def _approved_tag_catalog(connection: ConnectionLike, snapshot_id: int) -> dict[tuple[str, str], dict[str, str]]:
     rows = connection.execute(
         """SELECT category,code,label_ru,description_ru FROM jitendex_tag
         WHERE snapshot_id=? AND source_kind='embedded_tooltip'
@@ -63,28 +65,36 @@ def _required_tag_terminology(source: Any, pointer: str, catalog: TagCatalog) ->
     }
 
 
-def _evidence(connection: sqlite3.Connection, article_id: int) -> list[dict[str, str]]:
+def _evidence(connection: ConnectionLike, article_id: int) -> list[dict[str, str]]:
     rows = connection.execute(
-        """SELECT DISTINCT kn.word,kn.reading,kn.meaning_en,kn.sentence_ja,kn.sentence_en
+        """SELECT DISTINCT kn.id,kn.word,kn.reading,kn.meaning_en,kn.sentence_ja,kn.sentence_en
         FROM selection_candidate sc JOIN kaishi_note kn ON kn.id=sc.note_id
         JOIN selection_decision sd ON sd.note_id=sc.note_id AND sd.sequence=sc.sequence
         WHERE sc.article_id=? AND sd.decision='included' AND sd.review_status='accepted' ORDER BY kn.id""",
         (article_id,),
     ).fetchall()
-    return [dict(row) for row in rows]
+    return [
+        {key: value for key, value in dict(row).items() if key != "id"}
+        for row in rows
+    ]
 
 
 def _article_envelope(
-    connection: sqlite3.Connection, article: sqlite3.Row, units: list[sqlite3.Row],
+    connection: ConnectionLike, article: RowLike, units: list[RowLike],
     tag_catalog: TagCatalog | None = None,
+    evidence: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     source = json.loads(article["raw_json"])
     lexicographer = any(unit["role"] == "glossary_set" for unit in units)
     prepared_units = []
     for unit in units:
+        preserved = list(dict.fromkeys([
+            *json.loads(unit["protected_tokens_json"]),
+            *protected_tokens(unit["role"], unit["source_text"]),
+        ]))
         prepared = {
             "unit_id": unit["id"], "source_sha256": unit["source_sha256"], "role": unit["role"],
-            "protected_tokens": json.loads(unit["protected_tokens_json"]), "local_context": unit["role"],
+            "protected_tokens": preserved, "local_context": unit["role"],
         }
         if unit["role"] == "glossary_set":
             prepared["english_gloss_evidence"] = glossary_evidence(unit["source_text"])
@@ -99,28 +109,54 @@ def _article_envelope(
     return {
         "article_id": f"a-{article['id']}", "source_sha256": article["source_sha256"],
         "term": article["expression"], "reading": article["reading"], "sequence": article["sequence"],
-        "kaishi_evidence": _evidence(connection, article["id"]),
+        "kaishi_evidence": _evidence(connection, article["id"]) if evidence is None else evidence,
         "read_only_context": lexicographic_context(source) if lexicographer else semantic_context(source),
         "units": prepared_units,
     }
 
 
-def _manifest(batch_id: str, articles: list[dict[str, Any]], terminology: dict[str, str]) -> tuple[dict[str, Any], bytes]:
-    lexicographer = any(
+def _uses_lexicographer(articles: list[dict[str, Any]]) -> bool:
+    return any(
         "preservation_inventory" in article.get("read_only_context", {})
         or any(unit["role"] == "glossary_set" for unit in article["units"])
         for article in articles
     )
+
+
+def _manifest_payload(
+    batch_id: str, articles: list[dict[str, Any]], terminology: dict[str, str],
+    manifest_sha256: str = "",
+) -> dict[str, Any]:
+    lexicographer = _uses_lexicographer(articles)
     payload = {
         "schema_version": 2 if lexicographer else 1, "pipeline": "lexicographer-v2" if lexicographer else "scalar-v1",
-        "batch_id": batch_id, "manifest_sha256": "",
+        "batch_id": batch_id, "manifest_sha256": manifest_sha256,
         "target_language": "ru", "terminology": terminology, "articles": articles,
     }
     if not lexicographer:
         payload.pop("pipeline")
+    return payload
+
+
+def _manifest(batch_id: str, articles: list[dict[str, Any]], terminology: dict[str, str]) -> tuple[dict[str, Any], bytes]:
+    payload = _manifest_payload(batch_id, articles, terminology)
     digest = sha256_bytes(canonical_json(payload))
     payload["manifest_sha256"] = digest
     return payload, canonical_json(payload)
+
+
+def _manifest_size(
+    articles: list[dict[str, Any]], terminology: dict[str, str], article_sizes: dict[int, int],
+) -> int:
+    empty = _manifest_payload(
+        "b-" + "0" * 24, [], terminology, "0" * 64,
+    )
+    if _uses_lexicographer(articles):
+        empty["schema_version"] = 2
+        empty["pipeline"] = "lexicographer-v2"
+    serialized_empty = len(canonical_json(empty))
+    article_bytes = sum(article_sizes[id(article)] for article in articles)
+    return serialized_empty + article_bytes + max(0, len(articles) - 1)
 
 
 def _pack_envelopes(
@@ -131,10 +167,12 @@ def _pack_envelopes(
     """Pack whole articles using soft group caps and hard article ceilings."""
     batches: list[list[dict[str, Any]]] = []
     current: list[dict[str, Any]] = []
+    article_sizes = {id(envelope): len(canonical_json(envelope)) for envelope in envelopes}
 
     def measured(candidate: list[dict[str, Any]]) -> tuple[int, int]:
-        _, data = _manifest("b-" + "0" * 24, candidate, terminology)
-        return len(data), sum(len(article["units"]) for article in candidate)
+        return _manifest_size(candidate, terminology, article_sizes), sum(
+            len(article["units"]) for article in candidate
+        )
 
     for envelope in envelopes:
         article_bytes, article_units = measured([envelope])
@@ -162,63 +200,153 @@ def _pack_envelopes(
             current.append(envelope)
     if current:
         batches.append(current)
+    for batch in batches:
+        _, exact = _manifest("b-" + "0" * 24, batch, terminology)
+        predicted = _manifest_size(batch, terminology, article_sizes)
+        if len(exact) != predicted:
+            raise RuntimeError("cached manifest size does not match exact serialization")
+        if len(batch) > 1 and len(exact) > soft_max_bytes:
+            raise RuntimeError("packed multi-article manifest exceeds the exact byte limit")
     return batches
 
 
+def _ready_evidence(connection: ConnectionLike, run_id: int) -> dict[int, list[dict[str, str]]]:
+    rows = connection.execute(
+        """SELECT DISTINCT sc.article_id,kn.id,kn.word,kn.reading,kn.meaning_en,
+        kn.sentence_ja,kn.sentence_en
+        FROM translation_unit tu
+        JOIN selection_candidate sc ON sc.article_id=tu.article_id
+        JOIN kaishi_note kn ON kn.id=sc.note_id
+        JOIN selection_decision sd ON sd.note_id=sc.note_id AND sd.sequence=sc.sequence
+        WHERE tu.run_id=? AND tu.status='ready'
+          AND sd.decision='included' AND sd.review_status='accepted'
+          AND NOT EXISTS (SELECT 1 FROM batch_item bi JOIN batch b ON b.id=bi.batch_id
+                          WHERE bi.unit_id=tu.id AND b.kind='translation')
+        ORDER BY sc.article_id,kn.id""",
+        (run_id,),
+    ).fetchall()
+    grouped: dict[int, list[dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        grouped[row["article_id"]].append({
+            key: value for key, value in dict(row).items() if key not in {"article_id", "id"}
+        })
+    return grouped
+
+
 def make_batches(
-    connection: sqlite3.Connection, run_id: int, inbox: Path, terminology: dict[str, str],
+    connection: ConnectionLike, run_id: int, inbox: Path, terminology: dict[str, str],
     soft_max_articles: int, soft_max_bytes: int, soft_max_units: int, singleton_threshold_bytes: int,
     hard_max_article_bytes: int | None = None, hard_max_article_units: int | None = None,
     article_ids: set[int] | None = None,
-) -> dict[str, int]:
+) -> dict[str, Any]:
+    metrics = PrepMetrics("make_batches")
     run = connection.execute("SELECT jitendex_snapshot_id FROM run WHERE id=?", (run_id,)).fetchone()
     if run is None:
         raise ValueError(f"unknown run: {run_id}")
     tag_catalog = _approved_tag_catalog(connection, run["jitendex_snapshot_id"])
-    grouped: dict[int, list[sqlite3.Row]] = defaultdict(list)
-    for unit in connection.execute(
-        """SELECT tu.* FROM translation_unit tu WHERE tu.run_id=? AND tu.status='ready'
-        AND NOT EXISTS (SELECT 1 FROM batch_item bi JOIN batch b ON b.id=bi.batch_id
-                        WHERE bi.unit_id=tu.id AND b.kind='translation')
-        ORDER BY tu.article_id,tu.json_pointer""", (run_id,)
-    ):
-        if article_ids is None or unit["article_id"] in article_ids:
-            grouped[unit["article_id"]].append(unit)
-    articles = {row["id"]: row for row in connection.execute("SELECT * FROM article WHERE selected=1")}
-    envelopes = [
-        _article_envelope(connection, articles[article_id], units, tag_catalog)
-        for article_id, units in sorted(grouped.items())
-    ]
-    batches = _pack_envelopes(
-        envelopes, terminology,
-        soft_max_articles, soft_max_bytes, soft_max_units, singleton_threshold_bytes,
-        hard_max_article_bytes if hard_max_article_bytes is not None else soft_max_bytes,
-        hard_max_article_units if hard_max_article_units is not None else soft_max_units,
-    )
+    grouped: dict[int, list[RowLike]] = defaultdict(list)
+    with metrics.phase("ready_unit_loading") as phase:
+        for unit in connection.execute(
+            """SELECT tu.* FROM translation_unit tu WHERE tu.run_id=? AND tu.status='ready'
+            AND NOT EXISTS (SELECT 1 FROM batch_item bi JOIN batch b ON b.id=bi.batch_id
+                            WHERE bi.unit_id=tu.id AND b.kind='translation')
+            ORDER BY tu.article_id,tu.json_pointer""", (run_id,)
+        ):
+            if article_ids is None or unit["article_id"] in article_ids:
+                grouped[unit["article_id"]].append(unit)
+        phase.update(input_rows=sum(map(len, grouped.values())), output_rows=len(grouped))
+    with metrics.phase("article_loading", input_rows=len(grouped)) as phase:
+        articles = {row["id"]: row for row in connection.execute(
+            """SELECT a.* FROM article a WHERE a.selected=1 AND EXISTS (
+            SELECT 1 FROM translation_unit tu WHERE tu.run_id=? AND tu.article_id=a.id
+              AND tu.status='ready' AND NOT EXISTS (
+                SELECT 1 FROM batch_item bi JOIN batch b ON b.id=bi.batch_id
+                WHERE bi.unit_id=tu.id AND b.kind='translation'))""", (run_id,),
+        )}
+        missing = set(grouped) - set(articles)
+        if missing:
+            raise RuntimeError(f"missing {len(missing)} ready-unit articles")
+        evidence = _ready_evidence(connection, run_id)
+        phase.update(output_rows=len(articles), evidence_rows=sum(map(len, evidence.values())))
+    with metrics.phase("envelope_creation", input_rows=len(grouped)) as phase:
+        envelopes = [
+            _article_envelope(
+                connection, articles[article_id], units, tag_catalog,
+                evidence=evidence.get(article_id, []),
+            )
+            for article_id, units in sorted(grouped.items())
+        ]
+        phase.update(output_rows=len(envelopes))
+    with metrics.phase("batch_packing", input_rows=len(envelopes)) as phase:
+        batches = _pack_envelopes(
+            envelopes, terminology,
+            soft_max_articles, soft_max_bytes, soft_max_units, singleton_threshold_bytes,
+            hard_max_article_bytes if hard_max_article_bytes is not None else soft_max_bytes,
+            hard_max_article_units if hard_max_article_units is not None else soft_max_units,
+        )
+        phase.update(output_rows=len(batches))
 
-    for article_group in batches:
-        identity = {"run_id": run_id, "article_ids": [item["article_id"] for item in article_group],
-                    "unit_ids": [unit["unit_id"] for item in article_group for unit in item["units"]]}
-        batch_id = f"b-{sha256_bytes(canonical_json(identity))[:24]}"
-        manifest, data = _manifest(batch_id, article_group, terminology)
-        path = inbox / f"{batch_id}.json"
-        atomic_write(path, data + b"\n")
-        units = [unit for article in article_group for unit in article["units"]]
-        connection.execute(
-            """INSERT INTO batch(id,run_id,kind,manifest_sha256,serialized_bytes,article_count,unit_count,manifest_path)
-            VALUES (?,?,?,?,?,?,?,?)""",
-            (batch_id, run_id, "translation", manifest["manifest_sha256"], len(data), len(article_group), len(units), str(path)),
-        )
-        connection.executemany(
-            "INSERT INTO batch_item(batch_id,unit_id,ordinal) VALUES (?,?,?)",
-            ((batch_id, unit["unit_id"], ordinal) for ordinal, unit in enumerate(units)),
-        )
-        audit(connection, "create", "batch", batch_id, {"bytes": len(data), "units": len(units)})
-    return {"batches_created": len(batches), "articles": len(envelopes), "units": sum(len(a["units"]) for a in envelopes)}
+    batch_rows: list[tuple[Any, ...]] = []
+    item_rows: list[tuple[Any, ...]] = []
+    audit_rows: list[tuple[Any, ...]] = []
+    files_written = bytes_written = 0
+    with metrics.phase("manifest_writing", input_rows=len(batches)) as phase:
+        for article_group in batches:
+            identity = {"run_id": run_id, "article_ids": [item["article_id"] for item in article_group],
+                        "unit_ids": [unit["unit_id"] for item in article_group for unit in item["units"]]}
+            batch_id = f"b-{sha256_bytes(canonical_json(identity))[:24]}"
+            manifest, data = _manifest(batch_id, article_group, terminology)
+            path = inbox / f"{batch_id}.json"
+            atomic_write(path, data + b"\n")
+            files_written += 1
+            bytes_written += len(data) + 1
+            units = [unit for article in article_group for unit in article["units"]]
+            batch_rows.append((
+                batch_id, run_id, "translation", manifest["manifest_sha256"], len(data),
+                len(article_group), len(units), str(path),
+            ))
+            item_rows.extend(
+                (batch_id, unit["unit_id"], ordinal) for ordinal, unit in enumerate(units)
+            )
+            audit_rows.append((
+                "create", "batch", batch_id,
+                json.dumps({"bytes": len(data), "units": len(units)}, ensure_ascii=False, sort_keys=True),
+            ))
+        phase.update(output_rows=len(batches), files_written=files_written, bytes_written=bytes_written)
+    with metrics.phase("database_batch_loading", input_rows=len(batch_rows) + len(item_rows)) as phase:
+        if getattr(connection, "backend", "sqlite") == "postgresql":
+            connection.copy_rows(
+                "batch", ("id", "run_id", "kind", "manifest_sha256", "serialized_bytes",
+                          "article_count", "unit_count", "manifest_path"), batch_rows,
+            )
+            connection.copy_rows("batch_item", ("batch_id", "unit_id", "ordinal"), item_rows)
+            connection.copy_rows(
+                "audit_event", ("event_type", "entity_type", "entity_id", "details_json"), audit_rows,
+            )
+        else:
+            items_by_batch: dict[str, list[tuple[Any, ...]]] = defaultdict(list)
+            for item in item_rows:
+                items_by_batch[item[0]].append(item)
+            for row, audit_row in zip(batch_rows, audit_rows, strict=True):
+                connection.execute(
+                    """INSERT INTO batch(id,run_id,kind,manifest_sha256,serialized_bytes,
+                    article_count,unit_count,manifest_path) VALUES (?,?,?,?,?,?,?,?)""", row,
+                )
+                batch_id = row[0]
+                connection.executemany(
+                    "INSERT INTO batch_item(batch_id,unit_id,ordinal) VALUES (?,?,?)",
+                    items_by_batch[batch_id],
+                )
+                audit(connection, audit_row[0], audit_row[1], audit_row[2], json.loads(audit_row[3]))
+        phase.update(output_rows=len(batch_rows) + len(item_rows) + len(audit_rows))
+    return {
+        "batches_created": len(batches), "articles": len(envelopes),
+        "units": sum(len(a["units"]) for a in envelopes), "phase_metrics": metrics.phases,
+    }
 
 
 def claim(
-    connection: sqlite3.Connection, worker_id: str, outbox: Path,
+    connection: ConnectionLike, worker_id: str, outbox: Path,
     *, run_id: int, kind: str, model_id: str, reasoning_effort: str,
     transport: str, lease_minutes: int | None = None, batch_id: str | None = None,
 ) -> dict[str, str] | None:
@@ -234,22 +362,53 @@ def claim(
         raise ValueError("reasoning_effort is required")
     effective_lease_minutes = lease_minutes if lease_minutes is not None else (26 * 60 if transport == "batch-api" else 30)
     outbox.mkdir(parents=True, exist_ok=True)
+    backend = getattr(connection, "backend", "sqlite")
     now = dt.datetime.now(dt.timezone.utc)
     with transaction(connection, immediate=True):
-        connection.execute(
-            """UPDATE batch SET state='ready',lease_token=NULL,lease_expires_at=NULL
-            WHERE run_id=? AND kind=? AND state='leased' AND lease_expires_at < ? AND NOT EXISTS (
-              SELECT 1 FROM translation t JOIN batch_item bi ON bi.unit_id=t.unit_id WHERE bi.batch_id=batch.id)""",
-            (run_id, kind, now.isoformat()),
-        )
+        if backend == "postgresql":
+            expired = connection.execute(
+                """SELECT id,lease_token FROM batch
+                WHERE run_id=? AND kind=? AND state='leased'
+                AND lease_expires_at < CURRENT_TIMESTAMP
+                AND NOT EXISTS (SELECT 1 FROM translation t JOIN batch_item bi ON bi.unit_id=t.unit_id
+                                WHERE bi.batch_id=batch.id)
+                ORDER BY created_at,id FOR UPDATE SKIP LOCKED""", (run_id, kind),
+            ).fetchall()
+        else:
+            expired = connection.execute(
+                """SELECT id,lease_token FROM batch WHERE run_id=? AND kind=? AND state='leased'
+                AND lease_expires_at < ? AND NOT EXISTS (SELECT 1 FROM translation t
+                JOIN batch_item bi ON bi.unit_id=t.unit_id WHERE bi.batch_id=batch.id)
+                ORDER BY created_at,id""",
+                (run_id, kind, now.isoformat()),
+            ).fetchall()
+        for stale in expired:
+            connection.execute(
+                """UPDATE attempt SET outcome='interrupted',
+                error_json='{"reason":"expired lease recovered before next claim"}',
+                completed_at=CURRENT_TIMESTAMP WHERE batch_id=? AND lease_token=? AND outcome='claimed'""",
+                (stale["id"], stale["lease_token"]),
+            )
+            recovered = connection.execute(
+                """UPDATE batch SET state='ready',lease_token=NULL,lease_expires_at=NULL
+                WHERE id=? AND state='leased' AND lease_token=?""",
+                (stale["id"], stale["lease_token"]),
+            ).rowcount
+            if recovered:
+                audit(connection, "recover_expired_lease", "batch", stale["id"], {
+                    "lease_token": stale["lease_token"], "reason": "database lease expired",
+                })
         if batch_id is None:
+            lock = " FOR UPDATE SKIP LOCKED" if backend == "postgresql" else ""
             batch = connection.execute(
-                "SELECT * FROM batch WHERE run_id=? AND kind=? AND state='ready' ORDER BY created_at,id LIMIT 1",
+                "SELECT * FROM batch WHERE run_id=? AND kind=? AND state='ready' "
+                f"ORDER BY created_at,id LIMIT 1{lock}",
                 (run_id, kind),
             ).fetchone()
         else:
+            lock = " FOR UPDATE SKIP LOCKED" if backend == "postgresql" else ""
             batch = connection.execute(
-                "SELECT * FROM batch WHERE id=? AND run_id=? AND kind=? AND state='ready'",
+                "SELECT * FROM batch WHERE id=? AND run_id=? AND kind=? AND state='ready'" + lock,
                 (batch_id, run_id, kind),
             ).fetchone()
         if batch is None:
@@ -258,10 +417,18 @@ def claim(
         attempt_id = f"att-{uuid.uuid4().hex}"
         expires = now + dt.timedelta(minutes=effective_lease_minutes)
         response_path = outbox / f"{attempt_id}.json"
-        connection.execute(
-            "UPDATE batch SET state='leased',lease_token=?,lease_expires_at=?,attempt_count=attempt_count+1 WHERE id=?",
-            (token, expires.isoformat(), batch["id"]),
-        )
+        if backend == "postgresql":
+            expires = connection.execute(
+                """UPDATE batch SET state='leased',lease_token=?,
+                lease_expires_at=CURRENT_TIMESTAMP + (? * INTERVAL '1 minute'),
+                attempt_count=attempt_count+1 WHERE id=? RETURNING lease_expires_at""",
+                (token, effective_lease_minutes, batch["id"]),
+            ).fetchone()[0]
+        else:
+            connection.execute(
+                "UPDATE batch SET state='leased',lease_token=?,lease_expires_at=?,attempt_count=attempt_count+1 WHERE id=?",
+                (token, expires.isoformat(), batch["id"]),
+            )
         connection.execute(
             """INSERT INTO attempt(
             id,batch_id,worker_id,model,prompt_sha256,lease_token,request_path,response_path,
@@ -281,13 +448,22 @@ def claim(
         })
     return {
         "batch_id": batch["id"], "attempt_id": attempt_id, "lease_token": token,
-        "request_path": batch["manifest_path"], "response_path": str(response_path), "lease_expires_at": expires.isoformat(),
+        "request_path": batch["manifest_path"], "response_path": str(response_path),
+        "lease_expires_at": expires.isoformat() if hasattr(expires, "isoformat") else str(expires),
         "model_id": model_id, "reasoning_effort": reasoning_effort, "transport": transport,
     }
 
 
-def retry_or_split(connection: sqlite3.Connection, batch_id: str, *, max_attempts: int = 3) -> dict[str, Any]:
-    batch = connection.execute("SELECT * FROM batch WHERE id=?", (batch_id,)).fetchone()
+def retry_or_split(connection: ConnectionLike, batch_id: str, *, max_attempts: int = 3) -> dict[str, Any]:
+    with transaction(connection, immediate=True):
+        return _retry_or_split_locked(connection, batch_id, max_attempts=max_attempts)
+
+
+def _retry_or_split_locked(
+    connection: ConnectionLike, batch_id: str, *, max_attempts: int,
+) -> dict[str, Any]:
+    lock = " FOR UPDATE" if getattr(connection, "backend", "sqlite") == "postgresql" else ""
+    batch = connection.execute("SELECT * FROM batch WHERE id=?" + lock, (batch_id,)).fetchone()
     if batch is None or batch["state"] != "retryable":
         return {"batch_id": batch_id, "requeued": False, "split": False}
     if batch["attempt_count"] < max_attempts:

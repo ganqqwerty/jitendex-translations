@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
 import re
-import sqlite3
 import zipfile
 from pathlib import Path
 from typing import Any, Iterator
@@ -20,7 +21,7 @@ def _rank_label(limit: int) -> str:
     return f"{limit // 1000}k" if limit % 1000 == 0 else str(limit)
 
 
-def _frequency_metadata(connection: sqlite3.Connection, run_id: int) -> tuple[str, str, str] | None:
+def _frequency_metadata(connection: ConnectionLike, run_id: int) -> tuple[str, str, str] | None:
     run_articles = connection.execute(
         "SELECT COUNT(*) FROM run_article WHERE run_id=?", (run_id,),
     ).fetchone()[0]
@@ -122,7 +123,7 @@ def _chunk(rows: list[list[Any]], max_bytes: int = 4 * 1024 * 1024) -> list[list
 
 
 def build(
-    connection: sqlite3.Connection, run_id: int, output: Path,
+    connection: ConnectionLike, run_id: int, output: Path,
     tag_notes: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     run = connection.execute("SELECT * FROM run WHERE id=?", (run_id,)).fetchone()
@@ -140,10 +141,21 @@ def build(
     if source_row is None:
         raise ValueError("no Jitendex source snapshot")
     articles = connection.execute(
-        """SELECT a.* FROM run_article ra JOIN article a ON a.id=ra.article_id
+        """SELECT a.*,ra.structural_fingerprint run_structural_fingerprint
+        FROM run_article ra JOIN article a ON a.id=ra.article_id
         WHERE ra.run_id=? ORDER BY a.bank_number,a.entry_ordinal""", (run_id,)
     ).fetchall()
-    rows = [apply_article(connection, run_id, article) for article in articles]
+    unit_rows = connection.execute(
+        """SELECT tu.article_id,tu.json_pointer,tu.role,tu.source_text,
+        t.id translation_id,t.target_text,t.target_sha256
+        FROM translation_unit tu
+        LEFT JOIN translation t ON t.unit_id=tu.id AND t.accepted=1
+        WHERE tu.run_id=? ORDER BY tu.article_id,tu.json_pointer""", (run_id,),
+    ).fetchall()
+    units_by_article: dict[int, list[Any]] = {}
+    for unit_row in unit_rows:
+        units_by_article.setdefault(unit_row["article_id"], []).append(unit_row)
+    rows = [apply_article(connection, run_id, article, units_by_article.get(article["id"], [])) for article in articles]
     if not rows:
         raise ValueError("selection is empty")
     media = sorted({path for row in rows for path in _paths(row)})
@@ -192,10 +204,11 @@ def build(
     manifest_hash = sha256_bytes(canonical_json(manifest))
     zip_hash = sha256_file(output)
     cursor = connection.execute(
-        "INSERT INTO export(run_id,output_path,manifest_sha256,zip_sha256) VALUES (?,?,?,?)",
+        """INSERT INTO export(run_id,output_path,manifest_sha256,zip_sha256)
+        VALUES (?,?,?,?) RETURNING id""",
         (run_id, str(output), manifest_hash, zip_hash),
     )
-    export_id = cursor.lastrowid
+    export_id = cursor.fetchone()[0]
     connection.executemany(
         "INSERT INTO export_file(export_id,path,sha256,byte_count) VALUES (?,?,?,?)",
         ((export_id, item["path"], item["sha256"], item["bytes"]) for item in manifest),
@@ -204,7 +217,7 @@ def build(
     return {"export_id": export_id, "files": len(files), "articles": len(rows), "zip_sha256": zip_hash}
 
 
-def verify(connection: sqlite3.Connection, path: Path) -> dict[str, Any]:
+def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
         if not names or names[0] != "index.json":
@@ -244,7 +257,7 @@ YOMITAN_SMOKE_CHECKS = {
 }
 
 
-def record_yomitan_smoke(connection: sqlite3.Connection, path: Path, actor: str) -> dict[str, Any]:
+def record_yomitan_smoke(connection: ConnectionLike, path: Path, actor: str) -> dict[str, Any]:
     """Persist the human-observed clean-profile import/render release gate."""
     payload = json.loads(path.read_text(encoding="utf-8"))
     if set(payload) != {"schema_version", "zip_sha256", "clean_profile", "imported", "checks", "notes"}:

@@ -9,6 +9,12 @@ def test_scalar_protected_tokens_are_available_to_the_model_and_validator():
     ) == ("Lateolabrax japonicus",)
 
 
+def test_source_acronyms_are_visible_to_the_model_before_validation():
+    assert protected_tokens(
+        "glossary_set", '[{"content":"head-mounted display"},{"content":"HMD"}]'
+    ) == ("HMD",)
+
+
 def test_common_xref_phrases_are_not_mistaken_for_taxa():
     assert protected_tokens("xref_gloss", "washi; Japanese paper") == ()
     assert protected_tokens("xref_gloss", "Morse code (esp. signalling)") == ()

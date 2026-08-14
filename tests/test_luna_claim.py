@@ -70,3 +70,32 @@ def test_batch_claim_uses_attempt_id_as_custom_id(tmp_path):
 
         attempt = connection.execute("SELECT * FROM attempt WHERE id=?", (task["attempt_id"],)).fetchone()
         assert attempt["api_custom_id"] == task["attempt_id"]
+
+
+def test_expired_lease_recovery_interrupts_exact_attempt_and_audits(tmp_path):
+    path = tmp_path / "progress.sqlite3"
+    initialize(path)
+    with connect(path) as connection:
+        _seed_runs_and_batches(connection, tmp_path)
+        first = claim(
+            connection, "worker-1", tmp_path / "outbox", run_id=1, kind="translation",
+            batch_id="b-run1", model_id="gpt-5.6-luna", reasoning_effort="medium",
+            transport="codex-agent",
+        )
+        connection.execute(
+            "UPDATE batch SET lease_expires_at='2000-01-01T00:00:00+00:00' WHERE id='b-run1'"
+        )
+        connection.commit()
+        second = claim(
+            connection, "worker-2", tmp_path / "outbox", run_id=1, kind="translation",
+            batch_id="b-run1", model_id="gpt-5.6-luna", reasoning_effort="medium",
+            transport="codex-agent",
+        )
+
+        assert second and second["attempt_id"] != first["attempt_id"]
+        assert connection.execute(
+            "SELECT outcome FROM attempt WHERE id=?", (first["attempt_id"],)
+        ).fetchone()[0] == "interrupted"
+        assert connection.execute(
+            "SELECT COUNT(*) FROM audit_event WHERE event_type='recover_expired_lease'"
+        ).fetchone()[0] == 1

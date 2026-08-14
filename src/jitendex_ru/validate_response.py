@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from .database import ConnectionLike, RowLike
+
 import json
 import re
-import sqlite3
 from pathlib import Path
 from typing import Any
 
 from .db import audit
+from .extract_units import SOURCE_ACRONYM_RE
 from .util import (
     ASCII_WORD_RE, CONTROL_RE, CYRILLIC_RE, KEY_CHORD_RE, LANGUAGE_ORIGIN_RE,
     LATIN_TAXON_RE, TAG_RE, canonical_json, sha256_bytes, source_xref_taxa,
@@ -20,7 +22,6 @@ class ValidationFailure(ValueError):
 
 
 ACRONYM_DEFINITION_RE = re.compile(r"^[A-Z][A-Z0-9.+/-]{1,11}$")
-SOURCE_ACRONYM_RE = re.compile(r"\b[A-Z][A-Z0-9.+/-]{1,11}\b")
 ENGLISH_GRAMMAR_TOKEN_RE = re.compile(
     r"\b(?:this|that|these|those|which|who|whom|whose)\b", re.IGNORECASE,
 )
@@ -69,7 +70,7 @@ def target_storage(role: str, target: Any) -> str:
     return target
 
 
-def validate_worker_payload(connection: sqlite3.Connection, attempt: sqlite3.Row, payload: Any) -> list[dict[str, Any]]:
+def validate_worker_payload(connection: ConnectionLike, attempt: RowLike, payload: Any) -> list[dict[str, Any]]:
     batch = connection.execute("SELECT * FROM batch WHERE id=?", (attempt["batch_id"],)).fetchone()
     issues: list[dict[str, Any]] = []
     if not isinstance(payload, dict):
@@ -177,10 +178,20 @@ def validate_worker_payload(connection: sqlite3.Connection, attempt: sqlite3.Row
     return issues
 
 
-def ingest_response(connection: sqlite3.Connection, path: Path) -> dict[str, int]:
+def ingest_response(connection: ConnectionLike, path: Path) -> dict[str, int]:
     attempt = connection.execute("SELECT * FROM attempt WHERE response_path=?", (str(path),)).fetchone()
     if attempt is None:
         raise ValueError(f"no claimed attempt expects {path}")
+    lock = " FOR UPDATE" if getattr(connection, "backend", "sqlite") == "postgresql" else ""
+    owned_batch = connection.execute(
+        "SELECT state,lease_token FROM batch WHERE id=?" + lock, (attempt["batch_id"],),
+    ).fetchone()
+    if (
+        attempt["outcome"] != "claimed" or owned_batch is None
+        or owned_batch["state"] != "leased"
+        or not attempt["lease_token"] or owned_batch["lease_token"] != attempt["lease_token"]
+    ):
+        raise ValueError(f"stale attempt no longer owns batch lease: {attempt['id']}")
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
@@ -195,11 +206,30 @@ def ingest_response(connection: sqlite3.Connection, path: Path) -> dict[str, int
                 SELECT b.run_id,?,?, 'deterministic-v1','error',?,? FROM batch b WHERE b.id=?""",
                 (issue.get("unit_id"), attempt["id"], issue["code"], json.dumps(issue, ensure_ascii=False), attempt["batch_id"]),
             )
-        connection.execute("UPDATE attempt SET outcome='rejected',error_json=?,completed_at=CURRENT_TIMESTAMP WHERE id=?", (json.dumps(issues), attempt["id"]))
-        connection.execute("UPDATE batch SET state='retryable' WHERE id=?", (attempt["batch_id"],))
+        connection.execute(
+            """UPDATE attempt SET outcome='rejected',error_json=?,completed_at=CURRENT_TIMESTAMP
+            WHERE id=? AND outcome='claimed' AND lease_token=?""",
+            (json.dumps(issues), attempt["id"], attempt["lease_token"]),
+        )
+        connection.execute(
+            """UPDATE batch SET state='retryable' WHERE id=? AND state='leased' AND lease_token=?""",
+            (attempt["batch_id"], attempt["lease_token"]),
+        )
         audit(connection, "reject", "attempt", attempt["id"], {"issues": issues})
         raise ValidationFailure(issues)
     batch = connection.execute("SELECT * FROM batch WHERE id=?", (attempt["batch_id"],)).fetchone()
+    accepted_attempt = connection.execute(
+        """UPDATE attempt SET outcome='accepted',completed_at=CURRENT_TIMESTAMP
+        WHERE id=? AND outcome='claimed' AND lease_token=?""",
+        (attempt["id"], attempt["lease_token"]),
+    ).rowcount
+    validated_batch = connection.execute(
+        """UPDATE batch SET state='deterministic_validated' WHERE id=?
+        AND state='leased' AND lease_token=?""",
+        (attempt["batch_id"], attempt["lease_token"]),
+    ).rowcount
+    if accepted_attempt != 1 or validated_batch != 1:
+        raise ValueError(f"lease ownership changed during ingestion: {attempt['id']}")
     for item in payload["translations"]:
         source = connection.execute("SELECT role FROM translation_unit WHERE id=?", (item["unit_id"],)).fetchone()
         stored_target = target_storage(source["role"], item["target_text"])
@@ -210,8 +240,6 @@ def ingest_response(connection: sqlite3.Connection, path: Path) -> dict[str, int
              item["review_reason"], sha256_bytes(stored_target.encode())),
         )
         connection.execute("UPDATE translation_unit SET status='translated' WHERE id=?", (item["unit_id"],))
-    connection.execute("UPDATE attempt SET outcome='accepted',completed_at=CURRENT_TIMESTAMP WHERE id=?", (attempt["id"],))
-    connection.execute("UPDATE batch SET state='deterministic_validated' WHERE id=?", (attempt["batch_id"],))
     connection.execute(
         """UPDATE validation_issue SET resolved_at=CURRENT_TIMESTAMP,
         waiver_reason='superseded by a later deterministically valid response for the same batch'
