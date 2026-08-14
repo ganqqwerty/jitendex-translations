@@ -52,6 +52,11 @@ LEGACY_SAMPLE_DEMOS = (
         },
     },
 )
+HOME_PAGE_PHRASES = (
+    "Да только батя мой этому наверняка не обрадуется.",
+    "Мне было приятно быть вместе с тобой.",
+    "Мне было очень приятно быть с тобой.",
+)
 
 
 def jpdb_archive(scope: int) -> Path:
@@ -127,6 +132,12 @@ def load_dictionary(path: Path) -> tuple[list[list[Any]], str]:
             rows.extend(json.loads(archive.read(name)))
         styles = archive.read("styles.css").decode("utf-8") if "styles.css" in archive.namelist() else ""
     return rows, styles
+
+
+def scrub_home_page_phrases(markup: str) -> str:
+    for phrase in HOME_PAGE_PHRASES:
+        markup = markup.replace(phrase, "")
+    return markup
 
 
 def numbered_bank_names(archive: zipfile.ZipFile, prefix: str = "term_bank") -> list[str]:
@@ -737,7 +748,9 @@ def build(output: Path) -> None:
             claude = find_row(claude_exact, claude_by_sequence, article["expression"], article["reading"], article["sequence"])
             luna_missing += luna is None
             claude_missing += claude is None
-            rendered.append(render_row(article, [original, terra, luna, claude], ("original", "terra", "luna", "claude")))
+            rendered.append(scrub_home_page_phrases(render_row(
+                article, [original, terra, luna, claude], ("original", "terra", "luna", "claude"),
+            )))
             search_index.append({
                 "id": article["id"],
                 "page": page_number,
