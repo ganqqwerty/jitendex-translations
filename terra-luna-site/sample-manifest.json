@@ -256,6 +256,46 @@
       "samples": 100,
       "archive": "jitendex-articles-226368-ru-luna-v4.zip",
       "archive_sha256": "75fe600adc4790363ac28da54a4547a42196a15e7ea4a274af4b8b62d5e6cfaa"
+    },
+    {
+      "slug": "articles-226368-to-276368",
+      "range": "статьи 226,369–276,368",
+      "increment_entries": 50000,
+      "samples": 100,
+      "archive": "jitendex-articles-276368-ru-luna-v4.zip",
+      "archive_sha256": "9e00391edb33b54b3611ccb18054f3a3c619e0c4be9a5340afb7274950637046"
+    },
+    {
+      "slug": "articles-276368-to-326368",
+      "range": "статьи 276,369–326,368",
+      "increment_entries": 50000,
+      "samples": 100,
+      "archive": "jitendex-articles-326368-ru-luna-v4.zip",
+      "archive_sha256": "8fc3962d23025ac807d84a4bc8e2d21e8ab8a6d1335201aa0c374a0c542acd0d"
+    },
+    {
+      "slug": "articles-326368-to-376368",
+      "range": "статьи 326,369–376,368",
+      "increment_entries": 50000,
+      "samples": 100,
+      "archive": "jitendex-articles-376368-ru-luna-v4.zip",
+      "archive_sha256": "c62358ab73758f42bd5fbc93d01fb84ef854a395fe58b061116fc8130f415e2a"
+    },
+    {
+      "slug": "articles-376368-to-426368",
+      "range": "статьи 376,369–426,368",
+      "increment_entries": 50000,
+      "samples": 100,
+      "archive": "jitendex-articles-426368-ru-luna-v4.zip",
+      "archive_sha256": "d192baef6c43cf0c3f30f5b304e2b73a97d082a9a74e8a03204390deb222dd35"
+    },
+    {
+      "slug": "articles-426368-to-433885",
+      "range": "статьи 426,369–433,885",
+      "increment_entries": 7517,
+      "samples": 100,
+      "archive": "jitendex-articles-433885-ru-luna-v4-tags-ru-v1.zip",
+      "archive_sha256": "c157b41f3fc99a52d4099c8384e87c8e0ec8813e87c93f988a801c3e9fc63a58"
     }
   ]
 }

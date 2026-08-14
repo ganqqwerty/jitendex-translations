@@ -38,11 +38,30 @@ JPDB_INCREMENT_DEMOS = (
     (15, 14, "jpdb-90k-to-100k", "JPDB 90k–100k", "90,001–100,000", "top 90k", "top 100k"),
 )
 ZIP_SAMPLE_SIZE = 100
+LEGACY_SAMPLE_DEMOS = (
+    {
+        "slug": "articles-216368-to-226368",
+        "nav_label": "Статьи 216,369–226,368",
+        "manifest": {
+            "slug": "articles-216368-to-226368",
+            "range": "216,369–226,368 статей",
+            "increment_entries": 10_000,
+            "samples": 100,
+            "archive": "jitendex-articles-226368-ru-luna-v4.zip",
+            "archive_sha256": "75fe600adc4790363ac28da54a4547a42196a15e7ea4a274af4b8b62d5e6cfaa",
+        },
+    },
+)
 
 
 def jpdb_archive(scope: int) -> Path:
     provenance = "luna-clean-v1" if scope <= 140_000 else "luna-v4"
     return PROJECT_ROOT / "dist" / f"jitendex-jpdb-{scope // 1000}k-ru-{provenance}.zip"
+
+
+def article_archive(scope: int) -> Path:
+    suffix = "-tags-ru-v1" if scope == 433_885 else ""
+    return PROJECT_ROOT / "dist" / f"jitendex-articles-{scope}-ru-luna-v4{suffix}.zip"
 
 
 ZIP_SAMPLE_DEMOS: list[dict[str, Any]] = [
@@ -70,13 +89,21 @@ for current_scope in range(20_000, 300_001, 10_000):
         "previous": jpdb_archive(previous_scope),
         "current": jpdb_archive(current_scope),
     })
-ZIP_SAMPLE_DEMOS.append({
-    "slug": "articles-216368-to-226368",
-    "nav_label": "Статьи 216,368–226,368",
-    "rank_label": "216,369–226,368 статей",
-    "previous": jpdb_archive(300_000),
-    "current": PROJECT_ROOT / "dist" / "jitendex-articles-226368-ru-luna-v4.zip",
-})
+ARTICLE_SAMPLE_RANGES = (
+    (226_368, 276_368),
+    (276_368, 326_368),
+    (326_368, 376_368),
+    (376_368, 426_368),
+    (426_368, 433_885),
+)
+for previous_scope, current_scope in ARTICLE_SAMPLE_RANGES:
+    ZIP_SAMPLE_DEMOS.append({
+        "slug": f"articles-{previous_scope}-to-{current_scope}",
+        "nav_label": f"Статьи {previous_scope + 1:,}–{current_scope:,}",
+        "rank_label": f"статьи {previous_scope + 1:,}–{current_scope:,}",
+        "previous": article_archive(previous_scope),
+        "current": article_archive(current_scope),
+    })
 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from jitendex_ru.apply_translations import apply_article  # noqa: E402
@@ -414,6 +441,7 @@ def navigation_markup(active_path: str) -> str:
     links = [
         ("/", "Kaishi 1.5k"),
     ]
+    links.extend((f'/{demo["slug"]}/', demo["nav_label"]) for demo in LEGACY_SAMPLE_DEMOS)
     links.extend((f'/{demo["slug"]}/', demo["nav_label"]) for demo in ZIP_SAMPLE_DEMOS)
     rendered = []
     for path, label in links:
@@ -595,7 +623,7 @@ def build_zip_samples(output: Path) -> None:
         raise FileNotFoundError("Missing verified dictionary archives: " + ", ".join(missing))
 
     samples_by_slug: dict[str, list[list[Any]]] = {}
-    manifest: list[dict[str, Any]] = []
+    manifest = [dict(demo["manifest"]) for demo in LEGACY_SAMPLE_DEMOS]
     needed_originals: set[tuple[str, str, int]] = set()
     cached_key_sets: dict[Path, set[tuple[str, str, int]]] = {}
     for demo in ZIP_SAMPLE_DEMOS:
@@ -643,8 +671,9 @@ def build_zip_samples(output: Path) -> None:
         styles = latest_archive.read("styles.css").decode("utf-8") if "styles.css" in latest_archive.namelist() else ""
 
     output.mkdir(parents=True, exist_ok=True)
+    generated_slugs = {demo["slug"] for demo in ZIP_SAMPLE_DEMOS}
     for child in output.iterdir():
-        if child.is_dir() and (child.name.startswith("jpdb-") or child.name.startswith("articles-")):
+        if child.is_dir() and child.name in generated_slugs:
             shutil.rmtree(child)
     results: dict[str, dict[str, Any]] = {}
     for demo in ZIP_SAMPLE_DEMOS:
