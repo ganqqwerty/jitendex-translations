@@ -6,16 +6,16 @@ RUN-2 measure the time of the things you do.
 
 ## RUN-STOP — Current state (update when state changed)
 
-RUN-STOP-1 — Run 56 is complete in authoritative PostgreSQL with 406,368 frozen articles, 1,944,384 accepted units, zero unfinished leaf work, and verified export 62.
+RUN-STOP-1 — Run 57 is complete in authoritative PostgreSQL with 416,368 frozen articles, 1,983,628 accepted units, zero unfinished leaf work, and verified export 63.
 
-RUN-STOP-2 — The verified archive is `dist/jitendex-articles-406368-ru-luna-v4.zip`. Its SHA-256 is `f711d12be4b504511a42eb9f4a94ca1c7eb2dc1562bfb5bcc098107313d52474`.
-RUN-STOP-3 — Run 56 is the latest completed 10,000-article checkpoint. It has 404,076 translated headwords and 27,469 remaining. Translation is paused at the user's request; do not prepare Run 57 until the user asks to continue.
+RUN-STOP-2 — The verified archive is `dist/jitendex-articles-416368-ru-luna-v4.zip`. Its SHA-256 is `fdae199fe1e9f584c61904325a4ca44f0dbeecca95ee8e31c04959710ded9470`.
+RUN-STOP-3 — Run 57 is the latest completed 10,000-article checkpoint. It has 414,056 translated headwords and 17,489 remaining. The standing full-corpus goal authorizes continuing from it.
 
 RUN-STOP-4 — PostgreSQL is authoritative. The old SQLite source is read-only migration evidence and must not receive production writes.
 
 RUN-STOP-5 — Concurrency 100 remains the proven future setting. The concurrency-110 fixed window reached 332.0 headwords per minute, 4.0% below concurrency 100, although it remained operationally clean.
 
-RUN-STOP-6 — Docker's internal disk limit is 264 GB and its PostgreSQL filesystem has about 123 GB free. Its disk image remains under `~/Library/Containers`, outside Documents and iCloud.
+RUN-STOP-6 — Docker's internal disk limit is 264 GB and its PostgreSQL filesystem has about 121 GB free. Its disk image remains under `~/Library/Containers`, outside Documents and iCloud.
 
 ## RUN-PIN — Pinned runtime
 
@@ -27,11 +27,11 @@ RUN-PIN-3 — Do not change the model, prompt, reasoning, validator, batching li
 
 ~~~bash
 export PYTHONPATH=src
-export JPDB_SOURCE_RUN_ID=56
+export JPDB_SOURCE_RUN_ID=57
 export JPDB_ADD_ARTICLES=10000
-export JPDB_TARGET_ARTICLES=416368
-export JPDB_SCOPE_LABEL=416368
-export JPDB_RUN_ID=57
+export JPDB_TARGET_ARTICLES=426368
+export JPDB_SCOPE_LABEL=426368
+export JPDB_RUN_ID=58
 ~~~
 
 ## RUN-PREFLIGHT — Protect production
@@ -44,8 +44,8 @@ RUN-PREFLIGHT-3 — Make and hash a PostgreSQL backup before creating the next r
 
 ~~~bash
 pg_dump -Fc "$JITENDEX_POSTGRES_URL" \
-  -f work/backups/jitendex-postgresql-before-416368.dump
-shasum -a 256 work/backups/jitendex-postgresql-before-416368.dump
+  -f work/backups/jitendex-postgresql-before-426368.dump
+shasum -a 256 work/backups/jitendex-postgresql-before-426368.dump
 ~~~
 
 RUN-PREFLIGHT-4 — Check live Codex usage status before the run and before each concurrency increase. The current account does not enforce a five-hour window; stop only on an actual quota or authentication boundary.

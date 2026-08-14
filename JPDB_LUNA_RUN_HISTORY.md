@@ -2319,3 +2319,26 @@ SHA-256: f711d12be4b504511a42eb9f4a94ca1c7eb2dc1562bfb5bcc098107313d52474
 ~~~
 
 HIST-ALL-406368-6 — Export 62 was verified. Run 56 is the latest completed checkpoint. Work paused here at the user's request; no Run 57 scope or batch was created.
+
+## HIST-ALL-416368 — 416,368-article continuation results
+
+HIST-ALL-416368-1 — Run 57 retained Run 56, added 10,000 source-ordered articles, reused 1,944,384 units, and translated 39,244 new units from 1,030 initial batches. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-416368.dump`, SHA-256 `fa5a01dde88912497c02148e9e3fe55fe8e15e279d3e807f0c82fe55dd015720`. The host client was absent from `PATH`, so the version-matched PostgreSQL 17 container client created and validated a temporary dump before it was copied out and the temporary file removed. The backup took 4 minutes 10 seconds.
+
+HIST-ALL-416368-2 — Preparation took 246.76 seconds: source preflight 25.91, scope selection 20.60, extraction 38.06, reuse 117.69, batching 6.62, and verification 37.89 seconds. It passed all pre-Luna gates. The longer reuse and verification times follow the growing source-run row count and remained well below the ten-minute investigation threshold.
+
+HIST-ALL-416368-3 — Six full concurrency-100 windows completed 507 measured requests and 550 drain requests. Mean measured throughput was 327.77 headwords per minute, ranging from 318.65 to 339.99. Peak runner memory was 201 MB and maximum database duty cycle was 17.69%. They recorded 11 measured validation rejections, ten retries, one split, and zero rate limits, timeouts, transport failures, database retries, claim collisions, stale leases, or lock waits. The higher database duty cycle still showed no ingestion, pool, or lock bottleneck.
+
+HIST-ALL-416368-4 — Several full windows took about six to seven minutes because their last drain requests completed slowly, while measured p95 latency remained 90.9 to 99.8 seconds. The final six-batch tail took 12 minutes 35 seconds while one failing branch recursively split and retained each successful sibling. It ended with zero terminal leaves, unfinished work, unresolved errors, or active leases, so no manual repair was needed. Seven blocked rows remain split-parent provenance. The short-window wrapper reported no measurement phase after all productive tail work completed outside a full measured phase.
+
+HIST-ALL-416368-5 — Acceptance took 5.82 seconds and validation took 23.33 seconds. All 1,983,628 units were accepted with zero membership mismatches or blocking issues. Build took 116.00 seconds and independent verification took 225.21 seconds with session-only 512 MB `work_mem` and parallel gather disabled. All 113 tests passed with two expected PostgreSQL integration skips. Run 57 took about 70 minutes from backup start through verified export and tests; the longer total was mainly the backup, slow drains, and recursive tail isolation rather than lower measured throughput.
+
+~~~text
+ZIP members:                365
+schema-validated banks:     126
+archive articles:       416,368
+translated headwords:   414,056
+headwords remaining:     17,489
+SHA-256: fdae199fe1e9f584c61904325a4ca44f0dbeecca95ee8e31c04959710ded9470
+~~~
+
+HIST-ALL-416368-6 — Export 63 was verified. Run 57 is the latest completed checkpoint. The next 10,000-article continuation targets 426,368 articles at concurrency 100.
