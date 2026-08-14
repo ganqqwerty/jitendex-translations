@@ -216,9 +216,11 @@ def test_apple_project_preserves_xhtml_yomi_and_compiler_contract(tmp_path):
 
     tool = tmp_path / "fake-build-dict"
     tool.write_text(
-        '#!/bin/sh\nmkdir -p "objects/$1.dictionary/Contents/Resources"\n'
+        '#!/bin/sh\nmkdir -p "objects/$1.dictionary/Contents"\n'
         'cp "$4" "objects/$1.dictionary/Contents/Info.plist"\n'
-        'cp "$2" "objects/$1.dictionary/Contents/Resources/Body.data"\n',
+        'cp "$2" "objects/$1.dictionary/Contents/Body.data"\n'
+        'cp "$2" "objects/$1.dictionary/Contents/KeyText.data"\n'
+        'cp "$2" "objects/$1.dictionary/Contents/KeyText.index"\n',
         encoding="utf-8",
     )
     tool.chmod(0o755)
@@ -227,7 +229,7 @@ def test_apple_project_preserves_xhtml_yomi_and_compiler_contract(tmp_path):
         build_tool_sha256=sha256_file(tool), schema=None, schema_sha256=None,
     )
     assert bundle.name == f"{APPLE_BASENAME}.dictionary"
-    assert (bundle / "Contents" / "Resources" / "Body.data").is_file()
+    assert (bundle / "Contents" / "Body.data").is_file()
     assert details["command"][1] == APPLE_BASENAME
 
 
@@ -296,9 +298,11 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
 
     apple_tool = tmp_path / "fake-build-dict"
     apple_tool.write_text(
-        '#!/bin/sh\nmkdir -p "objects/$1.dictionary/Contents/Resources"\n'
+        '#!/bin/sh\nmkdir -p "objects/$1.dictionary/Contents"\n'
         'cp "$4" "objects/$1.dictionary/Contents/Info.plist"\n'
-        'cp "$2" "objects/$1.dictionary/Contents/Resources/Body.data"\n',
+        'cp "$2" "objects/$1.dictionary/Contents/Body.data"\n'
+        'cp "$2" "objects/$1.dictionary/Contents/KeyText.data"\n'
+        'cp "$2" "objects/$1.dictionary/Contents/KeyText.index"\n',
         encoding="utf-8",
     )
     apple_tool.chmod(0o755)

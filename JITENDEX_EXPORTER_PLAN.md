@@ -170,11 +170,11 @@ EX1-IMPL-10 — Verification checks the XDXF, compiler exit, package hash, entry
 
 ## EX2-RSCH — Apple Dictionary research gate
 
-EX2-RSCH-1 — Acquire the Dictionary Development Kit from Apple Developer Downloads and record its version, source, license, and SHA-256.
+EX2-RSCH-1 — The Dictionary Development Kit was acquired from Apple Developer Downloads in `Additional Tools for Xcode 26.6`; Apple's download terms apply and its hashes are recorded in the capability contract.
 
 EX2-RSCH-2 — Do not assume the archived 2007 guide matches the compiler. Treat the installed schema and compiler as the tested authority.
 
-EX2-RSCH-3 — This workstation has Dictionary.app on macOS 26.5.2, but it does not have the Dictionary Development Kit.
+EX2-RSCH-3 — This workstation has Dictionary.app and Dictionary Development Kit 26.6 on macOS 26.5.2. The kit is stored outside iCloud under `~/Library/Application Support/jitendex-translations/export-tools/`.
 
 EX2-RSCH-4 — Confirm that the kit builds and installs an unsigned custom bundle on macOS 26.5.2.
 

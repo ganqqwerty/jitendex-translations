@@ -355,10 +355,15 @@ def _compile(
         message = (result.stderr or result.stdout).strip()
         raise ValueError(f"Apple Dictionary build failed with exit {result.returncode}: {message[:500]}")
     bundle = root / "objects" / BUNDLE_NAME
-    if not (bundle / "Contents" / "Info.plist").is_file():
+    contents = bundle / "Contents"
+    if not (contents / "Info.plist").is_file():
         raise ValueError(f"Apple Dictionary build tool did not produce objects/{BUNDLE_NAME}")
-    if not any(path.is_file() for path in (bundle / "Contents" / "Resources").rglob("*")):
-        raise ValueError("Apple Dictionary bundle has no compiled resources")
+    compiled_payloads = ("Body.data", "KeyText.data", "KeyText.index")
+    if any(
+        not (contents / name).is_file() or not (contents / name).stat().st_size
+        for name in compiled_payloads
+    ):
+        raise ValueError("Apple Dictionary bundle has incomplete compiled payloads")
     tools["command"] = [build_tool.name, *command[1:]]
     return bundle, tools
 
@@ -446,8 +451,12 @@ def verify_apple_dictionary(connection: ConnectionLike, path: Path) -> dict[str,
         })
         bundle_prefix = f"{BUNDLE_NAME}/"
         bundle_info = f"{bundle_prefix}Contents/Info.plist"
-        resources_prefix = f"{bundle_prefix}Contents/Resources/"
-        if bundle_info not in names or not any(name.startswith(resources_prefix) for name in names):
+        compiled_payloads = {
+            f"{bundle_prefix}Contents/Body.data",
+            f"{bundle_prefix}Contents/KeyText.data",
+            f"{bundle_prefix}Contents/KeyText.index",
+        }
+        if bundle_info not in names or not compiled_payloads.issubset(names):
             raise ValueError("Apple Dictionary package has an incomplete bundle structure")
         manifest = json.loads(archive.read("manifest.json"))
         if manifest.get("format") != "apple-dictionary" or manifest.get("capability_profile") != CAPABILITY_PROFILE:
