@@ -2273,3 +2273,26 @@ SHA-256: 59562ccf6914c5b0559b8ecfbced91ed1fa639b8314baabc362ce7f18fa78a73
 ~~~
 
 HIST-ALL-386368-6 — Export 60 was verified. Run 54 is the latest completed checkpoint. The next 10,000-article continuation targets 396,368 articles at concurrency 100.
+
+## HIST-ALL-396368 — 396,368-article continuation results
+
+HIST-ALL-396368-1 — Run 55 retained Run 54, added 10,000 source-ordered articles, reused 1,867,354 units, and translated 39,770 new units from 1,035 initial batches. The pre-run PostgreSQL backup is `work/backups/jitendex-postgresql-before-396368.dump`, SHA-256 `06786d6fc108f96819f151dcceb87d9ab8e6c351d4dc600f9134afd74dcccc29`.
+
+HIST-ALL-396368-2 — Preparation took 206.32 seconds: source preflight 24.00, scope selection 18.51, extraction 38.54, reuse 84.74, batching 9.64, and verification 30.89 seconds. It passed all pre-Luna gates.
+
+HIST-ALL-396368-3 — Six full concurrency-100 windows completed 436 measured requests and 600 drain requests. Mean measured throughput was 273.77 headwords per minute, ranging from 239.32 to 294.66. Peak runner memory was 201 MB and maximum database duty cycle was 6.22%. They recorded 23 measured validation rejections, 18 retries, and zero rate limits, timeouts, transport failures, database retries, claim collisions, stale leases, or lock waits.
+
+HIST-ALL-396368-4 — The final 56 retries recursively isolated one singleton xref gloss for `ＪＳ`. Repeated `JavaScript` output failed `no_cyrillic`; the audited targeted-leaf path ingested `Джаваскрипт` without another Luna request. The short-window telemetry wrapper reported no measurement phase after productive work finished during ramp. PostgreSQL then proved zero unfinished work, terminal leaves, or unresolved errors. Fourteen blocked rows are preserved split-parent provenance.
+
+HIST-ALL-396368-5 — Acceptance took 5.38 seconds and validation took 18.17 seconds. All 1,907,124 units were accepted with zero membership mismatches or blocking issues. Build took 111.01 seconds and independent verification took 212.81 seconds with session-only 512 MB `work_mem` and parallel gather disabled. All 113 tests passed with two expected PostgreSQL integration skips. Run 55 took about 53 minutes from preparation start through verified export and tests.
+
+~~~text
+ZIP members:                345
+schema-validated banks:     121
+archive articles:       396,368
+translated headwords:   394,078
+headwords remaining:     37,467
+SHA-256: 11ef06cb29b77dd24370789f01c3ad546209dd3644094e6be83fd168b9e4b8c4
+~~~
+
+HIST-ALL-396368-6 — Export 61 was verified. Run 55 is the latest completed checkpoint. The next 10,000-article continuation targets 406,368 articles at concurrency 100.
