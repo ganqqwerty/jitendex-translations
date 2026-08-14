@@ -117,3 +117,9 @@ README-DB-3 — Frequency ranks are not identities and may repeat. `frequency_te
 README-DB-4 — The version-7 migration preserves version-6 terms and mappings while adding the term to each article mapping. Back up the production database and run SQLite integrity and foreign-key checks before continuing a release.
 
 README-DB-5 — Use [JPDB_LUNA_ORCHESTRATION_RUNBOOK.md](JPDB_LUNA_ORCHESTRATION_RUNBOOK.md) for operational commands. The combined six-list top-40k scope is a one-off supplement described in [FREQUENCY_TOP40K_TRANSLATION_PLAN.md](FREQUENCY_TOP40K_TRANSLATION_PLAN.md); normal releases continue by JPDB frequency.
+
+## README-DEMO — Public demos
+
+README-DEMO-1 — The [translation comparison](https://ganqqwerty.github.io/jitendex-translations/) shows public samples from the completed dictionary batches.
+
+README-DEMO-2 — The [frequency analysis](https://ganqqwerty.github.io/jitendex-translations/frequency/) shows the source-list coverage used to plan translation scopes.

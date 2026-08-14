@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Постраничное сравнение Jitendex, Terra, Luna и Claude для всей выборки Kaishi.">
+  <title>Jitendex × Terra × Luna × Claude — вся выборка Kaishi</title>
+  <style>
+:root { color-scheme: light; --canvas: #f1f3f5; --fg: #222; --text-color: #222; --background-color: #fff; --font-size-no-units: 14; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--canvas); color: var(--fg); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", sans-serif; }
+.page { width: min(1800px, calc(100% - 24px)); margin: 0 auto; padding: 24px 0 48px; }
+.page-title { margin: 0 0 14px; font-size: 18px; font-weight: 600; }
+.demo-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+.demo-nav a { padding: 6px 10px; border: 1px solid #b8bec5; border-radius: 999px; background: #fff; color: #384047; text-decoration: none; }
+.demo-nav a:hover { border-color: #1a73e8; color: #1a73e8; }
+.demo-nav a[aria-current="page"] { border-color: #1a73e8; background: #e8f0fe; color: #174ea6; font-weight: 600; }
+.term-search { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
+.term-search label { color: #4b5157; font-size: 13px; font-weight: 600; }
+.term-search input { width: min(360px, 100%); padding: 8px 10px; border: 1px solid #b8bec5; border-radius: 6px; background: #fff; color: #222; font: inherit; }
+.term-search input:focus, .pagination select:focus, .pagination button:focus { outline: 2px solid #1a73e8; outline-offset: 1px; }
+.term-search-status { color: #70757a; font-size: 12px; white-space: nowrap; }
+.column-picker { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 0 0 14px; padding: 10px 12px; border: 1px solid #cfd3d8; border-radius: 6px; background: #fff; }
+.column-picker legend { padding: 0 5px; color: #60666c; font-size: 12px; font-weight: 600; }
+.column-picker label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+.column-picker input { margin: 0; accent-color: #1a73e8; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 14px 0; }
+.pagination button, .pagination select { min-height: 36px; padding: 7px 11px; border: 1px solid #b8bec5; border-radius: 6px; background: #fff; color: #222; font: inherit; }
+.pagination button { cursor: pointer; }
+.pagination button:disabled { cursor: default; opacity: .45; }
+.pagination[hidden] { display: none; }
+.table-shell { min-height: 180px; overflow-x: auto; border: 1px solid #cfd3d8; border-radius: 6px; background: #fff; }
+.comparison-table { display: block; width: 100%; border-collapse: collapse; }
+.comparison-table > thead, .comparison-table > tbody { display: block; }
+.comparison-table > thead > tr, .comparison-table > tbody > tr.comparison-row { display: grid; grid-template-columns: repeat(var(--visible-columns), minmax(0, 1fr)); }
+.comparison-table > thead > tr > th { position: sticky; top: 0; z-index: 2; padding: 9px 14px; border-bottom: 1px solid #cfd3d8; background: #e9ecef; color: #4b5157; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.comparison-table > thead > tr > th + th, .comparison-table > tbody > tr > td + td { border-left: 1px solid #cfd3d8; }
+.comparison-table > tbody > tr > td { padding: 14px 16px 18px; vertical-align: top; border-top: 1px solid #dfe2e5; }
+.comparison-table > tbody > tr:first-child > td { border-top: 0; }
+.comparison-table > tbody > tr:nth-child(even) > td { background: #fafbfc; }
+.comparison-table [hidden] { display: none !important; }
+.entry-heading { display: flex; align-items: baseline; gap: .65em; margin: 0 0 .45em; padding-bottom: .35em; border-bottom: 1px solid #e4e6e8; }
+.expression { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif; font-size: 1.65em; font-weight: 500; }
+.entry-reading { color: #60666c; font-size: 1.05em; }
+.definition-list { overflow-wrap: anywhere; }
+.definition-list > div { margin-bottom: .3em; }
+.missing-entry { color: #777; font-style: italic; }
+.loading-row td { padding: 44px 16px !important; color: #70757a; text-align: center; }
+.yomitan-entry a { color: #1a73e8; text-decoration: none; }
+.yomitan-entry a:hover { text-decoration: underline; }
+.yomitan-entry table { border-collapse: collapse; }
+.yomitan-entry th, .yomitan-entry td { border: 1px solid #b9bec4; padding: .15em .35em; }
+@media (max-width: 700px) { .page { width: calc(100% - 12px); padding-top: 10px; } .comparison-table > tbody > tr > td { padding: 10px; } }
+
+span[title] {
+    cursor: help;
+}
+
+ul[data-sc-content="sense-groups"] {
+    list-style-type: "＊";
+}
+
+li[data-sc-content="sense-group"],
+li[data-sc-content="forms"] {
+    padding-left: 0.25em;
+}
+
+div[data-sc-content="sense-group"],
+li[data-sc-content="sense-group"]:first-child {
+    margin-top: 0.1em;
+}
+
+li[data-sc-content="sense-group"] + li[data-sc-content="sense-group"],
+div[data-sc-content="forms"],
+li[data-sc-content="forms"] {
+    margin-top: 0.5em;
+}
+
+li[data-sc-content="sense"] {
+    padding-left: 0.25em;
+    & ul[data-sc-content="glossary"] {
+        list-style-type: none;
+        padding-left: 0.25em;
+    }
+}
+
+span[data-sc-class="tag"] {
+    border-radius: 0.3em;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-right: 0.5em;
+    padding: 0.2em 0.3em;
+    vertical-align: text-bottom;
+    word-break: keep-all;
+}
+
+span[data-sc-content="part-of-speech-info"] {
+    background-color: #565656;
+    color: white;
+}
+
+span[data-sc-content="misc-info"] {
+    background-color: brown;
+    color: white;
+}
+
+span[data-sc-content="field-info"] {
+    background-color: purple;
+    color: white;
+}
+
+span[data-sc-content="dialect-info"] {
+    background-color: green;
+    color: white;
+}
+
+span[data-sc-content="lang-source-wasei"] {
+    background-color: orange;
+    color: black;
+    margin-left: 0.5em;
+    margin-right: 0;
+}
+
+span[data-sc-content="forms-label"] {
+    background-color: #565656;
+    color: white;
+}
+
+ul[data-sc-content="glossary"] {
+    list-style-type: disc;
+}
+
+span[data-sc-content="registered-trademark"] {
+    vertical-align: super;
+    font-size: 0.6em;
+}
+
+div[data-sc-class="extra-box"] {
+    border-radius: 0.4rem;
+    border-style: none none none solid;
+    border-width: calc(3em / var(--font-size-no-units, 14));
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    width: fit-content;
+}
+
+div[data-sc-class="extra-content"] {
+    margin-left: 0.5rem;
+}
+
+div[data-sc-content="info-gloss"] {
+    border-color: green;
+    background-color: color-mix(in srgb, green 5%, transparent);
+}
+
+div[data-sc-content="sense-note"] {
+    border-color: goldenrod;
+    background-color: color-mix(in srgb, goldenrod 5%, transparent);
+}
+
+div[data-sc-content="lang-source"] {
+    border-color: purple;
+    background-color: color-mix(in srgb, purple 5%, transparent);
+}
+
+div[data-sc-content="xref"] {
+    border-color: #1A73E8;
+    background-color: color-mix(in srgb, #1A73E8 5%, transparent);
+    & span[data-sc-content="reference-label"] {
+        color: #1A73E8;
+    }
+}
+
+div[data-sc-content="antonym"] {
+    border-color: brown;
+    background-color: color-mix(in srgb, brown 5%, transparent);
+    & span[data-sc-content="reference-label"] {
+        color: brown;
+    }
+}
+
+div[data-sc-content="example-sentence"] {
+    border-color: var(--text-color, var(--fg, #333));
+    background-color: color-mix(in srgb, var(--text-color, var(--fg, #333)) 5%, transparent);
+}
+
+div[data-sc-content="extra-info"] {
+    margin-left: 0.5em;
+}
+
+div[data-sc-class="extra-label"] {
+    color: #777;
+    font-size: 0.8em;
+    font-style: italic;
+}
+
+span[data-sc-content="reference-label"] {
+    font-size: 0.8em;
+    margin-right: 0.5rem;
+}
+
+div[data-sc-content="xref-content"],
+div[data-sc-content="antonym-content"] {
+    font-size: 1.3em;
+}
+
+div[data-sc-content="xref-glossary"],
+div[data-sc-content="antonym-glossary"] {
+    font-size: 0.8rem;
+}
+
+div[data-sc-content="example-sentence-a"] {
+    font-size: 1.3em;
+}
+
+div[data-sc-content="example-sentence-b"] {
+    font-size: 0.8em;
+}
+
+span[data-sc-content="example-keyword"] {
+    color: color-mix(in srgb, lime, var(--text-color, var(--fg, #333)));
+}
+
+span[data-sc-content="attribution-footnote"] {
+    color: #777;
+    font-size: 0.8em;
+    margin-left: 0.25rem;
+    vertical-align: top;
+}
+
+div[data-sc-content="graphic"] {
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    & .gloss-image-container {
+        border: solid calc(42em / var(--font-size-no-units, 14)) var(--text-color, var(--fg, #333));
+        border-radius: 3%;
+    }
+}
+
+div[data-sc-content="graphic-attribution"] {
+    font-size: 70%;
+    margin-top: 0.25rem;
+}
+
+/* The "forms" section may be contained in a <div> or a <li> depending on the content of the entry. */
+div[data-sc-content="forms"],
+li[data-sc-content="forms"] {
+    & ul {
+        font-size: 1.2em;
+        list-style-type: circle;
+    }
+    & table {
+        margin-top: 0.2em;
+    }
+    & tr {
+        border-width: 1px;
+    }
+    & th {
+        border-width: 1px;
+        font-weight: normal;
+        text-align: left;
+    }
+    & td {
+        border-width: 1px;
+        text-align: center;
+        & span {
+            clip-path: circle();
+            display: block;
+            font-weight: bold;
+            padding: 0 0.5em;
+        }
+    }
+}
+
+/* For the display of sense number restrictions in forms tables */
+th[data-sc-content="forms-row-senses"],
+tr[data-sc-content="forms-col-senses-row"] th {
+    text-align: center;
+}
+
+tr[data-sc-content="forms-header-row"] th {
+    font-size: 1.2em;
+    text-align: center;
+    vertical-align: text-bottom;
+    & span[data-sc-class="old-character"] {
+        text-emphasis-style: dot;
+    }
+}
+
+span[data-sc-class="form-special"] {
+    color: crimson;
+}
+
+td[data-sc-class="form-pri"] > span {
+    color: white;
+    background: radial-gradient(green 50%, white 100%);
+    &::before {
+        content: "△";
+    }
+}
+
+td[data-sc-class="form-irr"] > span {
+    color: white;
+    background: radial-gradient(crimson 50%, white 100%);
+    &::before {
+        content: "✕";
+    }
+}
+
+td[data-sc-class="form-out"] > span {
+    color: white;
+    background: radial-gradient(blue 50%, white 100%);
+    &::before {
+        content: "古";
+    }
+}
+
+td[data-sc-class="form-old"] > span {
+    color: white;
+    background: radial-gradient(blue 50%, white 100%);
+    &::before {
+        content: "旧";
+    }
+}
+
+td[data-sc-class="form-rare"] > span {
+    color: white;
+    background: radial-gradient(purple 50%, white 100%);
+    &::before {
+        content: "▽";
+    }
+}
+
+td[data-sc-class="form-valid"] > span {
+    color: var(--background-color, var(--canvas, #f8f9fa));
+    background: radial-gradient(var(--text-color, var(--fg, #333)) 50%, white 100%);
+    &::before {
+        content: "◇";
+    }
+}
+
+div[data-sc-content="attribution"] {
+    font-size: 0.7em;
+    text-align: right;
+}
+
+div[data-sc-content="redirect-glossary"] {
+    font-size: 180%;
+    margin-top: 0.2em;
+}
+</style>
+</head>
+<body>
+  <main class="page">
+    <h1 class="page-title">Jitendex × Terra × Luna × Claude — вся выборка Kaishi</h1>
+    <nav class="demo-nav" aria-label="Наборы слов"><a href="/" aria-current="page">Kaishi 1.5k</a><a href="/jpdb-top-5k/">JPDB top 5k</a><a href="/jpdb-5k-to-10k/">JPDB 5k–10k</a><a href="/jpdb-10k-to-20k/">JPDB 10k–20k</a><a href="/jpdb-20k-to-30k/">JPDB 20k–30k</a><a href="/jpdb-30k-to-40k/">JPDB 30k–40k</a><a href="/jpdb-40k-to-50k/">JPDB 40k–50k</a><a href="/jpdb-50k-to-60k/">JPDB 50k–60k</a><a href="/jpdb-60k-to-70k/">JPDB 60k–70k</a><a href="/jpdb-70k-to-80k/">JPDB 70k–80k</a><a href="/jpdb-80k-to-90k/">JPDB 80k–90k</a><a href="/jpdb-90k-to-100k/">JPDB 90k–100k</a><a href="/jpdb-100k-to-110k/">JPDB 100k–110k</a><a href="/jpdb-110k-to-120k/">JPDB 110k–120k</a><a href="/jpdb-120k-to-130k/">JPDB 120k–130k</a><a href="/jpdb-130k-to-140k/">JPDB 130k–140k</a><a href="/jpdb-140k-to-150k/">JPDB 140k–150k</a><a href="/jpdb-150k-to-160k/">JPDB 150k–160k</a><a href="/jpdb-160k-to-170k/">JPDB 160k–170k</a><a href="/jpdb-170k-to-180k/">JPDB 170k–180k</a><a href="/jpdb-180k-to-190k/">JPDB 180k–190k</a><a href="/jpdb-190k-to-200k/">JPDB 190k–200k</a><a href="/jpdb-200k-to-210k/">JPDB 200k–210k</a><a href="/jpdb-210k-to-220k/">JPDB 210k–220k</a><a href="/jpdb-220k-to-230k/">JPDB 220k–230k</a><a href="/jpdb-230k-to-240k/">JPDB 230k–240k</a><a href="/jpdb-240k-to-250k/">JPDB 240k–250k</a><a href="/jpdb-250k-to-260k/">JPDB 250k–260k</a><a href="/jpdb-260k-to-270k/">JPDB 260k–270k</a><a href="/jpdb-270k-to-280k/">JPDB 270k–280k</a><a href="/jpdb-280k-to-290k/">JPDB 280k–290k</a><a href="/jpdb-290k-to-300k/">JPDB 290k–300k</a><a href="/articles-216368-to-226368/">Статьи 216,368–226,368</a></nav>
+    <div class="term-search">
+      <label for="term-search-input">Поиск</label>
+      <input id="term-search-input" type="search" placeholder="Слово или чтение" autocomplete="off">
+      <span class="term-search-status" id="term-search-status" aria-live="polite">1–100 / 1704</span>
+    </div>
+    <fieldset class="column-picker">
+      <legend>Показывать столбцы</legend>
+      <label><input type="checkbox" data-column-toggle="original" checked> Original Jitendex</label><label><input type="checkbox" data-column-toggle="terra" checked> Terra</label><label><input type="checkbox" data-column-toggle="luna" checked> Luna clean v1</label><label><input type="checkbox" data-column-toggle="claude" checked> Claude</label>
+    </fieldset>
+    <nav class="pagination" aria-label="Навигация по страницам">
+      <button type="button" data-page-prev>← Назад</button>
+      <select aria-label="Текущая страница"></select>
+      <button type="button" data-page-next>Вперёд →</button>
+    </nav>
+    <div class="table-shell">
+      <table class="comparison-table" style="--visible-columns:4;min-width:1680px">
+        <thead><tr><th scope="col" data-compare-column="original">Original Jitendex</th><th scope="col" data-compare-column="terra">Terra</th><th scope="col" data-compare-column="luna">Luna clean v1</th><th scope="col" data-compare-column="claude">Claude</th></tr></thead>
+        <tbody><tr class="loading-row"><td colspan="4">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+    <nav class="pagination" aria-label="Навигация по страницам">
+      <button type="button" data-page-prev>← Назад</button>
+      <select aria-label="Текущая страница"></select>
+      <button type="button" data-page-next>Вперёд →</button>
+    </nav>
+  </main>
+  <script>
+(() => {
+  const PAGE_SIZE = 100;
+  const pageCount = 18;
+  const totalCount = 1704;
+  const terms = [{"id":46,"page":1,"search":"あそこ あそこ"},{"id":47,"page":1,"search":"彼処 あそこ"},{"id":48,"page":1,"search":"彼所 あそこ"},{"id":55,"page":1,"search":"アソコ アソコ"},{"id":59,"page":1,"search":"あっさり あっさり"},{"id":60,"page":1,"search":"アッサリ アッサリ"},{"id":69,"page":1,"search":"あの あの"},{"id":70,"page":1,"search":"彼の あの"},{"id":96,"page":1,"search":"あれ あれ"},{"id":97,"page":1,"search":"彼 あれ"},{"id":98,"page":1,"search":"彼れ あれ"},{"id":152,"page":1,"search":"いらっしゃる いらっしゃる"},{"id":293,"page":1,"search":"お陰 おかげ"},{"id":318,"page":1,"search":"お菓子 おかし"},{"id":320,"page":1,"search":"お願いします おねがいします"},{"id":356,"page":1,"search":"お金 おかね"},{"id":358,"page":1,"search":"お兄さん おにいさん"},{"id":423,"page":1,"search":"お姉さん おねえさん"},{"id":552,"page":1,"search":"お祖父さん おじいさん"},{"id":553,"page":1,"search":"お爺さん おじいさん"},{"id":558,"page":1,"search":"お祖母さん おばあさん"},{"id":559,"page":1,"search":"お婆さん おばあさん"},{"id":597,"page":1,"search":"お茶 おちゃ"},{"id":644,"page":1,"search":"お父さん おとうさん"},{"id":649,"page":1,"search":"お腹 おなか"},{"id":657,"page":1,"search":"お母さん おかあさん"},{"id":833,"page":1,"search":"きちんと きちんと"},{"id":838,"page":1,"search":"きっと きっと"},{"id":839,"page":1,"search":"屹度 きっと"},{"id":840,"page":1,"search":"急度 きっと"},{"id":841,"page":1,"search":"キッと キッと"},{"id":844,"page":1,"search":"きつい きつい"},{"id":845,"page":1,"search":"キツイ キツイ"},{"id":1034,"page":1,"search":"こう こう"},{"id":1035,"page":1,"search":"斯う こう"},{"id":1069,"page":1,"search":"こちら こちら"},{"id":1070,"page":1,"search":"此方 こちら"},{"id":1123,"page":1,"search":"これから これから"},{"id":1124,"page":1,"search":"此れから これから"},{"id":1125,"page":1,"search":"是から これから"},{"id":1129,"page":1,"search":"これまで これまで"},{"id":1130,"page":1,"search":"これ迄 これまで"},{"id":1131,"page":1,"search":"此れまで これまで"},{"id":1132,"page":1,"search":"是迄 これまで"},{"id":1133,"page":1,"search":"此れ迄 これまで"},{"id":1148,"page":1,"search":"こんなに こんなに"},{"id":1224,"page":1,"search":"さあ さあ"},{"id":1233,"page":1,"search":"さっき さっき"},{"id":1234,"page":1,"search":"先 さっき"},{"id":1269,"page":1,"search":"さん さん"},{"id":1365,"page":1,"search":"じっと じっと"},{"id":1366,"page":1,"search":"凝乎と じっと"},{"id":1375,"page":1,"search":"じゃ じゃ"},{"id":1417,"page":1,"search":"すっかり すっかり"},{"id":1465,"page":1,"search":"ずっと ずっと"},{"id":1497,"page":1,"search":"せめて せめて"},{"id":1498,"page":1,"search":"そいつ そいつ"},{"id":1499,"page":1,"search":"其奴 そいつ"},{"id":1519,"page":1,"search":"そこ そこ"},{"id":1520,"page":1,"search":"其処 そこ"},{"id":1521,"page":1,"search":"其所 そこ"},{"id":1536,"page":1,"search":"そして そして"},{"id":1537,"page":1,"search":"而して そして"},{"id":1538,"page":1,"search":"然して そして"},{"id":1550,"page":1,"search":"そちら そちら"},{"id":1551,"page":1,"search":"其方 そちら"},{"id":1552,"page":1,"search":"そっち そっち"},{"id":1553,"page":1,"search":"其方 そっち"},{"id":1555,"page":1,"search":"そっと そっと"},{"id":1559,"page":1,"search":"その その"},{"id":1560,"page":1,"search":"其の その"},{"id":1594,"page":1,"search":"その内 そのうち"},{"id":1603,"page":1,"search":"そもそも そもそも"},{"id":1604,"page":1,"search":"抑 そもそも"},{"id":1605,"page":1,"search":"抑々 そもそも"},{"id":1606,"page":1,"search":"抑抑 そもそも"},{"id":1611,"page":1,"search":"それ それ"},{"id":1612,"page":1,"search":"其れ それ"},{"id":1618,"page":1,"search":"それで それで"},{"id":1619,"page":1,"search":"其れで それで"},{"id":1629,"page":1,"search":"それに それに"},{"id":1630,"page":1,"search":"其れに それに"},{"id":1632,"page":1,"search":"それ程 それほど"},{"id":1633,"page":1,"search":"其れ程 それほど"},{"id":1634,"page":1,"search":"其程 それほど"},{"id":1661,"page":1,"search":"たった たった"},{"id":1662,"page":1,"search":"たっぷり たっぷり"},{"id":1737,"page":1,"search":"ちゃん ちゃん"},{"id":1742,"page":1,"search":"ちゃんと ちゃんと"},{"id":1809,"page":1,"search":"つい つい"},{"id":1810,"page":1,"search":"ついでに ついでに"},{"id":1811,"page":1,"search":"序でに ついでに"},{"id":1812,"page":1,"search":"序に ついでに"},{"id":1894,"page":1,"search":"では では"},{"id":1914,"page":1,"search":"とても とても"},{"id":1915,"page":1,"search":"迚も とても"},{"id":1949,"page":1,"search":"とんでもない とんでもない"},{"id":1973,"page":1,"search":"どう どう"},{"id":1974,"page":1,"search":"如何 どう"},{"id":1984,"page":1,"search":"どうせ どうせ"},{"id":1990,"page":2,"search":"どうにか どうにか"},{"id":1991,"page":2,"search":"どうも どうも"},{"id":1992,"page":2,"search":"どうやって どうやって"},{"id":1993,"page":2,"search":"どうやら どうやら"},{"id":2051,"page":2,"search":"どれ どれ"},{"id":2052,"page":2,"search":"何れ どれ"},{"id":2059,"page":2,"search":"どんどん どんどん"},{"id":2060,"page":2,"search":"ドンドン ドンドン"},{"id":2061,"page":2,"search":"どんな どんな"},{"id":2133,"page":2,"search":"について について"},{"id":2134,"page":2,"search":"に就いて について"},{"id":2176,"page":2,"search":"はい はい"},{"id":2194,"page":2,"search":"はっきり はっきり"},{"id":2195,"page":2,"search":"ハッキリ ハッキリ"},{"id":2423,"page":2,"search":"ぶつかる ぶつかる"},{"id":2581,"page":2,"search":"ぼんやり ぼんやり"},{"id":2582,"page":2,"search":"ボンヤリ ボンヤリ"},{"id":2621,"page":2,"search":"まあ まあ"},{"id":2698,"page":2,"search":"もう もう"},{"id":2705,"page":2,"search":"もし もし"},{"id":2706,"page":2,"search":"若し もし"},{"id":2707,"page":2,"search":"もしかしたら もしかしたら"},{"id":2708,"page":2,"search":"若しかしたら もしかしたら"},{"id":2723,"page":2,"search":"もっと もっと"},{"id":2756,"page":2,"search":"やって来る やってくる"},{"id":2760,"page":2,"search":"やっと やっと"},{"id":2761,"page":2,"search":"漸と やっと"},{"id":2762,"page":2,"search":"やっぱり やっぱり"},{"id":2763,"page":2,"search":"矢っ張り やっぱり"},{"id":2785,"page":2,"search":"やる やる"},{"id":2786,"page":2,"search":"遣る やる"},{"id":2802,"page":2,"search":"ゆっくり ゆっくり"},{"id":12983,"page":2,"search":"テレビ テレビ"},{"id":16314,"page":2,"search":"パン パン"},{"id":23394,"page":2,"search":"愛 あい"},{"id":23401,"page":2,"search":"愛する あいする"},{"id":23500,"page":2,"search":"挨拶 あいさつ"},{"id":23523,"page":2,"search":"悪い わるい"},{"id":23898,"page":2,"search":"悪魔 あくま"},{"id":23961,"page":2,"search":"握る にぎる"},{"id":24168,"page":2,"search":"扱う あつかう"},{"id":24244,"page":2,"search":"安心 あんしん"},{"id":24255,"page":2,"search":"安全 あんぜん"},{"id":24327,"page":2,"search":"暗い くらい"},{"id":24331,"page":2,"search":"くらい くらい"},{"id":24427,"page":2,"search":"案内 あんない"},{"id":24440,"page":2,"search":"闇 やみ"},{"id":24467,"page":2,"search":"以外 いがい"},{"id":24472,"page":2,"search":"以上 いじょう"},{"id":24477,"page":2,"search":"以前 いぜん"},{"id":24484,"page":2,"search":"以来 いらい"},{"id":24559,"page":2,"search":"依頼 いらい"},{"id":24578,"page":2,"search":"偉い えらい"},{"id":24612,"page":2,"search":"囲む かこむ"},{"id":24686,"page":2,"search":"意外 いがい"},{"id":24720,"page":2,"search":"意見 いけん"},{"id":24725,"page":2,"search":"意志 いし"},{"id":24741,"page":2,"search":"意識 いしき"},{"id":24761,"page":2,"search":"意味 いみ"},{"id":24798,"page":2,"search":"椅子 いす"},{"id":24801,"page":2,"search":"為 ため"},{"id":24802,"page":2,"search":"爲 ため"},{"id":24803,"page":2,"search":"為め ため"},{"id":24833,"page":2,"search":"する する"},{"id":24834,"page":2,"search":"為る する"},{"id":24963,"page":2,"search":"異常 いじょう"},{"id":25053,"page":2,"search":"移動 いどう"},{"id":25120,"page":2,"search":"違い ちがい"},{"id":25121,"page":2,"search":"違う ちがう"},{"id":25442,"page":2,"search":"育つ そだつ"},{"id":25445,"page":2,"search":"育てる そだてる"},{"id":25485,"page":2,"search":"一 いち"},{"id":25496,"page":2,"search":"一つ ひとつ"},{"id":25563,"page":2,"search":"一応 いちおう"},{"id":25662,"page":2,"search":"一気に いっきに"},{"id":25938,"page":2,"search":"一瞬 いっしゅん"},{"id":25944,"page":2,"search":"一緒 いっしょ"},{"id":26075,"page":2,"search":"ちょっと ちょっと"},{"id":26076,"page":2,"search":"一寸 ちょっと"},{"id":26077,"page":2,"search":"鳥渡 ちょっと"},{"id":26081,"page":2,"search":"チョット チョット"},{"id":26083,"page":2,"search":"チョッと チョッと"},{"id":26126,"page":2,"search":"一切 いっさい"},{"id":26189,"page":2,"search":"一体 いったい"},{"id":26394,"page":2,"search":"一杯 いっぱい"},{"id":26395,"page":2,"search":"１杯 いっぱい"},{"id":26396,"page":2,"search":"一盃 いっぱい"},{"id":26451,"page":2,"search":"一番 いちばん"},{"id":26490,"page":2,"search":"一部 いちぶ"},{"id":26544,"page":2,"search":"一方 いっぽう"},{"id":26717,"page":2,"search":"溢れる あふれる"},{"id":26907,"page":2,"search":"印象 いんしょう"},{"id":26943,"page":2,"search":"よる よる"},{"id":26944,"page":2,"search":"依る よる"},{"id":26945,"page":2,"search":"因る よる"},{"id":26946,"page":2,"search":"拠る よる"},{"id":26947,"page":2,"search":"由る よる"},{"id":27114,"page":2,"search":"引く ひく"},{"id":27302,"page":2,"search":"飲む のむ"},{"id":27449,"page":2,"search":"隠す かくす"},{"id":27454,"page":3,"search":"隠れる かくれる"},{"id":27537,"page":3,"search":"右 みぎ"},{"id":27715,"page":3,"search":"雨 あめ"},{"id":27816,"page":3,"search":"嘘 うそ"},{"id":27893,"page":3,"search":"噂 うわさ"},{"id":27908,"page":3,"search":"運ぶ はこぶ"},{"id":27973,"page":3,"search":"運命 うんめい"},{"id":28090,"page":3,"search":"影響 えいきょう"},{"id":28099,"page":3,"search":"映る うつる"},{"id":28190,"page":3,"search":"永遠 えいえん"},{"id":28308,"page":3,"search":"鋭い するどい"},{"id":28737,"page":3,"search":"炎 ほのお"},{"id":28906,"page":3,"search":"遠く とおく"},{"id":28994,"page":3,"search":"遠慮 えんりょ"},{"id":29172,"page":3,"search":"奥 おく"},{"id":29288,"page":3,"search":"応援 おうえん"},{"id":29472,"page":3,"search":"押す おす"},{"id":29490,"page":3,"search":"横 よこ"},{"id":29730,"page":3,"search":"殴る なぐる"},{"id":29747,"page":3,"search":"王国 おうこく"},{"id":29750,"page":3,"search":"王子 おうじ"},{"id":30199,"page":3,"search":"穏やか おだやか"},{"id":30293,"page":3,"search":"下 した"},{"id":30295,"page":3,"search":"下がる さがる"},{"id":30299,"page":3,"search":"下げる さげる"},{"id":30311,"page":3,"search":"下さい ください"},{"id":30451,"page":3,"search":"下手 へた"},{"id":30790,"page":3,"search":"仮に かりに"},{"id":31090,"page":3,"search":"何だか なんだか"},{"id":31104,"page":3,"search":"何とか なんとか"},{"id":31137,"page":3,"search":"何より なにより"},{"id":31186,"page":3,"search":"いつ いつ"},{"id":31187,"page":3,"search":"何時 いつ"},{"id":31189,"page":3,"search":"何時か いつか"},{"id":31195,"page":3,"search":"いつの間にか いつのまにか"},{"id":31201,"page":3,"search":"いつまでも いつまでも"},{"id":31202,"page":3,"search":"何時までも いつまでも"},{"id":31205,"page":3,"search":"何時も いつも"},{"id":31266,"page":3,"search":"どうぞ どうぞ"},{"id":31301,"page":3,"search":"どちら どちら"},{"id":31302,"page":3,"search":"何方 どちら"},{"id":31351,"page":3,"search":"価値 かち"},{"id":31411,"page":3,"search":"加える くわえる"},{"id":31539,"page":3,"search":"おかしい おかしい"},{"id":31540,"page":3,"search":"可笑しい おかしい"},{"id":31570,"page":3,"search":"可能 かのう"},{"id":31605,"page":3,"search":"夏 なつ"},{"id":31661,"page":3,"search":"家 いえ"},{"id":31662,"page":3,"search":"家 うち"},{"id":31715,"page":3,"search":"家族 かぞく"},{"id":31843,"page":3,"search":"果たす はたす"},{"id":31897,"page":3,"search":"歌 うた"},{"id":31979,"page":3,"search":"火 ひ"},{"id":32084,"page":3,"search":"火曜日 かようび"},{"id":32126,"page":3,"search":"花 はな"},{"id":32283,"page":3,"search":"荷物 にもつ"},{"id":32359,"page":3,"search":"過ぎる すぎる"},{"id":32362,"page":3,"search":"過ごす すごす"},{"id":32368,"page":3,"search":"過去 かこ"},{"id":32571,"page":3,"search":"我慢 がまん"},{"id":32822,"page":3,"search":"会う あう"},{"id":32999,"page":3,"search":"会話 かいわ"},{"id":33001,"page":3,"search":"解く とく"},{"id":33009,"page":3,"search":"解決 かいけつ"},{"id":33053,"page":3,"search":"解放 かいほう"},{"id":33062,"page":3,"search":"回 かい"},{"id":33065,"page":3,"search":"回す まわす"},{"id":33141,"page":3,"search":"回復 かいふく"},{"id":33173,"page":3,"search":"壊す こわす"},{"id":33176,"page":3,"search":"壊れる こわれる"},{"id":33232,"page":3,"search":"怪我 けが"},{"id":33292,"page":3,"search":"懐かしい なつかしい"},{"id":33351,"page":3,"search":"改めて あらためて"},{"id":33414,"page":3,"search":"海 うみ"},{"id":33664,"page":3,"search":"皆 みんな"},{"id":33666,"page":3,"search":"皆さん みなさん"},{"id":33695,"page":3,"search":"絵 え"},{"id":33773,"page":3,"search":"開く ひらく"},{"id":33775,"page":3,"search":"開ける あける"},{"id":33819,"page":3,"search":"開始 かいし"},{"id":33865,"page":3,"search":"階段 かいだん"},{"id":33882,"page":3,"search":"外 そと"},{"id":33884,"page":3,"search":"他 ほか"},{"id":33886,"page":3,"search":"外す はずす"},{"id":33887,"page":3,"search":"他に ほかに"},{"id":33891,"page":3,"search":"外れる はずれる"},{"id":34349,"page":3,"search":"確かめる たしかめる"},{"id":34356,"page":3,"search":"確実 かくじつ"},{"id":34364,"page":3,"search":"確信 かくしん"},{"id":34367,"page":3,"search":"確認 かくにん"},{"id":34389,"page":3,"search":"覚える おぼえる"},{"id":34398,"page":3,"search":"覚悟 かくご"},{"id":34458,"page":3,"search":"学ぶ まなぶ"},{"id":34466,"page":3,"search":"学園 がくえん"},{"id":34512,"page":3,"search":"学校 がっこう"},{"id":34556,"page":3,"search":"学生 がくせい"},{"id":34640,"page":3,"search":"楽 らく"},{"id":34642,"page":3,"search":"楽しい たのしい"},{"id":34652,"page":3,"search":"楽しむ たのしむ"},{"id":34723,"page":3,"search":"額 がく"},{"id":34748,"page":4,"search":"掛かる かかる"},{"id":34749,"page":4,"search":"掛る かかる"},{"id":34750,"page":4,"search":"懸かる かかる"},{"id":34751,"page":4,"search":"懸る かかる"},{"id":34756,"page":4,"search":"掛ける かける"},{"id":34925,"page":4,"search":"活動 かつどう"},{"id":35335,"page":4,"search":"寒い さむい"},{"id":35365,"page":4,"search":"勘違い かんちがい"},{"id":35491,"page":4,"search":"巻き込む まきこむ"},{"id":35549,"page":4,"search":"耐える たえる"},{"id":35554,"page":4,"search":"堪らない たまらない"},{"id":35575,"page":4,"search":"完成 かんせい"},{"id":35577,"page":4,"search":"完全 かんぜん"},{"id":35687,"page":4,"search":"感じ かんじ"},{"id":35688,"page":4,"search":"感じる かんじる"},{"id":35701,"page":4,"search":"感覚 かんかく"},{"id":35707,"page":4,"search":"感謝 かんしゃ"},{"id":35710,"page":4,"search":"感情 かんじょう"},{"id":35713,"page":4,"search":"感触 かんしょく"},{"id":35715,"page":4,"search":"感心 かんしん"},{"id":35749,"page":4,"search":"慣れる なれる"},{"id":35831,"page":4,"search":"汗 あせ"},{"id":35902,"page":4,"search":"甘い あまい"},{"id":35907,"page":4,"search":"甘える あまえる"},{"id":36034,"page":4,"search":"簡単 かんたん"},{"id":36189,"page":4,"search":"貫く つらぬく"},{"id":36210,"page":4,"search":"間 あいだ"},{"id":36212,"page":4,"search":"間 ま"},{"id":36214,"page":4,"search":"間に合う まにあう"},{"id":36224,"page":4,"search":"間違い まちがい"},{"id":36225,"page":4,"search":"間違える まちがえる"},{"id":36304,"page":4,"search":"関係 かんけい"},{"id":36465,"page":4,"search":"まるで まるで"},{"id":36466,"page":4,"search":"丸で まるで"},{"id":36577,"page":4,"search":"含む ふくむ"},{"id":36581,"page":4,"search":"含める ふくめる"},{"id":36696,"page":4,"search":"頑張る がんばる"},{"id":36699,"page":4,"search":"顔 かお"},{"id":36766,"page":4,"search":"願い ねがい"},{"id":36772,"page":4,"search":"願う ねがう"},{"id":36830,"page":4,"search":"危ない あぶない"},{"id":36864,"page":4,"search":"危険 きけん"},{"id":36904,"page":4,"search":"喜ぶ よろこぶ"},{"id":37029,"page":4,"search":"嬉しい うれしい"},{"id":37067,"page":4,"search":"寄る よる"},{"id":37118,"page":4,"search":"希望 きぼう"},{"id":37129,"page":4,"search":"幾ら いくら"},{"id":37169,"page":4,"search":"机 つくえ"},{"id":37192,"page":4,"search":"既に すでに"},{"id":37257,"page":4,"search":"期待 きたい"},{"id":37290,"page":4,"search":"機会 きかい"},{"id":37369,"page":4,"search":"帰る かえる"},{"id":37442,"page":4,"search":"気 き"},{"id":37516,"page":4,"search":"気に入る きにいる"},{"id":37811,"page":4,"search":"気配 けはい"},{"id":37838,"page":4,"search":"気分 きぶん"},{"id":37889,"page":4,"search":"祈る いのる"},{"id":37949,"page":4,"search":"記憶 きおく"},{"id":37995,"page":4,"search":"記録 きろく"},{"id":38014,"page":4,"search":"貴族 きぞく"},{"id":38022,"page":4,"search":"貴方 あなた"},{"id":38023,"page":4,"search":"貴女 あなた"},{"id":38024,"page":4,"search":"貴男 あなた"},{"id":38029,"page":4,"search":"起きる おきる"},{"id":38035,"page":4,"search":"起こす おこす"},{"id":38039,"page":4,"search":"起こる おこる"},{"id":38084,"page":4,"search":"輝く かがやく"},{"id":38112,"page":4,"search":"鬼 おに"},{"id":38276,"page":4,"search":"宜しい よろしい"},{"id":38325,"page":4,"search":"技 わざ"},{"id":38333,"page":4,"search":"技術 ぎじゅつ"},{"id":38392,"page":4,"search":"疑う うたがう"},{"id":38406,"page":4,"search":"疑問 ぎもん"},{"id":38592,"page":4,"search":"客 きゃく"},{"id":38644,"page":4,"search":"逆 ぎゃく"},{"id":38702,"page":4,"search":"久しぶり ひさしぶり"},{"id":38743,"page":4,"search":"休む やすむ"},{"id":38839,"page":4,"search":"吸う すう"},{"id":38892,"page":4,"search":"急 きゅう"},{"id":38907,"page":4,"search":"急ぐ いそぐ"},{"id":38957,"page":4,"search":"救う すくう"},{"id":39003,"page":4,"search":"求める もとめる"},{"id":39122,"page":4,"search":"泣く なく"},{"id":39503,"page":4,"search":"去る さる"},{"id":39508,"page":4,"search":"去年 きょねん"},{"id":39595,"page":4,"search":"巨大 きょだい"},{"id":39754,"page":4,"search":"許す ゆるす"},{"id":39758,"page":4,"search":"許可 きょか"},{"id":39762,"page":4,"search":"距離 きょり"},{"id":40249,"page":4,"search":"叫ぶ さけぶ"},{"id":40278,"page":4,"search":"強い つよい"},{"id":40294,"page":4,"search":"強引 ごういん"},{"id":40296,"page":4,"search":"強化 きょうか"},{"id":40360,"page":4,"search":"恐らく おそらく"},{"id":40373,"page":4,"search":"恐ろしい おそろしい"},{"id":40382,"page":4,"search":"恐怖 きょうふ"},{"id":40418,"page":4,"search":"教える おしえる"},{"id":40483,"page":4,"search":"教室 きょうしつ"},{"id":40587,"page":4,"search":"狭い せまい"},{"id":40614,"page":4,"search":"胸 むね"},{"id":40709,"page":5,"search":"興奮 こうふん"},{"id":40716,"page":5,"search":"興味 きょうみ"},{"id":40751,"page":5,"search":"鏡 かがみ"},{"id":40761,"page":5,"search":"響く ひびく"},{"id":40773,"page":5,"search":"驚き おどろき"},{"id":40776,"page":5,"search":"驚く おどろく"},{"id":41103,"page":5,"search":"僅か わずか"},{"id":41104,"page":5,"search":"纔か わずか"},{"id":41340,"page":5,"search":"緊張 きんちょう"},{"id":41399,"page":5,"search":"近い ちかい"},{"id":41473,"page":5,"search":"金 かね"},{"id":41583,"page":5,"search":"金曜日 きんようび"},{"id":41620,"page":5,"search":"九つ ここのつ"},{"id":41751,"page":5,"search":"苦しい くるしい"},{"id":41777,"page":5,"search":"苦手 にがて"},{"id":41806,"page":5,"search":"苦労 くろう"},{"id":41992,"page":5,"search":"空 そら"},{"id":42025,"page":5,"search":"空間 くうかん"},{"id":42027,"page":5,"search":"空気 くうき"},{"id":42154,"page":5,"search":"偶然 ぐうぜん"},{"id":42334,"page":5,"search":"繰り返す くりかえす"},{"id":42372,"page":5,"search":"君 きみ"},{"id":42375,"page":5,"search":"君 くん"},{"id":42410,"page":5,"search":"訓練 くんれん"},{"id":42440,"page":5,"search":"軍 ぐん"},{"id":42763,"page":5,"search":"兄 あに"},{"id":42793,"page":5,"search":"型 かた"},{"id":42812,"page":5,"search":"契約 けいやく"},{"id":42818,"page":5,"search":"形 かたち"},{"id":42902,"page":5,"search":"携帯 けいたい"},{"id":42931,"page":5,"search":"景色 けしき"},{"id":42974,"page":5,"search":"経つ たつ"},{"id":43057,"page":5,"search":"経験 けいけん"},{"id":43405,"page":5,"search":"計画 けいかく"},{"id":43446,"page":5,"search":"警戒 けいかい"},{"id":43457,"page":5,"search":"警察 けいさつ"},{"id":43483,"page":5,"search":"軽い かるい"},{"id":43653,"page":5,"search":"迎える むかえる"},{"id":43723,"page":5,"search":"撃つ うつ"},{"id":43766,"page":5,"search":"隙間 すきま"},{"id":43866,"page":5,"search":"決して けっして"},{"id":43886,"page":5,"search":"決める きめる"},{"id":43897,"page":5,"search":"決意 けつい"},{"id":43935,"page":5,"search":"穴 あな"},{"id":43980,"page":5,"search":"結ぶ むすぶ"},{"id":43982,"page":5,"search":"結果 けっか"},{"id":43986,"page":5,"search":"結局 けっきょく"},{"id":43989,"page":5,"search":"結構 けっこう"},{"id":43992,"page":5,"search":"結婚 けっこん"},{"id":44030,"page":5,"search":"血 ち"},{"id":44087,"page":5,"search":"月 つき"},{"id":44163,"page":5,"search":"月曜日 げつようび"},{"id":44407,"page":5,"search":"硬い かたい"},{"id":44408,"page":5,"search":"固い かたい"},{"id":44430,"page":5,"search":"嫌い きらい"},{"id":44431,"page":5,"search":"嫌う きらう"},{"id":44484,"page":5,"search":"建物 たてもの"},{"id":44521,"page":5,"search":"捲る まくる"},{"id":44659,"page":5,"search":"犬 いぬ"},{"id":44700,"page":5,"search":"研究 けんきゅう"},{"id":44806,"page":5,"search":"肩 かた"},{"id":44839,"page":5,"search":"見える みえる"},{"id":44852,"page":5,"search":"見せる みせる"},{"id":44868,"page":5,"search":"見る みる"},{"id":44889,"page":5,"search":"見下ろす みおろす"},{"id":44941,"page":5,"search":"見事 みごと"},{"id":44951,"page":5,"search":"見守る みまもる"},{"id":44961,"page":5,"search":"見上げる みあげる"},{"id":44983,"page":5,"search":"見送る みおくる"},{"id":45107,"page":5,"search":"鍵 かぎ"},{"id":45171,"page":5,"search":"元気 げんき"},{"id":45256,"page":5,"search":"原因 げんいん"},{"id":45445,"page":5,"search":"厳しい きびしい"},{"id":45573,"page":5,"search":"減る へる"},{"id":45639,"page":5,"search":"現れる あらわれる"},{"id":45669,"page":5,"search":"現在 げんざい"},{"id":45677,"page":5,"search":"現実 げんじつ"},{"id":45685,"page":5,"search":"現場 げんば"},{"id":45687,"page":5,"search":"現状 げんじょう"},{"id":45743,"page":5,"search":"言い出す いいだす"},{"id":45830,"page":5,"search":"言い方 いいかた"},{"id":45883,"page":5,"search":"言葉 ことば"},{"id":45910,"page":5,"search":"限る かぎる"},{"id":45911,"page":5,"search":"限界 げんかい"},{"id":45974,"page":5,"search":"古い ふるい"},{"id":46183,"page":5,"search":"呼び出す よびだす"},{"id":46212,"page":5,"search":"呼ぶ よぶ"},{"id":46218,"page":5,"search":"呼吸 こきゅう"},{"id":46226,"page":5,"search":"固まる かたまる"},{"id":46330,"page":5,"search":"戸惑う とまどう"},{"id":46511,"page":5,"search":"五 ご"},{"id":46520,"page":5,"search":"五つ いつつ"},{"id":46662,"page":5,"search":"午後 ごご"},{"id":46682,"page":5,"search":"くれる くれる"},{"id":46683,"page":5,"search":"呉れる くれる"},{"id":46734,"page":5,"search":"後 あと"},{"id":46748,"page":5,"search":"後ろ うしろ"},{"id":46768,"page":5,"search":"後悔 こうかい"},{"id":47002,"page":5,"search":"ご飯 ごはん"},{"id":47021,"page":5,"search":"御免 ごめん"},{"id":47022,"page":6,"search":"ご免 ごめん"},{"id":47023,"page":6,"search":"ゴメン ゴメン"},{"id":47075,"page":6,"search":"お礼 おれい"},{"id":47114,"page":6,"search":"語る かたる"},{"id":47163,"page":6,"search":"誤解 ごかい"},{"id":47397,"page":6,"search":"光 ひかり"},{"id":47403,"page":6,"search":"光る ひかる"},{"id":47428,"page":6,"search":"光景 こうけい"},{"id":47717,"page":6,"search":"効果 こうか"},{"id":47800,"page":6,"search":"口 くち"},{"id":48017,"page":6,"search":"向く むく"},{"id":48019,"page":6,"search":"向ける むける"},{"id":48024,"page":6,"search":"向こう むこう"},{"id":48094,"page":6,"search":"好き すき"},{"id":48232,"page":6,"search":"広い ひろい"},{"id":48357,"page":6,"search":"慌てる あわてる"},{"id":48410,"page":6,"search":"攻撃 こうげき"},{"id":48431,"page":6,"search":"更に さらに"},{"id":48482,"page":6,"search":"構う かまう"},{"id":48713,"page":6,"search":"考え かんがえ"},{"id":48716,"page":6,"search":"考える かんがえる"},{"id":48868,"page":6,"search":"行為 こうい"},{"id":48889,"page":6,"search":"いきなり いきなり"},{"id":48890,"page":6,"search":"行き成り いきなり"},{"id":48913,"page":6,"search":"行動 こうどう"},{"id":49032,"page":6,"search":"降る ふる"},{"id":49084,"page":6,"search":"高い たかい"},{"id":49284,"page":6,"search":"合う あう"},{"id":49295,"page":6,"search":"合わせる あわせる"},{"id":49526,"page":6,"search":"告げる つげる"},{"id":49547,"page":6,"search":"告白 こくはく"},{"id":49961,"page":6,"search":"黒 くろ"},{"id":49963,"page":6,"search":"黒い くろい"},{"id":50240,"page":6,"search":"腰 こし"},{"id":50289,"page":6,"search":"骨 ほね"},{"id":50337,"page":6,"search":"込める こめる"},{"id":50346,"page":6,"search":"ここ ここ"},{"id":50347,"page":6,"search":"此処 ここ"},{"id":50348,"page":6,"search":"此所 ここ"},{"id":50349,"page":6,"search":"是 ここ"},{"id":50350,"page":6,"search":"茲 ここ"},{"id":50351,"page":6,"search":"爰 ここ"},{"id":50356,"page":6,"search":"今 いま"},{"id":50386,"page":6,"search":"今回 こんかい"},{"id":50394,"page":6,"search":"今後 こんご"},{"id":50395,"page":6,"search":"今更 いまさら"},{"id":50432,"page":6,"search":"今度 こんど"},{"id":50458,"page":6,"search":"今夜 こんや"},{"id":50470,"page":6,"search":"困る こまる"},{"id":50634,"page":6,"search":"混乱 こんらん"},{"id":50665,"page":6,"search":"左 ひだり"},{"id":50666,"page":6,"search":"左右 さゆう"},{"id":50712,"page":6,"search":"差 さ"},{"id":50754,"page":6,"search":"差し出す さしだす"},{"id":50875,"page":6,"search":"座る すわる"},{"id":50963,"page":6,"search":"再び ふたたび"},{"id":51153,"page":6,"search":"最も もっとも"},{"id":51158,"page":6,"search":"最悪 さいあく"},{"id":51164,"page":6,"search":"最強 さいきょう"},{"id":51165,"page":6,"search":"最近 さいきん"},{"id":51171,"page":6,"search":"最後 さいご"},{"id":51176,"page":6,"search":"最高 さいこう"},{"id":51202,"page":6,"search":"最初 さいしょ"},{"id":51228,"page":6,"search":"最早 もはや"},{"id":51229,"page":6,"search":"最大 さいだい"},{"id":51246,"page":6,"search":"妻 つま"},{"id":51308,"page":6,"search":"才能 さいのう"},{"id":51370,"page":6,"search":"済みません すみません"},{"id":51373,"page":6,"search":"済む すむ"},{"id":51462,"page":6,"search":"細い ほそい"},{"id":51576,"page":6,"search":"際 さい"},{"id":51600,"page":6,"search":"有る ある"},{"id":51601,"page":6,"search":"在る ある"},{"id":51634,"page":6,"search":"罪 つみ"},{"id":51800,"page":6,"search":"作業 さぎょう"},{"id":51832,"page":6,"search":"作戦 さくせん"},{"id":52016,"page":6,"search":"察する さっする"},{"id":52086,"page":6,"search":"殺す ころす"},{"id":52271,"page":6,"search":"三つ みっつ"},{"id":52671,"page":6,"search":"参る まいる"},{"id":52676,"page":6,"search":"参加 さんか"},{"id":52854,"page":6,"search":"山 やま"},{"id":53233,"page":6,"search":"暫く しばらく"},{"id":53234,"page":6,"search":"暫らく しばらく"},{"id":53235,"page":6,"search":"姑く しばらく"},{"id":53236,"page":6,"search":"須臾 しばらく"},{"id":53242,"page":6,"search":"残り のこり"},{"id":53248,"page":6,"search":"残る のこる"},{"id":53298,"page":6,"search":"残念 ざんねん"},{"id":53363,"page":6,"search":"仕事 しごと"},{"id":53587,"page":6,"search":"使う つかう"},{"id":53621,"page":6,"search":"使用 しよう"},{"id":53751,"page":6,"search":"四つ よっつ"},{"id":53831,"page":6,"search":"始まる はじまる"},{"id":53839,"page":6,"search":"始める はじめる"},{"id":53852,"page":6,"search":"姉 あね"},{"id":53872,"page":6,"search":"姿 すがた"},{"id":53881,"page":6,"search":"子 こ"},{"id":53897,"page":6,"search":"子供 こども"},{"id":54123,"page":6,"search":"思い出す おもいだす"},{"id":54169,"page":7,"search":"思わず おもわず"},{"id":54179,"page":7,"search":"思考 しこう"},{"id":54195,"page":7,"search":"指 ゆび"},{"id":54222,"page":7,"search":"指示 しじ"},{"id":54262,"page":7,"search":"支える ささえる"},{"id":54289,"page":7,"search":"支配 しはい"},{"id":54311,"page":7,"search":"上手い うまい"},{"id":54350,"page":7,"search":"止まる とまる"},{"id":54365,"page":7,"search":"止める とめる"},{"id":54368,"page":7,"search":"止める やめる"},{"id":54376,"page":7,"search":"死 し"},{"id":54377,"page":7,"search":"死ぬ しぬ"},{"id":54406,"page":7,"search":"死体 したい"},{"id":54441,"page":7,"search":"私 わたし"},{"id":54469,"page":7,"search":"私たち わたしたち"},{"id":54526,"page":7,"search":"紙 かみ"},{"id":54583,"page":7,"search":"至る いたる"},{"id":54720,"page":7,"search":"試す ためす"},{"id":55064,"page":7,"search":"事 こと"},{"id":55101,"page":7,"search":"事件 じけん"},{"id":55103,"page":7,"search":"事故 じこ"},{"id":55117,"page":7,"search":"事実 じじつ"},{"id":55126,"page":7,"search":"事情 じじょう"},{"id":55213,"page":7,"search":"似る にる"},{"id":55234,"page":7,"search":"似合う にあう"},{"id":55429,"page":7,"search":"持ってくる もってくる"},{"id":55434,"page":7,"search":"持つ もつ"},{"id":55467,"page":7,"search":"時 とき"},{"id":55478,"page":7,"search":"時には ときには"},{"id":55486,"page":7,"search":"時間 じかん"},{"id":55501,"page":7,"search":"時期 じき"},{"id":55539,"page":7,"search":"時代 じだい"},{"id":55548,"page":7,"search":"次 つぎ"},{"id":55654,"page":7,"search":"示す しめす"},{"id":55662,"page":7,"search":"耳 みみ"},{"id":55691,"page":7,"search":"自ら みずから"},{"id":55720,"page":7,"search":"自覚 じかく"},{"id":55801,"page":7,"search":"自信 じしん"},{"id":55804,"page":7,"search":"自身 じしん"},{"id":55815,"page":7,"search":"自然 しぜん"},{"id":55900,"page":7,"search":"自分 じぶん"},{"id":55912,"page":7,"search":"自由 じゆう"},{"id":55976,"page":7,"search":"式 しき"},{"id":55995,"page":7,"search":"七 しち"},{"id":55998,"page":7,"search":"七 なな"},{"id":56005,"page":7,"search":"七つ ななつ"},{"id":56110,"page":7,"search":"失う うしなう"},{"id":56165,"page":7,"search":"失敗 しっぱい"},{"id":56279,"page":7,"search":"質問 しつもん"},{"id":56295,"page":7,"search":"実は じつは"},{"id":56373,"page":7,"search":"実際 じっさい"},{"id":56475,"page":7,"search":"実力 じつりょく"},{"id":56565,"page":7,"search":"写真 しゃしん"},{"id":56698,"page":7,"search":"捨てる すてる"},{"id":56939,"page":7,"search":"者 もの"},{"id":56943,"page":7,"search":"謝る あやまる"},{"id":56953,"page":7,"search":"車 くるま"},{"id":57031,"page":7,"search":"邪魔 じゃま"},{"id":57043,"page":7,"search":"借りる かりる"},{"id":57165,"page":7,"search":"若い わかい"},{"id":57208,"page":7,"search":"弱い よわい"},{"id":57270,"page":7,"search":"主 おも"},{"id":57593,"page":7,"search":"取り出す とりだす"},{"id":57666,"page":7,"search":"取り戻す とりもどす"},{"id":57685,"page":7,"search":"取る とる"},{"id":57686,"page":7,"search":"取れる とれる"},{"id":57713,"page":7,"search":"守る まもる"},{"id":57729,"page":7,"search":"手 て"},{"id":57822,"page":7,"search":"手紙 てがみ"},{"id":57887,"page":7,"search":"手段 しゅだん"},{"id":57904,"page":7,"search":"手伝う てつだう"},{"id":58058,"page":7,"search":"種類 しゅるい"},{"id":58075,"page":7,"search":"趣味 しゅみ"},{"id":58076,"page":7,"search":"酒 さけ"},{"id":58212,"page":7,"search":"受ける うける"},{"id":58222,"page":7,"search":"受け止める うけとめる"},{"id":58225,"page":7,"search":"受け取る うけとる"},{"id":58234,"page":7,"search":"受け入れる うけいれる"},{"id":58322,"page":7,"search":"呪い のろい"},{"id":58369,"page":7,"search":"授業 じゅぎょう"},{"id":58395,"page":7,"search":"収まる おさまる"},{"id":58534,"page":7,"search":"周囲 しゅうい"},{"id":58779,"page":7,"search":"拾う ひろう"},{"id":58787,"page":7,"search":"秋 あき"},{"id":58805,"page":7,"search":"終える おえる"},{"id":58842,"page":7,"search":"終了 しゅうりょう"},{"id":58909,"page":7,"search":"襲う おそう"},{"id":58937,"page":7,"search":"集まる あつまる"},{"id":58939,"page":7,"search":"集める あつめる"},{"id":58963,"page":7,"search":"集中 しゅうちゅう"},{"id":59035,"page":7,"search":"住む すむ"},{"id":59211,"page":7,"search":"十分 じゅうぶん"},{"id":59240,"page":7,"search":"従う したがう"},{"id":59263,"page":7,"search":"従兄 いとこ"},{"id":59265,"page":7,"search":"従兄弟 いとこ"},{"id":59269,"page":7,"search":"従姉 いとこ"},{"id":59271,"page":7,"search":"従姉妹 いとこ"},{"id":59302,"page":7,"search":"従弟 いとこ"},{"id":59309,"page":7,"search":"従妹 いとこ"},{"id":59349,"page":7,"search":"獣 けもの"},{"id":59403,"page":8,"search":"重い おもい"},{"id":59413,"page":8,"search":"重ねる かさねる"},{"id":59549,"page":8,"search":"重要 じゅうよう"},{"id":59784,"page":8,"search":"出す だす"},{"id":59795,"page":8,"search":"出る でる"},{"id":60114,"page":8,"search":"出来る できる"},{"id":60150,"page":8,"search":"出来事 できごと"},{"id":60233,"page":8,"search":"春 はる"},{"id":60269,"page":8,"search":"瞬間 しゅんかん"},{"id":60349,"page":8,"search":"準備 じゅんび"},{"id":60501,"page":8,"search":"始め はじめ"},{"id":60503,"page":8,"search":"初めて はじめて"},{"id":60584,"page":8,"search":"所 ところ"},{"id":60585,"page":8,"search":"処 ところ"},{"id":60769,"page":8,"search":"書く かく"},{"id":60879,"page":8,"search":"助かる たすかる"},{"id":60882,"page":8,"search":"助ける たすける"},{"id":60975,"page":8,"search":"女 おんな"},{"id":60978,"page":8,"search":"女の子 おんなのこ"},{"id":61017,"page":8,"search":"女子 じょし"},{"id":61042,"page":8,"search":"女性 じょせい"},{"id":61103,"page":8,"search":"そろそろ そろそろ"},{"id":61104,"page":8,"search":"ソロソロ ソロソロ"},{"id":61193,"page":8,"search":"勝手 かって"},{"id":61197,"page":8,"search":"勝負 しょうぶ"},{"id":61198,"page":8,"search":"勝利 しょうり"},{"id":61444,"page":8,"search":"将来 しょうらい"},{"id":61460,"page":8,"search":"小さい ちいさい"},{"id":61662,"page":8,"search":"少し すこし"},{"id":61670,"page":8,"search":"少ない すくない"},{"id":61727,"page":8,"search":"少年 しょうねん"},{"id":61743,"page":8,"search":"尚 なお"},{"id":61744,"page":8,"search":"猶 なお"},{"id":61745,"page":8,"search":"尚お なお"},{"id":61746,"page":8,"search":"猶お なお"},{"id":61769,"page":8,"search":"床 ゆか"},{"id":61879,"page":8,"search":"消える きえる"},{"id":61892,"page":8,"search":"消す けす"},{"id":62041,"page":8,"search":"焼く やく"},{"id":62101,"page":8,"search":"焦る あせる"},{"id":62179,"page":8,"search":"笑い わらい"},{"id":62205,"page":8,"search":"笑う わらう"},{"id":62212,"page":8,"search":"笑顔 えがお"},{"id":62217,"page":8,"search":"紹介 しょうかい"},{"id":62230,"page":8,"search":"衝撃 しょうげき"},{"id":62248,"page":8,"search":"証拠 しょうこ"},{"id":62268,"page":8,"search":"証明 しょうめい"},{"id":62279,"page":8,"search":"詳しい くわしい"},{"id":62343,"page":8,"search":"上 うえ"},{"id":62361,"page":8,"search":"上がる あがる"},{"id":62368,"page":8,"search":"上げる あげる"},{"id":62898,"page":8,"search":"乗る のる"},{"id":63022,"page":8,"search":"冗談 じょうだん"},{"id":63048,"page":8,"search":"城 しろ"},{"id":63057,"page":8,"search":"場 ば"},{"id":63060,"page":8,"search":"場合 ばあい"},{"id":63064,"page":8,"search":"場所 ばしょ"},{"id":63077,"page":8,"search":"常に つねに"},{"id":63139,"page":8,"search":"情報 じょうほう"},{"id":63158,"page":8,"search":"条件 じょうけん"},{"id":63201,"page":8,"search":"状況 じょうきょう"},{"id":63206,"page":8,"search":"状態 じょうたい"},{"id":63385,"page":8,"search":"色 いろ"},{"id":63450,"page":8,"search":"触る さわる"},{"id":63452,"page":8,"search":"触れる ふれる"},{"id":63537,"page":8,"search":"食べる たべる"},{"id":63571,"page":8,"search":"食事 しょくじ"},{"id":63628,"page":8,"search":"伸びる のびる"},{"id":63663,"page":8,"search":"信じる しんじる"},{"id":63762,"page":8,"search":"信用 しんよう"},{"id":63775,"page":8,"search":"信頼 しんらい"},{"id":63813,"page":8,"search":"唇 くちびる"},{"id":63830,"page":8,"search":"寝る ねる"},{"id":63963,"page":8,"search":"心 こころ"},{"id":64023,"page":8,"search":"心臓 しんぞう"},{"id":64057,"page":8,"search":"心配 しんぱい"},{"id":64125,"page":8,"search":"振り向く ふりむく"},{"id":64152,"page":8,"search":"振り返る ふりかえる"},{"id":64168,"page":8,"search":"振る ふる"},{"id":64199,"page":8,"search":"新しい あたらしい"},{"id":64202,"page":8,"search":"新た あらた"},{"id":64349,"page":8,"search":"森 もり"},{"id":64377,"page":8,"search":"深い ふかい"},{"id":64464,"page":8,"search":"申す もうす"},{"id":64500,"page":8,"search":"真っ赤 まっか"},{"id":64582,"page":8,"search":"まさか まさか"},{"id":64583,"page":8,"search":"真逆 まさか"},{"id":64611,"page":8,"search":"真剣 しんけん"},{"id":64636,"page":8,"search":"真似 まね"},{"id":64647,"page":8,"search":"真実 しんじつ"},{"id":64799,"page":8,"search":"真面目 まじめ"},{"id":64822,"page":8,"search":"神 かみ"},{"id":65024,"page":8,"search":"神様 かみさま"},{"id":65048,"page":8,"search":"親 おや"},{"id":65131,"page":8,"search":"身 み"},{"id":65201,"page":8,"search":"辛い からい"},{"id":65202,"page":8,"search":"辛い つらい"},{"id":65225,"page":8,"search":"進む すすむ"},{"id":65226,"page":8,"search":"進める すすめる"},{"id":65268,"page":8,"search":"震える ふるえる"},{"id":65281,"page":9,"search":"人 じん"},{"id":65332,"page":9,"search":"人間 にんげん"},{"id":65367,"page":9,"search":"人気 にんき"},{"id":65396,"page":9,"search":"人形 にんぎょう"},{"id":65592,"page":9,"search":"人生 じんせい"},{"id":65719,"page":9,"search":"人物 じんぶつ"},{"id":65862,"page":9,"search":"尋ねる たずねる"},{"id":66128,"page":9,"search":"水 みず"},{"id":66295,"page":9,"search":"水曜日 すいようび"},{"id":66361,"page":9,"search":"遂に ついに"},{"id":66362,"page":9,"search":"終に ついに"},{"id":66363,"page":9,"search":"竟に ついに"},{"id":66416,"page":9,"search":"随分 ずいぶん"},{"id":66654,"page":9,"search":"世界 せかい"},{"id":66792,"page":9,"search":"凄い すごい"},{"id":66853,"page":9,"search":"制服 せいふく"},{"id":66865,"page":9,"search":"勢い いきおい"},{"id":66917,"page":9,"search":"性格 せいかく"},{"id":66972,"page":9,"search":"成る なる"},{"id":66973,"page":9,"search":"為る なる"},{"id":66989,"page":9,"search":"成功 せいこう"},{"id":67001,"page":9,"search":"成長 せいちょう"},{"id":67004,"page":9,"search":"なるほど なるほど"},{"id":67005,"page":9,"search":"成る程 なるほど"},{"id":67049,"page":9,"search":"整える ととのえる"},{"id":67072,"page":9,"search":"星 ほし"},{"id":67149,"page":9,"search":"正しい ただしい"},{"id":67152,"page":9,"search":"正に まさに"},{"id":67165,"page":9,"search":"正解 せいかい"},{"id":67167,"page":9,"search":"正確 せいかく"},{"id":67262,"page":9,"search":"正体 しょうたい"},{"id":67269,"page":9,"search":"正直 しょうじき"},{"id":67468,"page":9,"search":"生きる いきる"},{"id":67486,"page":9,"search":"生き物 いきもの"},{"id":67506,"page":9,"search":"生まれる うまれる"},{"id":67555,"page":9,"search":"生活 せいかつ"},{"id":67664,"page":9,"search":"生徒 せいと"},{"id":67771,"page":9,"search":"精神 せいしん"},{"id":67941,"page":9,"search":"声 こえ"},{"id":68093,"page":9,"search":"青い あおい"},{"id":68242,"page":9,"search":"静か しずか"},{"id":68360,"page":9,"search":"席 せき"},{"id":68373,"page":9,"search":"昔 むかし"},{"id":68381,"page":9,"search":"石 いし"},{"id":68486,"page":9,"search":"つもり つもり"},{"id":68487,"page":9,"search":"積もり つもり"},{"id":68488,"page":9,"search":"積り つもり"},{"id":68511,"page":9,"search":"責める せめる"},{"id":68515,"page":9,"search":"責任 せきにん"},{"id":68525,"page":9,"search":"赤い あかい"},{"id":68622,"page":9,"search":"切り きり"},{"id":68885,"page":9,"search":"切る きる"},{"id":68890,"page":9,"search":"切れる きれる"},{"id":69205,"page":9,"search":"説明 せつめい"},{"id":69213,"page":9,"search":"雪 ゆき"},{"id":69305,"page":9,"search":"絶対 ぜったい"},{"id":69349,"page":9,"search":"絶望 ぜつぼう"},{"id":69359,"page":9,"search":"舌 した"},{"id":69407,"page":9,"search":"先ず まず"},{"id":69420,"page":9,"search":"先に さきに"},{"id":69526,"page":9,"search":"先生 せんせい"},{"id":69555,"page":9,"search":"先ほど さきほど"},{"id":69573,"page":9,"search":"先日 せんじつ"},{"id":69589,"page":9,"search":"先輩 せんぱい"},{"id":69813,"page":9,"search":"宣言 せんげん"},{"id":69897,"page":9,"search":"川 かわ"},{"id":69976,"page":9,"search":"戦争 せんそう"},{"id":69998,"page":9,"search":"戦闘 せんとう"},{"id":70185,"page":9,"search":"洗う あらう"},{"id":70224,"page":9,"search":"染まる そまる"},{"id":70480,"page":9,"search":"選択 せんたく"},{"id":70530,"page":9,"search":"前 まえ"},{"id":70808,"page":9,"search":"ようやく ようやく"},{"id":70809,"page":9,"search":"漸く ようやく"},{"id":70849,"page":9,"search":"全く まったく"},{"id":70856,"page":9,"search":"全員 ぜんいん"},{"id":70941,"page":9,"search":"全身 ぜんしん"},{"id":70966,"page":9,"search":"全然 ぜんぜん"},{"id":70972,"page":9,"search":"全体 ぜんたい"},{"id":71032,"page":9,"search":"全部 ぜんぶ"},{"id":71068,"page":9,"search":"全力 ぜんりょく"},{"id":71107,"page":9,"search":"狙う ねらう"},{"id":71269,"page":9,"search":"素晴らしい すばらしい"},{"id":71283,"page":9,"search":"素直 すなお"},{"id":71284,"page":9,"search":"素敵 すてき"},{"id":71304,"page":9,"search":"組 くみ"},{"id":71342,"page":9,"search":"組む くむ"},{"id":71347,"page":9,"search":"組織 そしき"},{"id":71743,"page":9,"search":"想像 そうぞう"},{"id":71798,"page":9,"search":"掃除 そうじ"},{"id":71940,"page":9,"search":"早速 さっそく"},{"id":72125,"page":9,"search":"相手 あいて"},{"id":72187,"page":9,"search":"相談 そうだん"},{"id":72198,"page":9,"search":"相当 そうとう"},{"id":72209,"page":9,"search":"相変わらず あいかわらず"},{"id":72235,"page":9,"search":"窓 まど"},{"id":72522,"page":9,"search":"走る はしる"},{"id":72551,"page":9,"search":"送る おくる"},{"id":72598,"page":9,"search":"騒ぐ さわぐ"},{"id":72618,"page":9,"search":"増す ます"},{"id":72788,"page":10,"search":"側 そば"},{"id":72789,"page":10,"search":"傍 そば"},{"id":72888,"page":10,"search":"息 いき"},{"id":72901,"page":10,"search":"息子 むすこ"},{"id":72937,"page":10,"search":"足 あし"},{"id":72952,"page":10,"search":"足りる たりる"},{"id":72956,"page":10,"search":"足音 あしおと"},{"id":73004,"page":10,"search":"早い はやい"},{"id":73005,"page":10,"search":"速い はやい"},{"id":73024,"page":10,"search":"速度 そくど"},{"id":73115,"page":10,"search":"続く つづく"},{"id":73117,"page":10,"search":"続ける つづける"},{"id":73181,"page":10,"search":"揃う そろう"},{"id":73185,"page":10,"search":"存在 そんざい"},{"id":73270,"page":10,"search":"村 むら"},{"id":73370,"page":10,"search":"多い おおい"},{"id":73412,"page":10,"search":"多少 たしょう"},{"id":73439,"page":10,"search":"多分 たぶん"},{"id":73496,"page":10,"search":"太陽 たいよう"},{"id":73612,"page":10,"search":"打つ うつ"},{"id":73679,"page":10,"search":"駄目 だめ"},{"id":73682,"page":10,"search":"体 からだ"},{"id":73868,"page":10,"search":"体力 たいりょく"},{"id":73882,"page":10,"search":"対応 たいおう"},{"id":73952,"page":10,"search":"対象 たいしょう"},{"id":74078,"page":10,"search":"待つ まつ"},{"id":74112,"page":10,"search":"わざと わざと"},{"id":74113,"page":10,"search":"態と わざと"},{"id":74115,"page":10,"search":"態度 たいど"},{"id":74116,"page":10,"search":"頂きます いただきます"},{"id":74161,"page":10,"search":"袋 ふくろ"},{"id":74182,"page":10,"search":"貸す かす"},{"id":74512,"page":10,"search":"大きな おおきな"},{"id":74640,"page":10,"search":"大好き だいすき"},{"id":74673,"page":10,"search":"大事 だいじ"},{"id":74699,"page":10,"search":"大丈夫 だいじょうぶ"},{"id":74703,"page":10,"search":"大人 おとな"},{"id":74709,"page":10,"search":"大人しい おとなしい"},{"id":74738,"page":10,"search":"大切 たいせつ"},{"id":74763,"page":10,"search":"大体 だいたい"},{"id":74835,"page":10,"search":"大分 だいぶ"},{"id":74845,"page":10,"search":"大変 たいへん"},{"id":74873,"page":10,"search":"大量 たいりょう"},{"id":74892,"page":10,"search":"第一 だいいち"},{"id":74991,"page":10,"search":"沢山 たくさん"},{"id":75059,"page":10,"search":"叩く たたく"},{"id":75079,"page":10,"search":"奪う うばう"},{"id":75090,"page":10,"search":"脱ぐ ぬぐ"},{"id":75197,"page":10,"search":"誰 だれ"},{"id":75200,"page":10,"search":"誰か だれか"},{"id":75363,"page":10,"search":"単純 たんじゅん"},{"id":75549,"page":10,"search":"担当 たんとう"},{"id":75585,"page":10,"search":"探る さぐる"},{"id":75647,"page":10,"search":"短い みじかい"},{"id":75809,"page":10,"search":"弾く ひく"},{"id":75866,"page":10,"search":"断る ことわる"},{"id":75956,"page":10,"search":"男 おとこ"},{"id":75959,"page":10,"search":"男の子 おとこのこ"},{"id":75966,"page":10,"search":"男子 だんし"},{"id":75978,"page":10,"search":"男性 だんせい"},{"id":76028,"page":10,"search":"知る しる"},{"id":76056,"page":10,"search":"知識 ちしき"},{"id":76076,"page":10,"search":"地 ち"},{"id":76092,"page":10,"search":"地下 ちか"},{"id":76135,"page":10,"search":"地獄 じごく"},{"id":76146,"page":10,"search":"地上 ちじょう"},{"id":76199,"page":10,"search":"地面 じめん"},{"id":76225,"page":10,"search":"恥ずかしい はずかしい"},{"id":76273,"page":10,"search":"置く おく"},{"id":76277,"page":10,"search":"致す いたす"},{"id":76288,"page":10,"search":"遅い おそい"},{"id":76466,"page":10,"search":"着く つく"},{"id":76469,"page":10,"search":"着る きる"},{"id":76499,"page":10,"search":"着替える きがえる"},{"id":76526,"page":10,"search":"中 なか"},{"id":76545,"page":10,"search":"中央 ちゅうおう"},{"id":76709,"page":10,"search":"中心 ちゅうしん"},{"id":76882,"page":10,"search":"仲間 なかま"},{"id":76927,"page":10,"search":"仲良く なかよく"},{"id":77037,"page":10,"search":"注意 ちゅうい"},{"id":77217,"page":10,"search":"丁度 ちょうど"},{"id":77218,"page":10,"search":"恰度 ちょうど"},{"id":77219,"page":10,"search":"丁寧 ていねい"},{"id":77318,"page":10,"search":"張る はる"},{"id":77390,"page":10,"search":"朝 あさ"},{"id":77491,"page":10,"search":"眺める ながめる"},{"id":77539,"page":10,"search":"調べる しらべる"},{"id":77545,"page":10,"search":"調査 ちょうさ"},{"id":77551,"page":10,"search":"調子 ちょうし"},{"id":77647,"page":10,"search":"飛ぶ とぶ"},{"id":77653,"page":10,"search":"長 ちょう"},{"id":77654,"page":10,"search":"長い ながい"},{"id":77749,"page":10,"search":"鳥 とり"},{"id":77818,"page":10,"search":"直ぐ すぐ"},{"id":77868,"page":10,"search":"直後 ちょくご"},{"id":77891,"page":10,"search":"直接 ちょくせつ"},{"id":77976,"page":10,"search":"沈む しずむ"},{"id":78001,"page":10,"search":"沈黙 ちんもく"},{"id":78006,"page":10,"search":"珍しい めずらしい"},{"id":78155,"page":10,"search":"追う おう"},{"id":78198,"page":11,"search":"痛い いたい"},{"id":78227,"page":11,"search":"通う かよう"},{"id":78231,"page":11,"search":"通じる つうじる"},{"id":78234,"page":11,"search":"通す とおす"},{"id":78241,"page":11,"search":"通り とおり"},{"id":78264,"page":11,"search":"通る とおる"},{"id":78361,"page":11,"search":"掴む つかむ"},{"id":78403,"page":11,"search":"潰す つぶす"},{"id":78499,"page":11,"search":"低い ひくい"},{"id":78763,"page":11,"search":"底 そこ"},{"id":78777,"page":11,"search":"庭 にわ"},{"id":78792,"page":11,"search":"抵抗 ていこう"},{"id":78808,"page":11,"search":"提案 ていあん"},{"id":78846,"page":11,"search":"程度 ていど"},{"id":78878,"page":11,"search":"諦める あきらめる"},{"id":79007,"page":11,"search":"適当 てきとう"},{"id":79160,"page":11,"search":"天 てん"},{"id":79182,"page":11,"search":"天井 てんじょう"},{"id":79573,"page":11,"search":"展開 てんかい"},{"id":79635,"page":11,"search":"まとめる まとめる"},{"id":79636,"page":11,"search":"纏める まとめる"},{"id":79650,"page":11,"search":"転がる ころがる"},{"id":79745,"page":11,"search":"点 てん"},{"id":79747,"page":11,"search":"点く つく"},{"id":79870,"page":11,"search":"伝える つたえる"},{"id":79876,"page":11,"search":"伝わる つたわる"},{"id":80260,"page":11,"search":"電話 でんわ"},{"id":80284,"page":11,"search":"とにかく とにかく"},{"id":80285,"page":11,"search":"兎に角 とにかく"},{"id":80286,"page":11,"search":"左右 とにかく"},{"id":80290,"page":11,"search":"ともかく ともかく"},{"id":80291,"page":11,"search":"兎も角 ともかく"},{"id":80425,"page":11,"search":"渡す わたす"},{"id":80533,"page":11,"search":"努力 どりょく"},{"id":80537,"page":11,"search":"度 ど"},{"id":80630,"page":11,"search":"土曜日 どようび"},{"id":80637,"page":11,"search":"奴 やつ"},{"id":80643,"page":11,"search":"怒り いかり"},{"id":80644,"page":11,"search":"怒る おこる"},{"id":80664,"page":11,"search":"倒す たおす"},{"id":80669,"page":11,"search":"倒れる たおれる"},{"id":80719,"page":11,"search":"冬 ふゆ"},{"id":80818,"page":11,"search":"島 しま"},{"id":80885,"page":11,"search":"投げる なげる"},{"id":81219,"page":11,"search":"当たり前 あたりまえ"},{"id":81231,"page":11,"search":"当たる あたる"},{"id":81247,"page":11,"search":"当てる あてる"},{"id":81323,"page":11,"search":"当時 とうじ"},{"id":81345,"page":11,"search":"当然 とうぜん"},{"id":81409,"page":11,"search":"答え こたえ"},{"id":81414,"page":11,"search":"答える こたえる"},{"id":81456,"page":11,"search":"到着 とうちゃく"},{"id":81537,"page":11,"search":"踏む ふむ"},{"id":81548,"page":11,"search":"逃げる にげる"},{"id":81564,"page":11,"search":"逃げ出す にげだす"},{"id":81697,"page":11,"search":"働く はたらく"},{"id":81699,"page":11,"search":"動かす うごかす"},{"id":81700,"page":11,"search":"動き うごき"},{"id":81704,"page":11,"search":"動く うごく"},{"id":81758,"page":11,"search":"動揺 どうよう"},{"id":81779,"page":11,"search":"同じ おなじ"},{"id":81864,"page":11,"search":"同士 どうし"},{"id":82012,"page":11,"search":"同様 どうよう"},{"id":82100,"page":11,"search":"道 みち"},{"id":82121,"page":11,"search":"道具 どうぐ"},{"id":82213,"page":11,"search":"特に とくに"},{"id":82258,"page":11,"search":"特殊 とくしゅ"},{"id":82293,"page":11,"search":"特別 とくべつ"},{"id":82325,"page":11,"search":"毒 どく"},{"id":82550,"page":11,"search":"読む よむ"},{"id":82844,"page":11,"search":"突っ込む つっこむ"},{"id":82880,"page":11,"search":"突然 とつぜん"},{"id":82918,"page":11,"search":"届く とどく"},{"id":82920,"page":11,"search":"届ける とどける"},{"id":83531,"page":11,"search":"内容 ないよう"},{"id":83612,"page":11,"search":"謎 なぞ"},{"id":83797,"page":11,"search":"難しい むずかしい"},{"id":83877,"page":11,"search":"二 に"},{"id":83901,"page":11,"search":"二つ ふたつ"},{"id":84316,"page":11,"search":"肉 にく"},{"id":84338,"page":11,"search":"肉体 にくたい"},{"id":84368,"page":11,"search":"日 ひ"},{"id":84475,"page":11,"search":"日本語 にほんご"},{"id":84527,"page":11,"search":"日曜日 にちようび"},{"id":84642,"page":11,"search":"入る はいる"},{"id":84645,"page":11,"search":"入れる いれる"},{"id":84862,"page":11,"search":"どうして どうして"},{"id":84863,"page":11,"search":"如何して どうして"},{"id":84865,"page":11,"search":"どうしても どうしても"},{"id":84866,"page":11,"search":"如何しても どうしても"},{"id":84911,"page":11,"search":"任せる まかせる"},{"id":84967,"page":11,"search":"認める みとめる"},{"id":84969,"page":11,"search":"認識 にんしき"},{"id":84981,"page":11,"search":"濡れる ぬれる"},{"id":84985,"page":11,"search":"猫 ねこ"},{"id":84998,"page":11,"search":"熱 ねつ"},{"id":84999,"page":11,"search":"熱い あつい"},{"id":85048,"page":11,"search":"年 とし"},{"id":85285,"page":11,"search":"燃える もえる"},{"id":85336,"page":11,"search":"悩む なやむ"},{"id":85366,"page":12,"search":"納得 なっとく"},{"id":85408,"page":12,"search":"能力 のうりょく"},{"id":85578,"page":12,"search":"派手 はで"},{"id":85589,"page":12,"search":"破壊 はかい"},{"id":85644,"page":12,"search":"馬 うま"},{"id":85918,"page":12,"search":"背中 せなか"},{"id":85931,"page":12,"search":"背負う せおう"},{"id":86078,"page":12,"search":"買う かう"},{"id":86160,"page":12,"search":"売る うる"},{"id":86379,"page":12,"search":"白 しろ"},{"id":86380,"page":12,"search":"白い しろい"},{"id":86488,"page":12,"search":"薄い うすい"},{"id":86524,"page":12,"search":"迫る せまる"},{"id":86552,"page":12,"search":"爆発 ばくはつ"},{"id":86779,"page":12,"search":"発する はっする"},{"id":86825,"page":12,"search":"発見 はっけん"},{"id":86835,"page":12,"search":"発言 はつげん"},{"id":86916,"page":12,"search":"発生 はっせい"},{"id":87006,"page":12,"search":"髪 かみ"},{"id":87075,"page":12,"search":"抜く ぬく"},{"id":87077,"page":12,"search":"抜ける ぬける"},{"id":87182,"page":12,"search":"判断 はんだん"},{"id":87354,"page":12,"search":"半分 はんぶん"},{"id":87394,"page":12,"search":"反応 はんのう"},{"id":87460,"page":12,"search":"反対 はんたい"},{"id":87631,"page":12,"search":"犯人 はんにん"},{"id":87693,"page":12,"search":"範囲 はんい"},{"id":87698,"page":12,"search":"煩い うるさい"},{"id":87699,"page":12,"search":"五月蝿い うるさい"},{"id":87700,"page":12,"search":"五月蠅い うるさい"},{"id":87966,"page":12,"search":"否定 ひてい"},{"id":87976,"page":12,"search":"彼 かれ"},{"id":87985,"page":12,"search":"彼女 かのじょ"},{"id":87986,"page":12,"search":"あいつ あいつ"},{"id":87987,"page":12,"search":"彼奴 あいつ"},{"id":87995,"page":12,"search":"悲しい かなしい"},{"id":88025,"page":12,"search":"悲鳴 ひめい"},{"id":88029,"page":12,"search":"扉 とびら"},{"id":88055,"page":12,"search":"比べる くらべる"},{"id":88082,"page":12,"search":"疲れる つかれる"},{"id":88174,"page":12,"search":"秘密 ひみつ"},{"id":88315,"page":12,"search":"非常 ひじょう"},{"id":88356,"page":12,"search":"飛ばす とばす"},{"id":88391,"page":12,"search":"飛び出す とびだす"},{"id":88539,"page":12,"search":"微妙 びみょう"},{"id":88565,"page":12,"search":"美しい うつくしい"},{"id":88589,"page":12,"search":"美人 びじん"},{"id":88606,"page":12,"search":"美味しい おいしい"},{"id":88616,"page":12,"search":"鼻 はな"},{"id":88706,"page":12,"search":"膝 ひざ"},{"id":88736,"page":12,"search":"必ず かならず"},{"id":88766,"page":12,"search":"必要 ひつよう"},{"id":88985,"page":12,"search":"氷 こおり"},{"id":89039,"page":12,"search":"漂う ただよう"},{"id":89095,"page":12,"search":"表情 ひょうじょう"},{"id":89140,"page":12,"search":"評価 ひょうか"},{"id":89173,"page":12,"search":"病院 びょういん"},{"id":89174,"page":12,"search":"病気 びょうき"},{"id":89332,"page":12,"search":"不安 ふあん"},{"id":89395,"page":12,"search":"不可能 ふかのう"},{"id":89559,"page":12,"search":"不思議 ふしぎ"},{"id":89655,"page":12,"search":"ふと ふと"},{"id":89656,"page":12,"search":"不図 ふと"},{"id":89657,"page":12,"search":"不斗 ふと"},{"id":89930,"page":12,"search":"不満 ふまん"},{"id":89935,"page":12,"search":"不味い まずい"},{"id":90055,"page":12,"search":"付く つく"},{"id":90062,"page":12,"search":"付ける つける"},{"id":90346,"page":12,"search":"布 ぬの"},{"id":90398,"page":12,"search":"普段 ふだん"},{"id":90399,"page":12,"search":"普通 ふつう"},{"id":90451,"page":12,"search":"浮かぶ うかぶ"},{"id":90495,"page":12,"search":"父 ちち"},{"id":90555,"page":12,"search":"負ける まける"},{"id":90611,"page":12,"search":"撫でる なでる"},{"id":90641,"page":12,"search":"武器 ぶき"},{"id":90802,"page":12,"search":"部屋 へや"},{"id":90805,"page":12,"search":"部下 ぶか"},{"id":90824,"page":12,"search":"部分 ぶぶん"},{"id":90852,"page":12,"search":"風 かぜ"},{"id":91031,"page":12,"search":"服 ふく"},{"id":91085,"page":12,"search":"腹 はら"},{"id":91121,"page":12,"search":"複雑 ふくざつ"},{"id":91182,"page":12,"search":"払う はらう"},{"id":91412,"page":12,"search":"物 もの"},{"id":91430,"page":12,"search":"物語 ものがたり"},{"id":91515,"page":12,"search":"分 ぶん"},{"id":91883,"page":12,"search":"雰囲気 ふんいき"},{"id":91923,"page":12,"search":"文句 もんく"},{"id":91941,"page":12,"search":"文字 もじ"},{"id":92185,"page":12,"search":"兵士 へいし"},{"id":92295,"page":12,"search":"平気 へいき"},{"id":92408,"page":12,"search":"平和 へいわ"},{"id":92467,"page":12,"search":"並ぶ ならぶ"},{"id":92472,"page":12,"search":"並べる ならべる"},{"id":92526,"page":12,"search":"閉じる とじる"},{"id":92635,"page":12,"search":"壁 かべ"},{"id":92660,"page":12,"search":"別 べつ"},{"id":92671,"page":12,"search":"別に べつに"},{"id":92822,"page":12,"search":"変 へん"},{"id":92824,"page":13,"search":"変える かえる"},{"id":92885,"page":13,"search":"変わる かわる"},{"id":92919,"page":13,"search":"変化 へんか"},{"id":93129,"page":13,"search":"片手 かたて"},{"id":93193,"page":13,"search":"辺り あたり"},{"id":93205,"page":13,"search":"返す かえす"},{"id":93217,"page":13,"search":"返事 へんじ"},{"id":93285,"page":13,"search":"勉強 べんきょう"},{"id":93415,"page":13,"search":"保つ たもつ"},{"id":93589,"page":13,"search":"捕まる つかまる"},{"id":93642,"page":13,"search":"歩く あるく"},{"id":93764,"page":13,"search":"暮らす くらす"},{"id":93774,"page":13,"search":"母 はは"},{"id":93881,"page":13,"search":"報告 ほうこく"},{"id":93978,"page":13,"search":"崩れる くずれる"},{"id":93984,"page":13,"search":"抱える かかえる"},{"id":94015,"page":13,"search":"放つ はなつ"},{"id":94088,"page":13,"search":"方 かた"},{"id":94089,"page":13,"search":"方 ほう"},{"id":94095,"page":13,"search":"方向 ほうこう"},{"id":94107,"page":13,"search":"方法 ほうほう"},{"id":94336,"page":13,"search":"訪れる おとずれる"},{"id":94381,"page":13,"search":"あくまで あくまで"},{"id":94382,"page":13,"search":"飽くまで あくまで"},{"id":94383,"page":13,"search":"飽く迄 あくまで"},{"id":94507,"page":13,"search":"忘れる わすれる"},{"id":94520,"page":13,"search":"忙しい いそがしい"},{"id":94533,"page":13,"search":"暴れる あばれる"},{"id":94575,"page":13,"search":"望む のぞむ"},{"id":94668,"page":13,"search":"防ぐ ふせぐ"},{"id":94866,"page":13,"search":"僕 ぼく"},{"id":94997,"page":13,"search":"殆ど ほとんど"},{"id":94998,"page":13,"search":"殆んど ほとんど"},{"id":94999,"page":13,"search":"幾ど ほとんど"},{"id":95013,"page":13,"search":"本 ほん"},{"id":95039,"page":13,"search":"本気 ほんき"},{"id":95088,"page":13,"search":"本人 ほんにん"},{"id":95129,"page":13,"search":"本当 ほんとう"},{"id":95140,"page":13,"search":"本日 ほんじつ"},{"id":95148,"page":13,"search":"本物 ほんもの"},{"id":95160,"page":13,"search":"本来 ほんらい"},{"id":95317,"page":13,"search":"魔法 まほう"},{"id":95401,"page":13,"search":"妹 いもうと"},{"id":95425,"page":13,"search":"毎日 まいにち"},{"id":95457,"page":13,"search":"また また"},{"id":95458,"page":13,"search":"又 また"},{"id":95459,"page":13,"search":"亦 また"},{"id":95460,"page":13,"search":"復 また"},{"id":95844,"page":13,"search":"満たす みたす"},{"id":95899,"page":13,"search":"満足 まんぞく"},{"id":95924,"page":13,"search":"味 あじ"},{"id":95931,"page":13,"search":"味わう あじわう"},{"id":95940,"page":13,"search":"味方 みかた"},{"id":95946,"page":13,"search":"未だ まだ"},{"id":95951,"page":13,"search":"まだまだ まだまだ"},{"id":95952,"page":13,"search":"未だ未だ まだまだ"},{"id":96090,"page":13,"search":"未来 みらい"},{"id":96164,"page":13,"search":"妙 みょう"},{"id":96302,"page":13,"search":"眠る ねむる"},{"id":96306,"page":13,"search":"夢 ゆめ"},{"id":96321,"page":13,"search":"無い ない"},{"id":96325,"page":13,"search":"無くなる なくなる"},{"id":96327,"page":13,"search":"無し なし"},{"id":96385,"page":13,"search":"無言 むごん"},{"id":96409,"page":13,"search":"無視 むし"},{"id":96411,"page":13,"search":"無事 ぶじ"},{"id":96495,"page":13,"search":"無駄 むだ"},{"id":96586,"page":13,"search":"無理 むり"},{"id":96629,"page":13,"search":"娘 むすめ"},{"id":96649,"page":13,"search":"名 な"},{"id":96709,"page":13,"search":"名前 なまえ"},{"id":96746,"page":13,"search":"命 いのち"},{"id":96775,"page":13,"search":"命令 めいれい"},{"id":96805,"page":13,"search":"明らか あきらか"},{"id":96809,"page":13,"search":"明るい あかるい"},{"id":96855,"page":13,"search":"迷う まよう"},{"id":96867,"page":13,"search":"迷惑 めいわく"},{"id":96893,"page":13,"search":"鳴る なる"},{"id":97022,"page":13,"search":"面倒 めんどう"},{"id":97034,"page":13,"search":"面白い おもしろい"},{"id":97192,"page":13,"search":"木 き"},{"id":97270,"page":13,"search":"木曜日 もくようび"},{"id":97282,"page":13,"search":"黙る だまる"},{"id":97408,"page":13,"search":"目覚める めざめる"},{"id":97431,"page":13,"search":"目指す めざす"},{"id":97455,"page":13,"search":"目的 もくてき"},{"id":97471,"page":13,"search":"目標 もくひょう"},{"id":97483,"page":13,"search":"目立つ めだつ"},{"id":97506,"page":13,"search":"勿論 もちろん"},{"id":97510,"page":13,"search":"もっとも もっとも"},{"id":97511,"page":13,"search":"尤も もっとも"},{"id":97515,"page":13,"search":"戻す もどす"},{"id":97521,"page":13,"search":"戻る もどる"},{"id":97528,"page":13,"search":"貰う もらう"},{"id":97550,"page":13,"search":"問う とう"},{"id":97552,"page":13,"search":"問題 もんだい"},{"id":97597,"page":13,"search":"夜 よる"},{"id":97873,"page":13,"search":"役 やく"},{"id":97874,"page":13,"search":"役に立つ やくにたつ"},{"id":97895,"page":13,"search":"約束 やくそく"},{"id":97898,"page":14,"search":"薬 くすり"},{"id":97990,"page":14,"search":"踊る おどる"},{"id":98056,"page":14,"search":"油断 ゆだん"},{"id":98092,"page":14,"search":"只 ただ"},{"id":98093,"page":14,"search":"唯 ただ"},{"id":98094,"page":14,"search":"徒 ただ"},{"id":98095,"page":14,"search":"但 ただ"},{"id":98096,"page":14,"search":"常 ただ"},{"id":98097,"page":14,"search":"タダ タダ"},{"id":98099,"page":14,"search":"唯一 ゆいいつ"},{"id":98107,"page":14,"search":"只今 ただいま"},{"id":98108,"page":14,"search":"ただ今 ただいま"},{"id":98109,"page":14,"search":"唯今 ただいま"},{"id":98119,"page":14,"search":"優しい やさしい"},{"id":98146,"page":14,"search":"優秀 ゆうしゅう"},{"id":98209,"page":14,"search":"勇気 ゆうき"},{"id":98272,"page":14,"search":"友人 ゆうじん"},{"id":98274,"page":14,"search":"友達 ともだち"},{"id":98419,"page":14,"search":"有難うございます ありがとうございます"},{"id":98420,"page":14,"search":"有り難うございます ありがとうございます"},{"id":98421,"page":14,"search":"有難う御座います ありがとうございます"},{"id":98422,"page":14,"search":"ありがとう御座います ありがとうございます"},{"id":98423,"page":14,"search":"有り難う御座います ありがとうございます"},{"id":98539,"page":14,"search":"有難い ありがたい"},{"id":98540,"page":14,"search":"有り難い ありがたい"},{"id":98549,"page":14,"search":"有名 ゆうめい"},{"id":98598,"page":14,"search":"誘う さそう"},{"id":98636,"page":14,"search":"遊ぶ あそぶ"},{"id":98714,"page":14,"search":"昨夜 ゆうべ"},{"id":98766,"page":14,"search":"予感 よかん"},{"id":98818,"page":14,"search":"予想 よそう"},{"id":98850,"page":14,"search":"予定 よてい"},{"id":99078,"page":14,"search":"余計 よけい"},{"id":99224,"page":14,"search":"余裕 よゆう"},{"id":99266,"page":14,"search":"与える あたえる"},{"id":99329,"page":14,"search":"預ける あずける"},{"id":99341,"page":14,"search":"幼い おさない"},{"id":99453,"page":14,"search":"揺れる ゆれる"},{"id":99480,"page":14,"search":"様子 ようす"},{"id":99579,"page":14,"search":"用 よう"},{"id":99581,"page":14,"search":"用意 ようい"},{"id":99589,"page":14,"search":"用事 ようじ"},{"id":99645,"page":14,"search":"要る いる"},{"id":99741,"page":14,"search":"欲しい ほしい"},{"id":99800,"page":14,"search":"来る くる"},{"id":99863,"page":14,"search":"来月 らいげつ"},{"id":99940,"page":14,"search":"来年 らいねん"},{"id":99984,"page":14,"search":"頼む たのむ"},{"id":100022,"page":14,"search":"落ちる おちる"},{"id":100266,"page":14,"search":"利用 りよう"},{"id":100316,"page":14,"search":"理解 りかい"},{"id":100347,"page":14,"search":"理由 りゆう"},{"id":100351,"page":14,"search":"裏 うら"},{"id":100378,"page":14,"search":"裏切る うらぎる"},{"id":100449,"page":14,"search":"離す はなす"},{"id":100450,"page":14,"search":"離れる はなれる"},{"id":100546,"page":14,"search":"立ち上がる たちあがる"},{"id":100616,"page":14,"search":"立てる たてる"},{"id":100640,"page":14,"search":"立場 たちば"},{"id":100654,"page":14,"search":"立派 りっぱ"},{"id":100675,"page":14,"search":"ほぼ ほぼ"},{"id":100676,"page":14,"search":"略 ほぼ"},{"id":100677,"page":14,"search":"粗 ほぼ"},{"id":100701,"page":14,"search":"流す ながす"},{"id":100702,"page":14,"search":"流れ ながれ"},{"id":100703,"page":14,"search":"流れる ながれる"},{"id":100739,"page":14,"search":"流石 さすが"},{"id":100740,"page":14,"search":"遉 さすが"},{"id":100741,"page":14,"search":"有繋 さすが"},{"id":100742,"page":14,"search":"有繫 さすが"},{"id":100783,"page":14,"search":"溜まる たまる"},{"id":100784,"page":14,"search":"溜る たまる"},{"id":100879,"page":14,"search":"旅 たび"},{"id":100929,"page":14,"search":"了解 りょうかい"},{"id":101013,"page":14,"search":"両手 りょうて"},{"id":101151,"page":14,"search":"料理 りょうり"},{"id":101200,"page":14,"search":"量 りょう"},{"id":101228,"page":14,"search":"力 ちから"},{"id":101393,"page":14,"search":"隣 となり"},{"id":101411,"page":14,"search":"涙 なみだ"},{"id":101484,"page":14,"search":"例えば たとえば"},{"id":101528,"page":14,"search":"冷たい つめたい"},{"id":101576,"page":14,"search":"冷静 れいせい"},{"id":101810,"page":14,"search":"歴史 れきし"},{"id":101932,"page":14,"search":"恋 こい"},{"id":101998,"page":14,"search":"恋人 こいびと"},{"id":102077,"page":14,"search":"練習 れんしゅう"},{"id":102116,"page":14,"search":"連れる つれる"},{"id":102268,"page":14,"search":"連中 れんちゅう"},{"id":102325,"page":14,"search":"連絡 れんらく"},{"id":102524,"page":14,"search":"廊下 ろうか"},{"id":102860,"page":14,"search":"話す はなす"},{"id":102868,"page":14,"search":"話題 わだい"},{"id":102955,"page":14,"search":"腕 うで"},{"id":103521,"page":14,"search":"いずれ いずれ"},{"id":103522,"page":14,"search":"何れ いずれ"},{"id":103523,"page":14,"search":"孰れ いずれ"},{"id":103581,"page":14,"search":"ふざける ふざける"},{"id":103582,"page":14,"search":"巫山戯る ふざける"},{"id":104579,"page":14,"search":"舐める なめる"},{"id":105237,"page":15,"search":"頷く うなずく"},{"id":105662,"page":15,"search":"一言 ひとこと"},{"id":105721,"page":15,"search":"一生 いっしょう"},{"id":105733,"page":15,"search":"一度 いちど"},{"id":105914,"page":15,"search":"俺 おれ"},{"id":105929,"page":15,"search":"音 おと"},{"id":105977,"page":15,"search":"何故 なぜ"},{"id":105980,"page":15,"search":"何処 どこ"},{"id":105981,"page":15,"search":"何所 どこ"},{"id":105982,"page":15,"search":"何處 どこ"},{"id":106001,"page":15,"search":"可愛い かわいい"},{"id":106026,"page":15,"search":"暇 ひま"},{"id":106253,"page":15,"search":"いる いる"},{"id":106254,"page":15,"search":"居る いる"},{"id":106258,"page":15,"search":"魚 さかな"},{"id":106302,"page":15,"search":"九 きゅう"},{"id":106502,"page":15,"search":"行く いく"},{"id":106585,"page":15,"search":"頃 ころ"},{"id":106591,"page":15,"search":"今朝 けさ"},{"id":106593,"page":15,"search":"今日 きょう"},{"id":106597,"page":15,"search":"今年 ことし"},{"id":106606,"page":15,"search":"魂 たましい"},{"id":106627,"page":15,"search":"昨日 きのう"},{"id":106651,"page":15,"search":"三 さん"},{"id":106694,"page":15,"search":"四 し"},{"id":106697,"page":15,"search":"四 よん"},{"id":106758,"page":15,"search":"寂しい さびしい"},{"id":106788,"page":15,"search":"十 じゅう"},{"id":106918,"page":15,"search":"傷 きず"},{"id":106932,"page":15,"search":"少女 しょうじょ"},{"id":107039,"page":15,"search":"真っ直ぐ まっすぐ"},{"id":107066,"page":15,"search":"人 ひと"},{"id":107068,"page":15,"search":"人々 ひとびと"},{"id":107113,"page":15,"search":"数 かず"},{"id":107233,"page":15,"search":"かつて かつて"},{"id":107234,"page":15,"search":"嘗て かつて"},{"id":107235,"page":15,"search":"曽て かつて"},{"id":107236,"page":15,"search":"都て かつて"},{"id":107305,"page":15,"search":"他人 たにん"},{"id":107440,"page":15,"search":"弟 おとうと"},{"id":107458,"page":15,"search":"敵 てき"},{"id":107495,"page":15,"search":"店 みせ"},{"id":107525,"page":15,"search":"途中 とちゅう"},{"id":107557,"page":15,"search":"頭 あたま"},{"id":107666,"page":15,"search":"日本 にほん"},{"id":107686,"page":15,"search":"入り口 いりぐち"},{"id":107712,"page":15,"search":"この この"},{"id":107713,"page":15,"search":"此の この"},{"id":107714,"page":15,"search":"斯の この"},{"id":107770,"page":15,"search":"八 はち"},{"id":107776,"page":15,"search":"八つ やっつ"},{"id":107836,"page":15,"search":"いいえ いいえ"},{"id":107838,"page":15,"search":"避ける さける"},{"id":107885,"page":15,"search":"描く えがく"},{"id":107887,"page":15,"search":"描く かく"},{"id":108040,"page":15,"search":"包む つつむ"},{"id":108070,"page":15,"search":"頬 ほお"},{"id":108113,"page":15,"search":"毎月 まいつき"},{"id":108116,"page":15,"search":"毎年 まいとし"},{"id":108136,"page":15,"search":"万 まん"},{"id":108205,"page":15,"search":"明日 あした"},{"id":108219,"page":15,"search":"面 めん"},{"id":108244,"page":15,"search":"門 もん"},{"id":108277,"page":15,"search":"余り あまり"},{"id":108278,"page":15,"search":"餘り あまり"},{"id":108384,"page":15,"search":"例 れい"},{"id":108403,"page":15,"search":"六 ろく"},{"id":108412,"page":15,"search":"六つ むっつ"},{"id":108481,"page":15,"search":"箱 はこ"},{"id":108722,"page":15,"search":"空く すく"},{"id":108723,"page":15,"search":"開く あく"},{"id":108724,"page":15,"search":"空く あく"},{"id":108785,"page":15,"search":"足元 あしもと"},{"id":108905,"page":15,"search":"怪しい あやしい"},{"id":109009,"page":15,"search":"言い訳 いいわけ"},{"id":109016,"page":15,"search":"言う いう"},{"id":109109,"page":15,"search":"頂く いただく"},{"id":109111,"page":15,"search":"痛み いたみ"},{"id":109113,"page":15,"search":"位置 いち"},{"id":109207,"page":15,"search":"今まで いままで"},{"id":109214,"page":15,"search":"嫌 いや"},{"id":109219,"page":15,"search":"嫌々 いやいや"},{"id":109220,"page":15,"search":"嫌嫌 いやいや"},{"id":109221,"page":15,"search":"厭々 いやいや"},{"id":109222,"page":15,"search":"厭厭 いやいや"},{"id":109223,"page":15,"search":"イヤイヤ イヤイヤ"},{"id":109237,"page":15,"search":"いよいよ いよいよ"},{"id":109238,"page":15,"search":"愈 いよいよ"},{"id":109239,"page":15,"search":"愈々 いよいよ"},{"id":109240,"page":15,"search":"弥々 いよいよ"},{"id":109241,"page":15,"search":"愈愈 いよいよ"},{"id":109242,"page":15,"search":"弥弥 いよいよ"},{"id":109300,"page":15,"search":"色々 いろいろ"},{"id":109389,"page":15,"search":"歌う うたう"},{"id":109518,"page":15,"search":"生む うむ"},{"id":109638,"page":15,"search":"選ぶ えらぶ"},{"id":109651,"page":15,"search":"得る える"},{"id":109678,"page":15,"search":"覆う おおう"},{"id":109695,"page":15,"search":"大きい おおきい"},{"id":109747,"page":15,"search":"遅れる おくれる"},{"id":109752,"page":16,"search":"行う おこなう"},{"id":109760,"page":16,"search":"押さえる おさえる"},{"id":109800,"page":16,"search":"恐れる おそれる"},{"id":109810,"page":16,"search":"落ち着く おちつく"},{"id":109825,"page":16,"search":"落とす おとす"},{"id":109863,"page":16,"search":"思い おもい"},{"id":109868,"page":16,"search":"思い出 おもいで"},{"id":109874,"page":16,"search":"思う おもう"},{"id":109915,"page":16,"search":"降りる おりる"},{"id":109916,"page":16,"search":"下りる おりる"},{"id":109949,"page":16,"search":"終わり おわり"},{"id":109952,"page":16,"search":"終わる おわる"},{"id":109991,"page":16,"search":"買い物 かいもの"},{"id":110029,"page":16,"search":"香り かおり"},{"id":110055,"page":16,"search":"関わる かかわる"},{"id":110203,"page":16,"search":"影 かげ"},{"id":110322,"page":16,"search":"格好 かっこう"},{"id":110348,"page":16,"search":"かなり かなり"},{"id":110349,"page":16,"search":"可也 かなり"},{"id":110350,"page":16,"search":"可成り かなり"},{"id":110510,"page":16,"search":"完璧 かんぺき"},{"id":110588,"page":16,"search":"効く きく"},{"id":110591,"page":16,"search":"聞く きく"},{"id":110602,"page":16,"search":"聞こえる きこえる"},{"id":110628,"page":16,"search":"傷つく きずつく"},{"id":110669,"page":16,"search":"気付く きづく"},{"id":110707,"page":16,"search":"決まる きまる"},{"id":110711,"page":16,"search":"気持ち きもち"},{"id":110803,"page":16,"search":"協力 きょうりょく"},{"id":110874,"page":16,"search":"綺麗 きれい"},{"id":110936,"page":16,"search":"食う くう"},{"id":110982,"page":16,"search":"国 くに"},{"id":110995,"page":16,"search":"首 くび"},{"id":111020,"page":16,"search":"悔しい くやしい"},{"id":111270,"page":16,"search":"越える こえる"},{"id":111411,"page":16,"search":"怖い こわい"},{"id":111475,"page":16,"search":"探す さがす"},{"id":111476,"page":16,"search":"捜す さがす"},{"id":111538,"page":16,"search":"様々 さまざま"},{"id":111609,"page":16,"search":"幸せ しあわせ"},{"id":111672,"page":16,"search":"刺激 しげき"},{"id":111737,"page":16,"search":"しっかり しっかり"},{"id":111738,"page":16,"search":"確り しっかり"},{"id":111739,"page":16,"search":"聢り しっかり"},{"id":111960,"page":16,"search":"少々 しょうしょう"},{"id":112000,"page":16,"search":"知り合い しりあい"},{"id":112055,"page":16,"search":"事態 じたい"},{"id":112170,"page":16,"search":"少なくとも すくなくとも"},{"id":112213,"page":16,"search":"全て すべて"},{"id":112357,"page":16,"search":"折角 せっかく"},{"id":112358,"page":16,"search":"切角 せっかく"},{"id":112564,"page":16,"search":"それぞれ それぞれ"},{"id":112565,"page":16,"search":"其れ其れ それぞれ"},{"id":112566,"page":16,"search":"夫れ夫れ それぞれ"},{"id":112662,"page":16,"search":"確か たしか"},{"id":112667,"page":16,"search":"戦い たたかい"},{"id":112672,"page":16,"search":"戦う たたかう"},{"id":112710,"page":16,"search":"立つ たつ"},{"id":112803,"page":16,"search":"頼る たよる"},{"id":113001,"page":16,"search":"捕まえる つかまえる"},{"id":113005,"page":16,"search":"付き合う つきあう"},{"id":113046,"page":16,"search":"作る つくる"},{"id":113195,"page":16,"search":"連れて行く つれていく"},{"id":113295,"page":16,"search":"出会う であう"},{"id":113303,"page":16,"search":"出かける でかける"},{"id":113426,"page":16,"search":"飛び込む とびこむ"},{"id":113451,"page":16,"search":"とりあえず とりあえず"},{"id":113452,"page":16,"search":"取りあえず とりあえず"},{"id":113453,"page":16,"search":"取り敢えず とりあえず"},{"id":113599,"page":16,"search":"直す なおす"},{"id":113603,"page":16,"search":"中々 なかなか"},{"id":113604,"page":16,"search":"中中 なかなか"},{"id":113605,"page":16,"search":"仲々 なかなか"},{"id":113606,"page":16,"search":"仲仲 なかなか"},{"id":113607,"page":16,"search":"却々 なかなか"},{"id":113608,"page":16,"search":"却却 なかなか"},{"id":113609,"page":16,"search":"中身 なかみ"},{"id":113621,"page":16,"search":"情けない なさけない"},{"id":113721,"page":16,"search":"何となく なんとなく"},{"id":113728,"page":16,"search":"匂い におい"},{"id":113898,"page":16,"search":"年齢 ねんれい"},{"id":113903,"page":16,"search":"残す のこす"},{"id":113908,"page":16,"search":"喉 のど"},{"id":113916,"page":16,"search":"伸ばす のばす"},{"id":113961,"page":16,"search":"飲み込む のみこむ"},{"id":114148,"page":16,"search":"激しい はげしい"},{"id":114154,"page":16,"search":"挟む はさむ"},{"id":114227,"page":16,"search":"話 はなし"},{"id":114351,"page":16,"search":"馬鹿 ばか"},{"id":114649,"page":16,"search":"必死 ひっし"},{"id":114651,"page":16,"search":"引っ張る ひっぱる"},{"id":114710,"page":16,"search":"酷い ひどい"},{"id":114735,"page":16,"search":"日々 ひび"},{"id":114818,"page":16,"search":"広がる ひろがる"},{"id":114822,"page":16,"search":"広げる ひろげる"},{"id":114849,"page":16,"search":"増える ふえる"},{"id":114928,"page":16,"search":"両親 りょうしん"},{"id":114963,"page":16,"search":"船 ふね"},{"id":115198,"page":16,"search":"褒める ほめる"},{"id":115354,"page":16,"search":"益々 ますます"},{"id":115355,"page":17,"search":"益 ますます"},{"id":115356,"page":17,"search":"増々 ますます"},{"id":115357,"page":17,"search":"増す増す ますます"},{"id":115358,"page":17,"search":"益益 ますます"},{"id":115359,"page":17,"search":"増増 ますます"},{"id":115381,"page":17,"search":"町 まち"},{"id":115518,"page":17,"search":"周り まわり"},{"id":115519,"page":17,"search":"回る まわる"},{"id":115610,"page":17,"search":"満ちる みちる"},{"id":115614,"page":17,"search":"見つかる みつかる"},{"id":115623,"page":17,"search":"見つける みつける"},{"id":115630,"page":17,"search":"見つめる みつめる"},{"id":115695,"page":17,"search":"向かう むかう"},{"id":115735,"page":17,"search":"寧ろ むしろ"},{"id":115736,"page":17,"search":"寧 むしろ"},{"id":115743,"page":17,"search":"目 め"},{"id":115888,"page":17,"search":"元々 もともと"},{"id":115900,"page":17,"search":"漏らす もらす"},{"id":115902,"page":17,"search":"漏れる もれる"},{"id":115977,"page":17,"search":"屋敷 やしき"},{"id":116025,"page":17,"search":"柔らかい やわらかい"},{"id":116114,"page":17,"search":"良く よく"},{"id":116115,"page":17,"search":"善く よく"},{"id":116116,"page":17,"search":"能く よく"},{"id":116117,"page":17,"search":"好く よく"},{"id":116118,"page":17,"search":"克く よく"},{"id":116385,"page":17,"search":"分かる わかる"},{"id":116401,"page":17,"search":"別れる わかれる"},{"id":116447,"page":17,"search":"わざわざ わざわざ"},{"id":116448,"page":17,"search":"態々 わざわざ"},{"id":116449,"page":17,"search":"態態 わざわざ"},{"id":116565,"page":17,"search":"我々 われわれ"},{"id":117264,"page":17,"search":"せい せい"},{"id":117265,"page":17,"search":"所為 せい"},{"id":117343,"page":17,"search":"点ける つける"},{"id":117349,"page":17,"search":"詰まり つまり"},{"id":117350,"page":17,"search":"詰り つまり"},{"id":117357,"page":17,"search":"連れて来る つれてくる"},{"id":117494,"page":17,"search":"何故か なぜか"},{"id":117499,"page":17,"search":"何で なんで"},{"id":117500,"page":17,"search":"何でも なんでも"},{"id":117586,"page":17,"search":"不意に ふいに"},{"id":117617,"page":17,"search":"本当に ほんとうに"},{"id":117628,"page":17,"search":"間違う まちがう"},{"id":117657,"page":17,"search":"見た目 みため"},{"id":117710,"page":17,"search":"申し訳ない もうしわけない"},{"id":117715,"page":17,"search":"もしも もしも"},{"id":117716,"page":17,"search":"若しも もしも"},{"id":117902,"page":17,"search":"その物 そのもの"},{"id":117903,"page":17,"search":"其の物 そのもの"},{"id":120609,"page":17,"search":"これ これ"},{"id":120610,"page":17,"search":"此れ これ"},{"id":120611,"page":17,"search":"是 これ"},{"id":120612,"page":17,"search":"之 これ"},{"id":120613,"page":17,"search":"維 これ"},{"id":120614,"page":17,"search":"惟 これ"},{"id":120767,"page":17,"search":"王 おう"},{"id":121386,"page":17,"search":"どうか どうか"},{"id":121387,"page":17,"search":"如何か どうか"},{"id":121860,"page":17,"search":"たまに たまに"},{"id":121861,"page":17,"search":"偶に たまに"},{"id":121862,"page":17,"search":"適に たまに"},{"id":166613,"page":17,"search":"多く おおく"},{"id":170931,"page":17,"search":"続き つづき"},{"id":174306,"page":17,"search":"どの どの"},{"id":174307,"page":17,"search":"何の どの"},{"id":179608,"page":17,"search":"他 た"},{"id":184904,"page":17,"search":"お互い おたがい"},{"id":185157,"page":17,"search":"あんなに あんなに"},{"id":189914,"page":17,"search":"下 もと"},{"id":190215,"page":17,"search":"もう一度 もういちど"},{"id":190217,"page":17,"search":"もう少し もうすこし"},{"id":190823,"page":17,"search":"そんなに そんなに"},{"id":191816,"page":17,"search":"赤 あか"},{"id":192112,"page":17,"search":"もうすぐ もうすぐ"},{"id":192113,"page":17,"search":"もう直ぐ もうすぐ"},{"id":193072,"page":17,"search":"時 じ"},{"id":193384,"page":17,"search":"番 ばん"},{"id":196082,"page":17,"search":"お願い おねがい"},{"id":205533,"page":17,"search":"年 ねん"},{"id":210674,"page":17,"search":"二度と にどと"},{"id":216162,"page":17,"search":"そう そう"},{"id":216163,"page":17,"search":"然う そう"},{"id":218291,"page":17,"search":"背 せ"},{"id":233172,"page":17,"search":"元 もと"},{"id":242159,"page":17,"search":"伯父さん おじさん"},{"id":242160,"page":17,"search":"叔父さん おじさん"},{"id":242161,"page":17,"search":"小父さん おじさん"},{"id":242162,"page":17,"search":"オジサン オジサン"},{"id":242163,"page":17,"search":"オジさん オジさん"},{"id":242164,"page":17,"search":"伯母さん おばさん"},{"id":242165,"page":17,"search":"叔母さん おばさん"},{"id":243256,"page":17,"search":"一度も いちども"},{"id":245235,"page":17,"search":"失礼します しつれいします"},{"id":310495,"page":17,"search":"吐く はく"},{"id":328960,"page":17,"search":"ぶつける ぶつける"},{"id":328961,"page":17,"search":"打付ける ぶつける"},{"id":344490,"page":17,"search":"いい いい"},{"id":344494,"page":17,"search":"実に じつに"},{"id":354927,"page":17,"search":"身体 しんたい"},{"id":365653,"page":18,"search":"抑える おさえる"},{"id":382241,"page":18,"search":"抱く だく"},{"id":383275,"page":18,"search":"如何 いかが"},{"id":385236,"page":18,"search":"何 なん"}];
+  const table = document.querySelector('.comparison-table');
+  const tableBody = table.querySelector('tbody');
+  const searchInput = document.querySelector('#term-search-input');
+  const searchStatus = document.querySelector('#term-search-status');
+  const pagers = [...document.querySelectorAll('.pagination')];
+  const toggles = [...document.querySelectorAll('[data-column-toggle]')];
+  const cache = new Map();
+  let currentPage = Math.min(pageCount, Math.max(1, Number(new URL(location.href).searchParams.get('page')) || 1));
+  let requestVersion = 0;
+
+  const normalize = (value) => value.normalize('NFKC').trim().toLocaleLowerCase('ja');
+  const htmlEscape = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[character]);
+  const pagePath = (page) => `data/page-${String(page).padStart(3, '0')}.html`;
+  const setLoading = () => { tableBody.innerHTML = '<tr class="loading-row"><td colspan="4">Загрузка…</td></tr>'; };
+  const getPage = async (page) => {
+    if (!cache.has(page)) cache.set(page, fetch(pagePath(page)).then((response) => {
+      if (!response.ok) throw new Error(`Page ${page} failed: ${response.status}`);
+      return response.text();
+    }));
+    return cache.get(page);
+  };
+  const syncColumns = () => {
+    const visible = toggles.filter((toggle) => toggle.checked);
+    if (!visible.length) { toggles[0].checked = true; return syncColumns(); }
+    table.style.setProperty('--visible-columns', String(visible.length));
+    table.style.minWidth = `${Math.max(420, visible.length * 420)}px`;
+    toggles.forEach((toggle) => {
+      document.querySelectorAll(`[data-compare-column="${toggle.dataset.columnToggle}"]`)
+        .forEach((cell) => { cell.hidden = !toggle.checked; });
+    });
+  };
+  const syncPagers = () => pagers.forEach((pager) => {
+    pager.hidden = Boolean(searchInput.value.trim());
+    const select = pager.querySelector('select');
+    select.value = String(currentPage);
+    pager.querySelector('[data-page-prev]').disabled = currentPage === 1;
+    pager.querySelector('[data-page-next]').disabled = currentPage === pageCount;
+  });
+  const showPage = async (page, pushState = true) => {
+    const version = ++requestVersion;
+    currentPage = Math.min(pageCount, Math.max(1, page));
+    searchInput.value = '';
+    setLoading();
+    syncPagers();
+    const content = await getPage(currentPage);
+    if (version !== requestVersion) return;
+    tableBody.innerHTML = content;
+    const first = (currentPage - 1) * PAGE_SIZE + 1;
+    const last = Math.min(totalCount, currentPage * PAGE_SIZE);
+    searchStatus.textContent = `${first}–${last} / ${totalCount}`;
+    syncColumns();
+    if (pushState) history.pushState({page: currentPage}, '', `?page=${currentPage}`);
+    scrollTo({top: 0, behavior: 'smooth'});
+  };
+  const showSearch = async () => {
+    const version = ++requestVersion;
+    const query = normalize(searchInput.value);
+    syncPagers();
+    if (!query) return showPage(currentPage, false);
+    const matches = terms.filter((term) => term.search.includes(query));
+    if (!matches.length) {
+      tableBody.innerHTML = '<tr class="loading-row"><td colspan="4">Ничего не найдено.</td></tr>';
+      searchStatus.textContent = `0 / ${totalCount}`;
+      return;
+    }
+    setLoading();
+    const shown = matches.slice(0, PAGE_SIZE);
+    const pages = [...new Set(shown.map((term) => term.page))];
+    const documents = await Promise.all(pages.map(async (page) => {
+      const template = document.createElement('template');
+      template.innerHTML = await getPage(page);
+      return template.content;
+    }));
+    if (version !== requestVersion) return;
+    const ids = new Set(shown.map((term) => String(term.id)));
+    const rows = documents.flatMap((document) => [...document.querySelectorAll('.comparison-row')])
+      .filter((row) => ids.has(row.dataset.termId));
+    const byId = new Map(rows.map((row) => [row.dataset.termId, row]));
+    tableBody.replaceChildren(...shown.map((term) => byId.get(String(term.id))).filter(Boolean));
+    searchStatus.textContent = matches.length > PAGE_SIZE
+      ? `${PAGE_SIZE} из ${matches.length} совпадений`
+      : `${matches.length} / ${totalCount}`;
+    syncColumns();
+  };
+
+  pagers.forEach((pager) => {
+    const select = pager.querySelector('select');
+    for (let page = 1; page <= pageCount; page += 1) {
+      const option = document.createElement('option');
+      option.value = String(page);
+      option.textContent = `Страница ${page} из ${pageCount}`;
+      select.append(option);
+    }
+    select.addEventListener('change', () => showPage(Number(select.value)));
+    pager.querySelector('[data-page-prev]').addEventListener('click', () => showPage(currentPage - 1));
+    pager.querySelector('[data-page-next]').addEventListener('click', () => showPage(currentPage + 1));
+  });
+  toggles.forEach((toggle) => toggle.addEventListener('change', syncColumns));
+  let searchTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(showSearch, 120);
+  });
+  addEventListener('popstate', () => showPage(Number(new URL(location.href).searchParams.get('page')) || 1, false));
+  showPage(currentPage, false).catch((error) => {
+    tableBody.innerHTML = `<tr class="loading-row"><td colspan="4">Не удалось загрузить страницу: ${htmlEscape(error.message)}</td></tr>`;
+  });
+})();
+</script>
+</body>
+</html>
