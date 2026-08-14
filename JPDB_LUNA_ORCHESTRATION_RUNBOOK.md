@@ -6,16 +6,16 @@ RUN-2 measure the time of the things you do.
 
 ## RUN-STOP — Current state (update when state changed)
 
-RUN-STOP-1 — Run 52 is complete in authoritative PostgreSQL with 366,368 frozen articles, 1,792,978 accepted units, zero unfinished leaf work, and verified export 58.
+RUN-STOP-1 — Run 53 is complete in authoritative PostgreSQL with 376,368 frozen articles, 1,831,593 accepted units, zero unfinished leaf work, and verified export 59.
 
-RUN-STOP-2 — The verified archive is `dist/jitendex-articles-366368-ru-luna-v4.zip`. Its SHA-256 is `2e8390e3f3d71032d042d1c4662ccd19e03e51483845a3b81ba0219f8450b287`.
-RUN-STOP-3 — Run 52 is the latest completed 10,000-article checkpoint. The standing full-corpus goal authorizes continuing from it.
+RUN-STOP-2 — The verified archive is `dist/jitendex-articles-376368-ru-luna-v4.zip`. Its SHA-256 is `c62358ab73758f42bd5fbc93d01fb84ef854a395fe58b061116fc8130f415e2a`.
+RUN-STOP-3 — Run 53 is the latest completed 10,000-article checkpoint. It has 374,108 translated headwords and 57,437 remaining. The standing full-corpus goal authorizes continuing from it.
 
 RUN-STOP-4 — PostgreSQL is authoritative. The old SQLite source is read-only migration evidence and must not receive production writes.
 
 RUN-STOP-5 — Concurrency 100 remains the proven future setting. The concurrency-110 fixed window reached 332.0 headwords per minute, 4.0% below concurrency 100, although it remained operationally clean.
 
-RUN-STOP-6 — Docker has about 2 GB free. Expand or migrate its PostgreSQL storage outside Documents before creating Run 53. Details are in [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md).
+RUN-STOP-6 — Docker's internal disk limit is 264 GB and its PostgreSQL filesystem has about 128 GB free. Its disk image remains under `~/Library/Containers`, outside Documents and iCloud.
 
 ## RUN-PIN — Pinned runtime
 
@@ -27,11 +27,11 @@ RUN-PIN-3 — Do not change the model, prompt, reasoning, validator, batching li
 
 ~~~bash
 export PYTHONPATH=src
-export JPDB_SOURCE_RUN_ID=49
+export JPDB_SOURCE_RUN_ID=53
 export JPDB_ADD_ARTICLES=10000
-export JPDB_TARGET_ARTICLES=346368
-export JPDB_SCOPE_LABEL=346368
-export JPDB_RUN_ID=50
+export JPDB_TARGET_ARTICLES=386368
+export JPDB_SCOPE_LABEL=386368
+export JPDB_RUN_ID=54
 ~~~
 
 ## RUN-PREFLIGHT — Protect production
@@ -44,8 +44,8 @@ RUN-PREFLIGHT-3 — Make and hash a PostgreSQL backup before creating the next r
 
 ~~~bash
 pg_dump -Fc "$JITENDEX_POSTGRES_URL" \
-  -f work/backups/jitendex-postgresql-before-346368.dump
-shasum -a 256 work/backups/jitendex-postgresql-before-346368.dump
+  -f work/backups/jitendex-postgresql-before-386368.dump
+shasum -a 256 work/backups/jitendex-postgresql-before-386368.dump
 ~~~
 
 RUN-PREFLIGHT-4 — Check live Codex usage status before the run and before each concurrency increase. The current account does not enforce a five-hour window; stop only on an actual quota or authentication boundary.
@@ -77,7 +77,7 @@ RUN-TUNE-2 — Use the production-safe online window command after its no-reques
 PYTHONPATH=src .venv/bin/python scripts/run_luna_online_window.py \
   --config config.luna.toml \
   --run-id "$JPDB_RUN_ID" \
-  --window-id "run${JPDB_RUN_ID}-c80-1" \
+  --window-id "run${JPDB_RUN_ID}-c100-1" \
   --concurrency 100 \
   --ramp-seconds 30 \
   --steady-seconds 90 \

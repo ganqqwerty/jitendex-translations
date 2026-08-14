@@ -2227,3 +2227,26 @@ SHA-256: 2e8390e3f3d71032d042d1c4662ccd19e03e51483845a3b81ba0219f8450b287
 ~~~
 
 HIST-ALL-366368-6 — Export 58 was verified. Run 52 is the latest completed checkpoint. Docker has about 2 GB free, so PostgreSQL storage must be expanded or safely migrated outside Documents before the next 10,000-article continuation.
+
+## HIST-ALL-376368 — 376,368-article continuation results
+
+HIST-ALL-376368-1 — Before Run 53, Docker's internal disk limit was raised from 128 GB to 264 GB. The disk image stayed under `~/Library/Containers`, outside Documents and iCloud. PostgreSQL had 130 GB free after restart and 128 GB free after the completed run. The pre-run backup is `work/backups/jitendex-postgresql-before-376368.dump`, SHA-256 `acc9930e34655562b0bd63c2f947ea3ea3a716bcf1818d268fff450ef6e18328`.
+
+HIST-ALL-376368-2 — Run 53 retained Run 52, added 10,000 source-ordered articles, reused 1,792,978 units, and translated 38,615 new units from 977 initial batches. Preparation took 177.96 seconds: source preflight 17.60, scope selection 17.13, extraction 31.97, reuse 75.26, batching 6.98, and verification 29.01 seconds. It passed every pre-Luna gate.
+
+HIST-ALL-376368-3 — Six full concurrency-100 windows completed 430 measured requests and 599 drain requests. Mean measured throughput was 268.86 headwords per minute, ranging from 233.32 as the scope emptied to 281.32. Peak runner memory was 203 MB and maximum database duty cycle was 6.29%. The measured windows recorded 24 validation rejections, 19 retries, and zero rate limits, timeouts, transport failures, database retries, claim collisions, stale leases, or lock waits.
+
+HIST-ALL-376368-4 — Two small retry windows recursively isolated validation failures. All terminal children validated through normal Luna responses, so no manual target repair was needed. The last seven requests finished during ramp; the telemetry wrapper reported that no measurement phase existed, but PostgreSQL proved zero ready, leased, active, terminal blocked leaves, or unresolved errors. The 45 blocked rows are preserved split-parent provenance.
+
+HIST-ALL-376368-5 — Acceptance took 5.30 seconds and validation took 17.85 seconds. All 1,831,593 units were accepted with zero membership mismatches or blocking issues. Build took 104.89 seconds and independent verification took 206.53 seconds with session-only 512 MB `work_mem` and parallel gather disabled. All 113 tests passed with two expected PostgreSQL integration skips. Run 53 took about 54 minutes from preparation start through verified export and tests.
+
+~~~text
+ZIP members:                339
+schema-validated banks:     116
+archive articles:       376,368
+translated headwords:   374,108
+headwords remaining:     57,437
+SHA-256: c62358ab73758f42bd5fbc93d01fb84ef854a395fe58b061116fc8130f415e2a
+~~~
+
+HIST-ALL-376368-6 — Export 59 was verified. Run 53 is the latest completed checkpoint. The next 10,000-article continuation targets 386,368 articles at concurrency 100.
