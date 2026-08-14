@@ -25,11 +25,12 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Assemble the public site
         run: |
-          mkdir -p _site/frequency
-          rsync -a --exclude='.openai/' --exclude='dist/' terra-luna-site/ _site/
+          mkdir -p _site/comparison _site/frequency
+          rsync -a site-home/ _site/
+          rsync -a --exclude='.openai/' --exclude='dist/' terra-luna-site/ _site/comparison/
           cp reports/frequency_dictionary_analysis/index.html _site/frequency/
           cp reports/frequency_dictionary_analysis/data.js _site/frequency/
-          find _site -type f -name '*.html' -exec sed -i 's|href="/|href="/jitendex-translations/|g' {} +
+          find _site/comparison -type f -name '*.html' -exec sed -i 's|href="/|href="/jitendex-translations/comparison/|g' {} +
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
