@@ -120,6 +120,8 @@ README-DB-5 — Use [JPDB_LUNA_ORCHESTRATION_RUNBOOK.md](JPDB_LUNA_ORCHESTRATION
 
 ## README-DEMO — Public demos
 
-README-DEMO-1 — The [translation comparison](https://ganqqwerty.github.io/jitendex-translations/) shows public samples from the completed dictionary batches.
+README-DEMO-1 — The [project home page](https://ganqqwerty.github.io/jitendex-translations/) introduces the Russian dictionary and links to its current downloads.
 
 README-DEMO-2 — The [frequency analysis](https://ganqqwerty.github.io/jitendex-translations/frequency/) shows the source-list coverage used to plan translation scopes.
+
+README-DEMO-3 — The [translation comparison](https://ganqqwerty.github.io/jitendex-translations/comparison/) shows public samples from the completed dictionary batches.
