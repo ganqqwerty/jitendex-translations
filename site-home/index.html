@@ -93,10 +93,6 @@
     .feature-no { color: var(--red); font-family: var(--serif); font-size: 17px; }
     .feature h3 { margin: 48px 0 12px; font-family: var(--serif); font-size: 28px; font-weight: 500; line-height: 1.1; }
     .feature p { margin: 0; color: var(--muted); font-size: 14px; }
-    .manifesto { overflow: hidden; background: var(--red); color: var(--white); }
-    .manifesto-inner { position: relative; padding: 96px 0; }
-    .manifesto-inner::after { content: "日本語"; position: absolute; right: -40px; bottom: -76px; color: rgba(255,255,255,.1); font-family: var(--serif); font-size: 190px; line-height: 1; white-space: nowrap; }
-    blockquote { position: relative; z-index: 1; max-width: 980px; margin: 0; font-family: var(--serif); font-size: clamp(36px, 6vw, 72px); line-height: 1.03; letter-spacing: -.045em; }
     .story-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 70px; }
     .story h3 { margin: 0 0 18px; font-family: var(--serif); font-size: 32px; font-weight: 500; }
     .story p { margin: 0 0 16px; color: #3f3c35; font-size: 17px; }
@@ -118,6 +114,7 @@
     .authors-lead a, .authors-thanks a { text-decoration-color: var(--red); text-decoration-thickness: 2px; text-underline-offset: 5px; }
     .authors-thanks { margin-top: 26px !important; color: #3f3c35; font-size: 16px; line-height: 1.7; }
     .author-character { margin: 0; transform: rotate(1.5deg); }
+    .author-character a { display: block; color: inherit; }
     .author-character img { display: block; width: 100%; height: auto; aspect-ratio: 1; border: 1px solid var(--ink); background: var(--white); box-shadow: 10px 10px 0 var(--yellow); object-fit: cover; }
     .author-character figcaption { margin-top: 16px; color: var(--muted); font-size: 12px; }
     footer { padding: 34px 0; color: var(--muted); font-size: 12px; }
@@ -207,15 +204,11 @@
       </div>
     </section>
 
-    <section class="manifesto" aria-labelledby="MANIFESTO-TITLE">
-      <div class="wrap manifesto-inner"><blockquote id="MANIFESTO-TITLE">Русскоязычная иммерсивная японистика наконец вылезла из бронзового века.</blockquote></div>
-    </section>
-
     <section class="wrap section" aria-labelledby="WHY-TITLE">
       <div class="section-head"><div class="kicker">Зачем это всё</div><h2 id="WHY-TITLE">Теперь не обязательно сначала учить английский, чтобы потом учить японский</h2></div>
       <div class="story roadmap">
         <h3>Что дальше?</h3>
-        <p>Пока без революций. Возможно, переведём топ-50 000 слов более дорогой моделью. Ещё хочется добавить дословные варианты фраз: нынешние переводы порой слишком литературные.</p>
+        <p>Возможно, переведём топ-50 000 слов более дорогой моделью. Ещё хочется добавить дословные варианты фраз: нынешние переводы порой слишком литературные.</p>
         <p>Сначала послушаем ваши впечатления и попробуем исправить реальные огрехи.</p>
       </div>
     </section>
@@ -237,7 +230,7 @@
     </section>
 
     <section class="wrap section" id="feedback" aria-labelledby="FEEDBACK-TITLE">
-      <div class="section-head"><div class="kicker">Нашли проблему?</div><h2 id="FEEDBACK-TITLE">Присылайте проблемные слова. Только чётко объясняйте, что именно не так</h2></div>
+      <div class="section-head"><div class="kicker">Нашли проблему?</div><h2 id="FEEDBACK-TITLE">Присылайте проблемные слова</h2></div>
       <div class="story-grid">
         <div class="story"><p>Укажите японское слово, чтение, спорный фрагмент и предложите исправление или источник. Тогда замечание получится проверить по существу.</p></div>
         <div><a class="button button-primary" href="https://github.com/ganqqwerty/jitendex-translations/issues/new">Сообщить об ошибке →</a></div>
@@ -248,10 +241,10 @@
       <div class="kicker" id="AUTHORS-TITLE">Авторы</div>
       <div class="authors-copy">
         <p class="authors-lead">Русский перевод сделали <strong>Юрий Катков</strong> и коллектив <a href="https://t.me/immersionjp">«Иммерсошной»</a>.</p>
-        <p class="authors-thanks">Спасибо Elio за поддержку со стороны науки, Широкуме и сайту «Наминори» за совместные эксперименты, Анате, Оутмилу и Даии за ручное тестирование. Ещё мы благодарим авторов <a href="https://jitendex.org/">Jitendex</a>, редакторов <a href="https://www.edrdg.org/jmdict/j_jmdict.html">JMdict</a>, участников <a href="https://tatoeba.org/">Tatoeba</a> и создателей моделей <a href="https://openai.com/">OpenAI</a>. Без их работы Колобок бы не добежал.</p>
+        <p class="authors-thanks">Спасибо Elio за поддержку со стороны науки, Широкуме и сайту <a href="https://naminori.fun/">«Наминори»</a> за совместные эксперименты, Анате, Оутмилу и Даии за ручное тестирование. Ещё мы благодарим авторов <a href="https://jitendex.org/">Jitendex</a>, редакторов <a href="https://www.edrdg.org/jmdict/j_jmdict.html">JMdict</a>, участников <a href="https://tatoeba.org/">Tatoeba</a> и создателей моделей <a href="https://openai.com/">OpenAI</a>. Без их работы Колобок бы не добежал.</p>
       </div>
       <figure class="author-character">
-        <img src="kolobok-reader.png" width="1254" height="1254" loading="lazy" alt="Пиксельный персонаж читает книгу среди льдинок">
+        <a href="https://t.me/immersionjp" aria-label="Открыть Telegram-канал «Иммерсошная»"><img src="kolobok-reader.png" width="1254" height="1254" loading="lazy" alt="Пиксельный персонаж читает книгу среди льдинок"></a>
         <figcaption>Читает, не дожидаясь перевода на английский.</figcaption>
       </figure>
     </section>
