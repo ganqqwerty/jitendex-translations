@@ -267,6 +267,7 @@ APP_CSS = r"""
 body { margin: 0; background: var(--canvas); color: var(--fg); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", sans-serif; }
 .page { width: min(1800px, calc(100% - 24px)); margin: 0 auto; padding: 24px 0 48px; }
 .page-title { margin: 0 0 14px; font-size: 18px; font-weight: 600; }
+.page-description { max-width: 860px; margin: -2px 0 18px; color: var(--muted, #596168); font-size: 15px; }
 .demo-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
 .demo-nav a { padding: 6px 10px; border: 1px solid #b8bec5; border-radius: 999px; background: #fff; color: #384047; text-decoration: none; }
 .demo-nav a:hover { border-color: #1a73e8; color: #1a73e8; }
@@ -462,6 +463,14 @@ def build_document(
 ) -> str:
     asset_prefix = ".." if active_path == "/" else "../.."
     comparison_href = "./" if active_path == "/" else "../"
+    kaishi_note = (
+        '<p class="page-description">Kaishi 1.5k был нашей испытательной площадкой: '
+        'здесь мы пробовали разные модели и способы перевода. Luna при этом могла '
+        'подглядывать в результат Terra и учитывать его. Ниже все варианты стоят '
+        'рядом — можно самому сравнить, что получилось лучше.</p>'
+        if active_path == "/"
+        else ""
+    )
     script = (
         APP_JS.replace("__PAGE_SIZE__", str(PAGE_SIZE))
         .replace("__PAGE_COUNT__", str(page_count))
@@ -496,7 +505,6 @@ def build_document(
       <nav class="site-nav" aria-label="Основная навигация">
         <a href="{asset_prefix}/">Главная</a>
         <a href="{comparison_href}" aria-current="page">Сравнение</a>
-        <a href="{asset_prefix}/frequency/">Частотность</a>
       </nav>
       <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему"><span aria-hidden="true">☾</span></button>
     </div>
@@ -505,6 +513,7 @@ def build_document(
     <div class="comparison-intro">
       <div class="eyebrow">Сравнение переводов</div>
       <h1 class="page-title">{html.escape(title)}</h1>
+      {kaishi_note}
     </div>
     {navigation_markup(active_path)}
     <div class="term-search">
