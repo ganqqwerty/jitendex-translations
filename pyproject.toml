@@ -3,7 +3,7 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jitendex-translations"
+name = "jp-ru-kolobok-dictionary"
 version = "0.1.0"
 description = "Auditable Kaishi-scoped Jitendex Russian translation pipeline"
 requires-python = ">=3.12"

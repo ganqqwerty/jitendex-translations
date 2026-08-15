@@ -405,7 +405,7 @@ def build_goldendict(
             ifo_lines.append(f"synwordcount={len(synonyms)}")
         ifo_lines.extend([
             "sametypesequence=h", f"author={DICTIONARY_AUTHORS}",
-            "website=https://ganqqwerty.github.io/jitendex-translations/", f"description={_ifo_value(description)}",
+            "website=https://ganqqwerty.github.io/jp-ru-kolobok-dictionary/", f"description={_ifo_value(description)}",
         ])
         (root / f"{BASENAME}.ifo").write_text("\n".join(ifo_lines) + "\n", encoding="utf-8", newline="\n")
         bundle_paths = sorted(

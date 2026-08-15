@@ -30,7 +30,7 @@ wheels = [
 ]
 
 [[package]]
-name = "jitendex-translations"
+name = "jp-ru-kolobok-dictionary"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

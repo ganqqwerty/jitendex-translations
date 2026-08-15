@@ -17,7 +17,7 @@ def _download(url: str, target: Path, attempts: int = 3) -> None:
     last_error: Exception | None = None
     for attempt in range(attempts):
         try:
-            request = urllib.request.Request(url, headers={"User-Agent": "jitendex-translations/0.1"})
+            request = urllib.request.Request(url, headers={"User-Agent": "jp-ru-kolobok-dictionary/0.1"})
             with urllib.request.urlopen(request, timeout=60) as response, target.open("wb") as output:
                 while chunk := response.read(1024 * 1024):
                     output.write(chunk)

@@ -30,7 +30,7 @@ jobs:
           rsync -a --exclude='.openai/' --exclude='dist/' terra-luna-site/ _site/comparison/
           cp reports/frequency_dictionary_analysis/index.html _site/frequency/
           cp reports/frequency_dictionary_analysis/data.js _site/frequency/
-          find _site/comparison -type f -name '*.html' -exec sed -i 's|href="/|href="/jitendex-translations/comparison/|g' {} +
+          find _site/comparison -type f -name '*.html' -exec sed -i 's|href="/|href="/jp-ru-kolobok-dictionary/comparison/|g' {} +
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
