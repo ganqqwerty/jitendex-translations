@@ -27,6 +27,7 @@ jobs:
         run: |
           mkdir -p _site/comparison
           rsync -a site-home/ _site/
+          cmp site-home/index.html _site/index.html
           rsync -a --exclude='.openai/' --exclude='dist/' terra-luna-site/ _site/comparison/
           find _site/comparison -type f -name '*.html' -exec sed -i 's|href="/|href="/jp-ru-kolobok-dictionary/comparison/|g' {} +
       - uses: actions/upload-pages-artifact@v3
