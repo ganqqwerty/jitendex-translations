@@ -496,7 +496,6 @@ def build_document(
       <nav class="site-nav" aria-label="Основная навигация">
         <a href="{asset_prefix}/">Главная</a>
         <a href="{comparison_href}" aria-current="page">Сравнение</a>
-        <a href="{asset_prefix}/frequency/">Частотность</a>
       </nav>
       <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему"><span aria-hidden="true">☾</span></button>
     </div>
