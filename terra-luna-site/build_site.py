@@ -493,6 +493,7 @@ def build_document(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#e8462a">
+  <link rel="icon" href="{asset_prefix}/favicon.svg" type="image/svg+xml">
   <meta name="description" content="{html.escape(description, quote=True)}">
   <title>{html.escape(title)}</title>
   <style>{APP_CSS}\n{styles}</style>
