@@ -13,7 +13,10 @@ from typing import Any
 from urllib.parse import parse_qs, quote, urlsplit
 from xml.etree import ElementTree
 
-from .attribution import ATTRIBUTION, PRODUCT_ID, PRODUCT_NAME
+from .attribution import (
+    ATTRIBUTION, COMPILATION_DATETIME_UTC, DICTIONARY_VERSION, PRODUCT_ID,
+    VERSIONED_PRODUCT_ID, VERSIONED_PRODUCT_NAME,
+)
 from .database import ConnectionLike
 from .export_model import ExportCorpus, ExportEntry, ExportVariant, prepare_export
 from .export_render import (
@@ -24,6 +27,7 @@ from .export_render import (
     record_export,
     require_xml_text,
     verify_recorded_export,
+    verify_release_manifest,
     verify_zip_members,
     write_deterministic_zip,
     write_manifest_file,
@@ -31,10 +35,10 @@ from .export_render import (
 )
 from .util import canonical_json, sha256_file
 
-BASENAME = PRODUCT_ID
-XML_NAME = f"{PRODUCT_ID}.xml"
-CSS_NAME = f"{PRODUCT_ID}.css"
-PLIST_NAME = f"{PRODUCT_ID}.plist"
+BASENAME = VERSIONED_PRODUCT_ID
+XML_NAME = f"{BASENAME}.xml"
+CSS_NAME = f"{BASENAME}.css"
+PLIST_NAME = f"{BASENAME}.plist"
 BUNDLE_NAME = f"{BASENAME}.dictionary"
 CAPABILITY_PROFILE = "apple-dictionary-ddk-experimental-v1"
 DICTIONARY_NAMESPACE = "http://www.apple.com/DTDs/DictionaryService-1.0.rng"
@@ -261,8 +265,10 @@ def _plist(corpus: ExportCorpus) -> bytes:
         "CFBundleDevelopmentRegion": "Russian",
         "CFBundleDisplayName": corpus.title,
         "CFBundleIdentifier": "org.kolobok.dictionary.jp-ru-400k",
-        "CFBundleName": PRODUCT_ID,
-        "CFBundleShortVersionString": "1.0",
+        "CFBundleName": VERSIONED_PRODUCT_ID,
+        "CFBundleShortVersionString": DICTIONARY_VERSION,
+        "CFBundleVersion": DICTIONARY_VERSION,
+        "KolobokCompilationDateUTC": COMPILATION_DATETIME_UTC,
         "DCSDictionaryCopyright": "Jitendex/JMdict/Tatoeba; Russian derivative CC BY-SA 4.0",
         "DCSDictionaryManufacturerName": "Колобок 400k; Юрий Катков",
         "DCSDictionaryFrontMatterReferenceID": "front_back_matter",
@@ -286,7 +292,7 @@ def render_apple_project(
             f'<d:dictionary xmlns="http://www.w3.org/1999/xhtml" xmlns:d="{DICTIONARY_NAMESPACE}">\n'
         )
         stream.write(
-            f'<d:entry id="front_back_matter" d:title="{PRODUCT_NAME} — сведения">'
+            f'<d:entry id="front_back_matter" d:title="{VERSIONED_PRODUCT_NAME} — сведения">'
             f'<h1>{_escape(corpus.title)}</h1><p>{_escape(corpus.description)}</p>'
             '<p>Jitendex, JMdict, Tatoeba; русская производная версия CC BY-SA 4.0. '
             'Соавтор русской редакции: Юрий Катков.</p></d:entry>\n'
@@ -458,6 +464,12 @@ def verify_apple_dictionary(connection: ConnectionLike, path: Path) -> dict[str,
         manifest = json.loads(archive.read("manifest.json"))
         if manifest.get("format") != "apple-dictionary" or manifest.get("capability_profile") != CAPABILITY_PROFILE:
             raise ValueError("unexpected Apple Dictionary manifest profile")
+        verify_release_manifest(manifest)
+        bundle_metadata = plistlib.loads(archive.read(bundle_info))
+        if bundle_metadata.get("CFBundleShortVersionString") != DICTIONARY_VERSION:
+            raise ValueError("Apple Dictionary bundle version mismatch")
+        if bundle_metadata.get("KolobokCompilationDateUTC") != COMPILATION_DATETIME_UTC:
+            raise ValueError("Apple Dictionary compilation datetime mismatch")
         for item in manifest.get("files", []):
             name = item.get("path")
             if name not in names or zip_member_sha256(archive, name) != item.get("sha256"):

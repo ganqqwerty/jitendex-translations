@@ -10,7 +10,7 @@ from jitendex_ru.apply_translations import _compose_glossary, _localize_mixed_fo
 from jitendex_ru.build_dictionary import _chunk, build, record_yomitan_smoke, verify
 from jitendex_ru.db import connect, initialize
 from jitendex_ru.extract_units import extract_selected
-from jitendex_ru.goldendict import build_goldendict, verify_goldendict
+from jitendex_ru.goldendict import BASENAME as GOLDENDICT_BASENAME, build_goldendict, verify_goldendict
 from jitendex_ru.review import apply_adjudication, _review_manifest, _split_review_envelope, ingest_review, make_review_batches
 from jitendex_ru.util import canonical_json, sha256_bytes
 from jitendex_ru.validate_response import ingest_response
@@ -202,7 +202,7 @@ def test_translation_review_and_reproducible_build(tmp_path):
     assert verify(connection, first)["verified"]
     with zipfile.ZipFile(first) as archive:
         index = json.loads(archive.read("index.json"))
-        assert index["title"].startswith("Колобок 400k")
+        assert index["title"].startswith("Колобок 400k v1.0")
         assert index["author"] == "Stephen Kraus; Yuri Katkov"
         assert "jp-ru-kolobok-400k" in index["revision"]
         emitted = json.loads(archive.read("term_bank_1.json"))[0]
@@ -226,14 +226,15 @@ def test_translation_review_and_reproducible_build(tmp_path):
     assert verify_goldendict(connection, golden_one)["verified"]
     with zipfile.ZipFile(golden_one) as archive:
         assert {
-            "jp-ru-kolobok-400k.ifo", "jp-ru-kolobok-400k.idx",
-            "jp-ru-kolobok-400k.dict", "jp-ru-kolobok-400k.syn",
-            "res/jp-ru-kolobok-400k.css",
+            f"{GOLDENDICT_BASENAME}.ifo", f"{GOLDENDICT_BASENAME}.idx",
+            f"{GOLDENDICT_BASENAME}.dict", f"{GOLDENDICT_BASENAME}.syn",
+            f"res/{GOLDENDICT_BASENAME}.css",
         } <= set(archive.namelist())
-        ifo = archive.read("jp-ru-kolobok-400k.ifo").decode()
-        assert "bookname=Колобок 400k" in ifo
+        ifo = archive.read(f"{GOLDENDICT_BASENAME}.ifo").decode()
+        assert "bookname=Колобок 400k v1.0" in ifo
+        assert "dictionaryversion=1.0" in ifo
         assert "author=Stephen Kraus; Yuri Katkov" in ifo
-        golden_article = archive.read("jp-ru-kolobok-400k.dict").decode()
+        golden_article = archive.read(f"{GOLDENDICT_BASENAME}.dict").decode()
         assert "есть" in golden_article
         assert '<span class="jr-tag" title="Запись с высоким приоритетом">★</span>' in golden_article
         assert 'data-rules="v1" data-score="0" data-sequence="42"' in golden_article
@@ -243,8 +244,8 @@ def test_translation_review_and_reproducible_build(tmp_path):
         with Image.open(BytesIO(archive.read("res/jitendex/graphics/example.png"))) as converted:
             assert converted.format == "PNG"
             assert converted.size == (2, 2)
-        assert "たべる" in archive.read("jp-ru-kolobok-400k.syn").decode(errors="ignore")
-        assert "span {}" in archive.read("res/jp-ru-kolobok-400k.css").decode()
+        assert "たべる" in archive.read(f"{GOLDENDICT_BASENAME}.syn").decode(errors="ignore")
+        assert "span {}" in archive.read(f"res/{GOLDENDICT_BASENAME}.css").decode()
     smoke_path = tmp_path / "smoke.json"
     smoke_path.write_text(json.dumps({
         "schema_version": 1, "zip_sha256": first_result["zip_sha256"],

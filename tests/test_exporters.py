@@ -44,6 +44,7 @@ from jitendex_ru.pocketbook import (
     render_pocketbook_xdxf,
 )
 from jitendex_ru.util import sha256_file
+from jitendex_ru.attribution import COMPILATION_DATETIME_UTC, DICTIONARY_VERSION
 
 PROBE_PATH = Path(__file__).parents[1] / "probes" / "exporters" / "common-probe.json"
 
@@ -119,8 +120,12 @@ def _corpus(tmp_path: Path) -> ExportCorpus:
         snapshot_id=1,
         source_archive=archive,
         source_sha256=sha256_file(archive),
-        title="Jitendex — тест",
-        description="Проверка богатой разметки",
+        title=f"Jitendex — тест v{DICTIONARY_VERSION}",
+        description=(
+            "Проверка богатой разметки. "
+            f"Версия словаря {DICTIONARY_VERSION}. "
+            f"Дата и время компиляции (UTC): {COMPILATION_DATETIME_UTC}."
+        ),
         entries=entries_from_rows(_probe_rows()),
         resources=(
             ExportResource(PurePosixPath("probe/image.avif")),
@@ -173,6 +178,8 @@ def test_pocketbook_renders_keys_rich_fallbacks_and_compiler_contract(tmp_path):
     )
     root = ElementTree.parse(output).getroot()
     assert root.tag == "xdxf"
+    assert root.findtext("full_name").endswith(f"v{DICTIONARY_VERSION}")
+    assert COMPILATION_DATETIME_UTC in root.findtext("description")
     assert counts["headwords"] == 5
     tomorrow = next(article for article in root.findall("ar") if article.findtext("./head/k") == "明日")
     assert [item.text for item in tomorrow.findall("./head/k")] == ["明日", "あした", "みょうにち"]
@@ -257,7 +264,8 @@ def test_mdict_binary_is_deterministic_and_queryable(tmp_path):
     _write_mdict(second, records_again, corpus, is_mdd=False)
     assert first.read_bytes() == second.read_bytes()
     header = _independent_header(first.read_bytes(), mdd=False)
-    assert header["CreationDate"] == "1980-1-1"
+    assert header["CreationDate"] == COMPILATION_DATETIME_UTC[:10]
+    assert header["Title"].endswith(f"v{DICTIONARY_VERSION}")
     assert mdict_reader.query(str(first), "明日").startswith('<link rel="stylesheet"')
     assert mdict_reader.query(str(first), "みょうにち").rstrip("\n\0") == "@@@LINK=明日"
     assert counts["redirects"] >= 1
@@ -298,8 +306,11 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     with zipfile.ZipFile(pocket_output) as archive:
         assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
         assert "Соавтор русской редакции: Юрий Катков." in archive.read("ATTRIBUTION.txt").decode()
-        assert "jp-ru-kolobok-400k.xdxf" in archive.namelist()
-        assert "jp-ru-kolobok-400k.dic" in archive.namelist()
+        assert f"{pocketbook_module.BASENAME}.xdxf" in archive.namelist()
+        assert f"{pocketbook_module.BASENAME}.dic" in archive.namelist()
+        manifest = json.loads(archive.read("manifest.json"))
+        assert manifest["dictionary_version"] == DICTIONARY_VERSION
+        assert manifest["compilation_datetime_utc"] == COMPILATION_DATETIME_UTC
 
     apple_tool = tmp_path / "fake-build-dict"
     apple_tool.write_text(
@@ -323,7 +334,9 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     with zipfile.ZipFile(apple_output) as archive:
         assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
         assert "Соавтор русской редакции: Юрий Катков." in archive.read("ATTRIBUTION.txt").decode()
-        assert any(name.startswith("jp-ru-kolobok-400k.dictionary/") for name in archive.namelist())
+        assert any(name.startswith(f"{apple_module.BUNDLE_NAME}/") for name in archive.namelist())
+        manifest = json.loads(archive.read("manifest.json"))
+        assert manifest["dictionary_version"] == DICTIONARY_VERSION
 
     monkeypatch.setattr(mdict_module, "prepare_export", lambda connection, run_id: corpus)
     mdict_connection = _ExportConnection()
@@ -337,5 +350,7 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
     with zipfile.ZipFile(first_output) as archive:
         assert "Russian edition co-author: Yuri Katkov." in archive.read("ATTRIBUTION.txt").decode()
         assert "Соавтор русской редакции: Юрий Катков." in archive.read("ATTRIBUTION.txt").decode()
-        assert "jp-ru-kolobok-400k.mdx" in archive.namelist()
-        assert "jp-ru-kolobok-400k.mdd" in archive.namelist()
+        assert f"{mdict_module.BASENAME}.mdx" in archive.namelist()
+        assert f"{mdict_module.BASENAME}.mdd" in archive.namelist()
+        manifest = json.loads(archive.read("manifest.json"))
+        assert manifest["dictionary_version"] == DICTIONARY_VERSION

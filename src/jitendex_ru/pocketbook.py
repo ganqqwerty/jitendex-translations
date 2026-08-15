@@ -13,7 +13,9 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 from xml.etree import ElementTree
 
-from .attribution import ATTRIBUTION, PRODUCT_ID
+from .attribution import (
+    ATTRIBUTION, COMPILATION_DATETIME_UTC, DICTIONARY_VERSION, VERSIONED_PRODUCT_ID,
+)
 from .database import ConnectionLike
 from .export_model import ExportCorpus, ExportEntry, ExportVariant, prepare_export
 from .export_render import (
@@ -23,6 +25,7 @@ from .export_render import (
     record_export,
     require_xml_text,
     verify_recorded_export,
+    verify_release_manifest,
     verify_zip_members,
     write_deterministic_zip,
     write_manifest_file,
@@ -30,7 +33,7 @@ from .export_render import (
 )
 from .util import canonical_json, sha256_bytes, sha256_file
 
-BASENAME = PRODUCT_ID
+BASENAME = VERSIONED_PRODUCT_ID
 CAPABILITY_PROFILE = "pocketbook-xdxf-experimental-v1"
 ALLOWED_TAGS = {
     "a", "br", "details", "div", "img", "li", "ol", "rp", "rt", "ruby",
@@ -38,7 +41,7 @@ ALLOWED_TAGS = {
 }
 INSTALLATION = (
     "Experimental PocketBook build. Device compatibility is not yet verified.\n"
-    f"After closing the capability gate, copy {PRODUCT_ID}.dic to /system/dictionaries/ on the device.\n"
+    f"After closing the capability gate, copy {BASENAME}.dic to /system/dictionaries/ on the device.\n"
 )
 
 
@@ -389,6 +392,7 @@ def verify_pocketbook(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         manifest = json.loads(archive.read("manifest.json"))
         if manifest.get("format") != "pocketbook-dic" or manifest.get("capability_profile") != CAPABILITY_PROFILE:
             raise ValueError("unexpected PocketBook manifest profile")
+        verify_release_manifest(manifest)
         for item in manifest.get("files", []):
             name = item.get("path")
             if name not in names or zip_member_sha256(archive, name) != item.get("sha256"):
@@ -396,13 +400,21 @@ def verify_pocketbook(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         with archive.open(f"{BASENAME}.xdxf") as source:
             headwords = 0
             index_keys = 0
+            full_name = ""
+            description = ""
             for event, element in ElementTree.iterparse(source, events=("end",)):
+                if element.tag == "full_name":
+                    full_name = element.text or ""
+                elif element.tag == "description":
+                    description = element.text or ""
                 if element.tag == "ar":
                     headwords += 1
                     index_keys += len(element.findall("./head/k"))
                     if not element.findtext("./head/k") or element.find("./def") is None:
                         raise ValueError("invalid PocketBook XDXF article")
                     element.clear()
+        if f"v{DICTIONARY_VERSION}" not in full_name or COMPILATION_DATETIME_UTC not in description:
+            raise ValueError("PocketBook metadata lacks the release identity")
         if headwords != manifest.get("headwords"):
             raise ValueError("PocketBook XDXF headword count mismatch")
         if archive.getinfo(f"{BASENAME}.dic").file_size <= 0:
