@@ -66,7 +66,7 @@
     .button-primary { color: var(--white); border-color: var(--red); background: var(--red); }
     .button-ghost { background: rgba(255,255,255,.36); }
     .release-link { display: inline-block; margin-top: 17px; color: var(--muted); font-size: 13px; text-underline-offset: 4px; }
-    .dictionary-card { position: relative; padding: 34px; background: var(--white); border: 1px solid var(--ink); box-shadow: 13px 13px 0 var(--yellow); transform: rotate(1.1deg); }
+    .dictionary-card { position: relative; display: block; padding: 34px; color: inherit; background: var(--white); border: 1px solid var(--ink); box-shadow: 13px 13px 0 var(--yellow); text-decoration: none; transform: rotate(1.1deg); }
     .dictionary-card::before { content: "辞"; position: absolute; top: -54px; right: -22px; z-index: -1; color: rgba(232,70,42,.13); font-family: var(--serif); font-size: 180px; line-height: 1; }
     .dict-top { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
     .term { font-family: var(--serif); font-size: 54px; line-height: 1; }
@@ -175,7 +175,7 @@
         <a class="release-link" href="https://github.com/ganqqwerty/jitendex-translations/releases/tag/run59-tags-ru-v1">Другие форматы →</a>
       </div>
 
-      <div class="dictionary-card" aria-label="Пример словарной статьи">
+      <a class="dictionary-card" href="comparison/" aria-label="Открыть сравнительную таблицу переводов">
         <div class="dict-top">
           <div><div class="term">学ぶ</div><div class="reading">まなぶ · manabu</div></div>
           <div class="dict-no">Колобок<br>400k</div>
@@ -183,7 +183,7 @@
         <div class="definition">учиться; изучать; усваивать знания</div>
         <div class="example"><div class="example-jp">失敗から学ぶ。</div><div class="example-ru">Учиться на ошибках.</div></div>
         <div class="tags"><span class="tag">глагол годан</span><span class="tag">переходный</span><span class="tag">частотное</span></div>
-      </div>
+      </a>
     </section>
 
     <section class="stats" aria-label="Масштаб словаря">
