@@ -100,7 +100,7 @@
     .story-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 70px; }
     .story h3 { margin: 0 0 18px; font-family: var(--serif); font-size: 32px; font-weight: 500; }
     .story p { margin: 0 0 16px; color: #3f3c35; font-size: 17px; }
-    .roadmap { padding: 30px; border-left: 5px solid var(--yellow); background: var(--white); }
+    .roadmap { max-width: 820px; padding: 30px; border-left: 5px solid var(--yellow); background: var(--white); }
     .downloads { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .download { position: relative; min-height: 280px; padding: 32px; overflow: hidden; border: 1px solid var(--ink); background: var(--white); text-decoration: none; }
     .download:hover .download-arrow { transform: translate(5px, -5px); }
@@ -199,7 +199,7 @@
     </section>
 
     <section class="wrap section" id="inside" aria-labelledby="INSIDE-TITLE">
-      <div class="section-head"><div class="kicker">Что внутри</div><h2 id="INSIDE-TITLE">Не список переводов, а нормальный большой словарь</h2></div>
+      <div class="section-head"><div class="kicker">Что внутри</div><h2 id="INSIDE-TITLE">Нормальный большой словарь</h2></div>
       <div class="feature-grid">
         <article class="feature"><div class="feature-no">01</div><h3>Значения и оттенки</h3><p>Переведены короткие глоссы, пояснения, ограничения употребления, ссылки на синонимы и антонимы.</p></article>
         <article class="feature"><div class="feature-no">02</div><h3>Формы и лингвистика</h3><p>Чтения, редкие и устаревшие формы, части речи, области употребления, диалекты и прочие полезные пометы остались на месте.</p></article>
@@ -213,17 +213,10 @@
 
     <section class="wrap section" aria-labelledby="WHY-TITLE">
       <div class="section-head"><div class="kicker">Зачем это всё</div><h2 id="WHY-TITLE">Теперь не обязательно сначала учить английский, чтобы потом учить японский</h2></div>
-      <div class="story-grid">
-        <div class="story">
-          <h3>Инструменты уже есть</h3>
-          <p>Yomitan с этим словарём, Вародаем и Kenrowa; Наминори с двумя переводами Таэ Кима; подробные руководства о том, где и что смотреть; чат, в котором помогут.</p>
-          <p>Наконец-то сложился полный русскоязычный набор для чтения, разбора грамматики и ежедневной иммерсии.</p>
-        </div>
-        <div class="story roadmap">
-          <h3>Что дальше?</h3>
-          <p>Пока без революций. Возможно, переведём топ-50 000 слов более дорогой моделью. Ещё хочется добавить дословные варианты фраз: нынешние переводы порой слишком литературные.</p>
-          <p>Сначала послушаем ваши впечатления и попробуем исправить реальные огрехи.</p>
-        </div>
+      <div class="story roadmap">
+        <h3>Что дальше?</h3>
+        <p>Пока без революций. Возможно, переведём топ-50 000 слов более дорогой моделью. Ещё хочется добавить дословные варианты фраз: нынешние переводы порой слишком литературные.</p>
+        <p>Сначала послушаем ваши впечатления и попробуем исправить реальные огрехи.</p>
       </div>
     </section>
 
