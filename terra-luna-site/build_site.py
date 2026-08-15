@@ -18,6 +18,9 @@ from typing import Any
 
 SITE_ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = SITE_ROOT.parent
+PUBLIC_SITE_URL = "https://ganqqwerty.github.io/jp-ru-kolobok-dictionary"
+SOCIAL_IMAGE_URL = f"{PUBLIC_SITE_URL}/og-character.png"
+SOCIAL_IMAGE_ALT = "Карточка словаря «Колобок 400k» с пиксельным персонажем, читающим книгу"
 DATABASE_PATH = PROJECT_ROOT / "work" / "progress.sqlite3"
 LUNA_ZIP = PROJECT_ROOT / "dist" / "jitendex-kaishi-ru-luna-clean-v1.zip"
 CLAUDE_ZIP = Path("/Users/iuriikatkov/Downloads/jitendex-kaishi-ru-inline.zip")
@@ -451,6 +454,86 @@ def navigation_markup(active_path: str) -> str:
     return '<nav class="demo-nav" aria-label="Наборы слов">' + "".join(rendered) + "</nav>"
 
 
+def metadata_markup(title: str, description: str, active_path: str) -> str:
+    canonical_url = f"{PUBLIC_SITE_URL}/comparison{active_path}"
+    structured_data = json.dumps(
+        {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "@id": f"{canonical_url}#webpage",
+            "url": canonical_url,
+            "name": title,
+            "description": description,
+            "inLanguage": "ru",
+            "isPartOf": {"@id": f"{PUBLIC_SITE_URL}/#website"},
+            "about": {"@id": f"{PUBLIC_SITE_URL}/#dictionary"},
+            "primaryImageOfPage": {
+                "@type": "ImageObject",
+                "url": SOCIAL_IMAGE_URL,
+                "width": 1724,
+                "height": 912,
+                "caption": SOCIAL_IMAGE_ALT,
+            },
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+    escaped_title = html.escape(title, quote=True)
+    escaped_description = html.escape(description, quote=True)
+    return f"""  <!-- SOCIAL-METADATA:START -->
+  <link rel="canonical" href="{canonical_url}">
+  <meta name="application-name" content="Колобок 400k">
+  <meta name="description" content="{escaped_description}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:site_name" content="Колобок 400k">
+  <meta property="og:title" content="{escaped_title}">
+  <meta property="og:description" content="{escaped_description}">
+  <meta property="og:url" content="{canonical_url}">
+  <meta property="og:image" content="{SOCIAL_IMAGE_URL}">
+  <meta property="og:image:secure_url" content="{SOCIAL_IMAGE_URL}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1724">
+  <meta property="og:image:height" content="912">
+  <meta property="og:image:alt" content="{SOCIAL_IMAGE_ALT}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{escaped_title}">
+  <meta name="twitter:description" content="{escaped_description}">
+  <meta name="twitter:image" content="{SOCIAL_IMAGE_URL}">
+  <meta name="twitter:image:alt" content="{SOCIAL_IMAGE_ALT}">
+  <title>{html.escape(title)}</title>
+  <script type="application/ld+json">{structured_data}</script>
+  <!-- SOCIAL-METADATA:END -->"""
+
+
+def refresh_metadata(output: Path) -> None:
+    refreshed = 0
+    for index_path in sorted(output.rglob("index.html")):
+        relative = index_path.relative_to(output)
+        if relative.parts[0] in {".openai", "dist"}:
+            continue
+        active_path = "/" if relative == Path("index.html") else f"/{relative.parent.as_posix()}/"
+        source = index_path.read_text(encoding="utf-8")
+        title_match = re.search(r"<title>(.*?)</title>", source, flags=re.DOTALL)
+        description_match = re.search(r'<meta name="description" content="([^"]*)">', source)
+        if title_match is None or description_match is None:
+            raise ValueError(f"Missing title or description metadata in {index_path}")
+        title = html.unescape(title_match.group(1).strip())
+        description = html.unescape(description_match.group(1).strip())
+        replacement = metadata_markup(title, description, active_path)
+        if "<!-- SOCIAL-METADATA:START -->" in source:
+            pattern = r"  <!-- SOCIAL-METADATA:START -->.*?  <!-- SOCIAL-METADATA:END -->"
+        else:
+            pattern = r'  <meta name="description" content="[^"]*">\n  <title>.*?</title>'
+        updated, substitutions = re.subn(pattern, lambda _: replacement, source, count=1, flags=re.DOTALL)
+        if substitutions != 1:
+            raise ValueError(f"Could not replace social metadata in {index_path}")
+        index_path.write_text(updated, encoding="utf-8")
+        refreshed += 1
+    print(json.dumps({"refreshed_metadata_pages": refreshed}, ensure_ascii=False))
+
+
 def build_document(
     styles: str,
     search_index: list[dict[str, Any]],
@@ -463,6 +546,7 @@ def build_document(
 ) -> str:
     asset_prefix = ".." if active_path == "/" else "../.."
     comparison_href = "./" if active_path == "/" else "../"
+    metadata = metadata_markup(title, description, active_path)
     kaishi_note = (
         '<p class="page-description">Kaishi 1.5k был нашей испытательной площадкой: '
         'здесь мы пробовали разные модели и способы перевода. Luna при этом могла '
@@ -493,8 +577,8 @@ def build_document(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#e8462a">
-  <meta name="description" content="{html.escape(description, quote=True)}">
-  <title>{html.escape(title)}</title>
+  <link rel="icon" href="{asset_prefix}/favicon.svg" type="image/svg+xml">
+{metadata}
   <style>{APP_CSS}\n{styles}</style>
   <link rel="stylesheet" href="{asset_prefix}/site-theme.css">
 </head>
@@ -850,8 +934,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=SITE_ROOT)
     parser.add_argument("--zip-samples", action="store_true")
+    parser.add_argument("--metadata-only", action="store_true")
     args = parser.parse_args()
-    if args.zip_samples:
+    if args.metadata_only:
+        refresh_metadata(args.output.resolve())
+    elif args.zip_samples:
         build_zip_samples(args.output.resolve())
     else:
         build(args.output.resolve())
