@@ -138,7 +138,10 @@
       .nav { display: none; }
       .hero { padding: 52px 0 72px; }
       h1 { font-size: clamp(48px, 15vw, 70px); }
-      .dictionary-card { padding: 24px; box-shadow: 8px 8px 0 var(--yellow); }
+      .dictionary-card { padding: 24px; box-shadow: 8px 8px 0 var(--yellow); transform: none; }
+      .dictionary-card::before { right: 0; }
+      .author-character { width: calc(100% - 8px); transform: none; }
+      .author-character img { box-shadow: 8px 8px 0 var(--yellow); }
       .term { font-size: 44px; }
       .stats-grid { grid-template-columns: 1fr; }
       .stat { min-height: 120px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.2); }
