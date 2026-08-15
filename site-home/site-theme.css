@@ -112,7 +112,7 @@ body.frequency-page {
 .eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; color: var(--red-dark); font-size: 12px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
 .eyebrow::before { content: ""; width: 34px; height: 3px; background: var(--red); }
 .page-intro h1,
-.comparison-page .page-title { max-width: 900px; margin: 0; color: var(--ink); font-family: var(--serif); font-size: clamp(42px, 6vw, 70px); font-weight: 500; line-height: .98; letter-spacing: -.05em; }
+.comparison-page .page-title { max-width: 900px; margin: 0; color: var(--ink); font-family: var(--serif); font-size: clamp(38px, 4.8vw, 56px); font-weight: 500; line-height: 1.1; }
 .page-intro .lede { max-width: 780px; margin: 22px 0 0; color: var(--body-copy); font-size: 17px; line-height: 1.6; }
 .stamp { padding-left: 20px; border-left: 3px solid var(--yellow); color: var(--muted); font-size: 12px; line-height: 1.75; white-space: nowrap; }
 .site-footer { display: flex; justify-content: space-between; gap: 24px; padding: 34px 0; color: var(--muted); border-top: 1px solid var(--line); font-size: 12px; }
