@@ -1,9 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Frequency dictionary coverage</title>
+  <meta name="theme-color" content="#e8462a">
+  <meta name="description" content="Покрытие русского Jitendex шестью частотными словарями: пересечения, ранги и непереведённые слова.">
+  <title>Частотность — Колобок 400k</title>
   <style>
     :root {
       color-scheme: light;
@@ -119,88 +121,100 @@
       .hist-row { grid-template-columns: 62px 1fr 58px; }
     }
   </style>
+  <link rel="stylesheet" href="../site-theme.css">
 </head>
-<body>
+<body class="frequency-page">
+  <header class="site-header wrap">
+    <a class="brand" href="../"><span class="brand-mark">辞</span><span>Колобок 400k</span></a>
+    <div class="header-actions">
+      <nav class="site-nav" aria-label="Основная навигация">
+        <a href="../">Главная</a>
+        <a href="../comparison/">Сравнение</a>
+        <a href="./" aria-current="page">Частотность</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему"><span aria-hidden="true">☾</span></button>
+    </div>
+  </header>
   <main>
-    <header>
+    <section class="page-intro">
       <div>
-        <div class="eyebrow">Колобок 400k · frequency coverage</div>
-        <h1 id="FREQ-TITLE">Six frequency dictionaries, one coverage map</h1>
-        <p class="lede" id="FREQ-INTRO">Explore exact headword coverage inside each dictionary’s rank ≤ 20,000 set. Change the selected dictionaries to recalculate their union.</p>
+        <div class="eyebrow">Частотные словари</div>
+        <h1 id="FREQ-TITLE">Шесть словарей, одна карта покрытия</h1>
+        <p class="lede" id="FREQ-INTRO">Здесь видно, какие слова из первых 20 000 позиций каждого частотного словаря уже есть в русском Jitendex. Выберите нужные источники — показатели и объединённый список пересчитаются.</p>
       </div>
       <div class="stamp" id="baselineStamp"></div>
-    </header>
+    </section>
 
-    <section class="toolbar" id="FREQ-SELECT" aria-label="Dictionary selection">
-      <span class="toolbar-label">Union includes</span>
+    <section class="toolbar" id="FREQ-SELECT" aria-label="Выбор частотных словарей">
+      <span class="toolbar-label">В объединение входят</span>
       <div id="dictionaryToggles"></div>
     </section>
 
     <section class="grid" aria-live="polite">
       <article class="panel summary">
-        <div class="summary-label">Union headwords</div>
+        <div class="summary-label">Слов в объединении</div>
         <div class="summary-value" id="unionTotal">—</div>
-        <div class="summary-note" id="unionScope">Unique exact strings</div>
+        <div class="summary-note" id="unionScope">Уникальные точные написания</div>
       </article>
       <article class="panel summary">
-        <div class="summary-label">Already Russian</div>
+        <div class="summary-label">Уже переведено</div>
         <div class="summary-value" id="translatedTotal">—</div>
         <div class="summary-note" id="translatedShare">—</div>
       </article>
       <article class="panel summary">
-        <div class="summary-label">Needs translation</div>
+        <div class="summary-label">Нужно перевести</div>
         <div class="summary-value" id="untranslatedTotal">—</div>
-        <div class="summary-note">In source Jitendex, absent from Russian export</div>
+        <div class="summary-note">Есть в исходном Jitendex, но нет в русском выпуске</div>
       </article>
       <article class="panel summary">
-        <div class="summary-label">Not in Jitendex</div>
+        <div class="summary-label">Нет в Jitendex</div>
         <div class="summary-value" id="absentTotal">—</div>
-        <div class="summary-note">Cannot be translated without adding entries</div>
+        <div class="summary-note">Сначала такие статьи нужно добавить в сам словарь</div>
       </article>
 
       <article class="panel wide">
-        <h2 id="FREQ-COVERAGE">Coverage by dictionary</h2>
-        <p class="subhead" id="FREQ-COVERAGE-P">Counts use unique headword strings with recorded rank ≤ 20,000. Tied ranks can produce more than 20,000 strings.</p>
+        <h2 id="FREQ-COVERAGE">Покрытие по словарям</h2>
+        <p class="subhead" id="FREQ-COVERAGE-P">Считаются уникальные написания с указанным рангом не выше 20 000. Из-за одинаковых рангов слов иногда получается немного больше.</p>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Dictionary</th><th>Top set</th><th>Full dictionary</th><th>Russian</th><th>Needs translation</th><th>Not in Jitendex</th><th>Composition</th></tr></thead>
+            <thead><tr><th>Словарь</th><th>Частотная выборка</th><th>Весь словарь</th><th>Переведено</th><th>Нужно перевести</th><th>Нет в Jitendex</th><th>Состав</th></tr></thead>
             <tbody id="coverageRows"></tbody>
           </table>
         </div>
         <div class="legend">
-          <span><i class="translated"></i>Already Russian</span>
-          <span><i class="untranslated"></i>Needs translation</span>
-          <span><i class="absent"></i>Not in Jitendex</span>
+          <span><i class="translated"></i>Уже переведено</span>
+          <span><i class="untranslated"></i>Нужно перевести</span>
+          <span><i class="absent"></i>Нет в Jitendex</span>
         </div>
       </article>
 
       <article class="panel narrow">
-        <h2 id="FREQ-OVERLAP">Overlap depth</h2>
-        <p class="subhead" id="FREQ-OVERLAP-P">How many selected dictionaries contain each union headword.</p>
+        <h2 id="FREQ-OVERLAP">Глубина пересечения</h2>
+        <p class="subhead" id="FREQ-OVERLAP-P">Сколько выбранных словарей содержат каждое слово из объединения.</p>
         <div class="histogram" id="overlapHistogram"></div>
       </article>
 
       <article class="panel full">
-        <h2 id="FREQ-VENN">Three-dictionary Venn diagram</h2>
-        <p class="subhead" id="FREQ-VENN-P">Circle areas scale to set totals and circle positions fit the observed intersections. Every displayed number is an exact exclusive-region count.</p>
+        <h2 id="FREQ-VENN">Диаграмма Венна для трёх словарей</h2>
+        <p class="subhead" id="FREQ-VENN-P">Размер кругов соответствует числу слов, а положение — реальным пересечениям. Числа показывают точное количество слов в каждой отдельной области.</p>
         <div class="venn-layout">
           <div class="venn-controls">
-            <label>Set A<select id="vennA" aria-label="Venn set A"></select></label>
-            <label>Set B<select id="vennB" aria-label="Venn set B"></select></label>
-            <label>Set C<select id="vennC" aria-label="Venn set C"></select></label>
-            <label>Coverage status
-              <select id="vennStatus" aria-label="Venn coverage status">
-                <option value="all">All headwords</option>
-                <option value="translated">Already Russian</option>
-                <option value="untranslated">Needs translation</option>
-                <option value="absent">Not in Jitendex</option>
+            <label>Набор A<select id="vennA" aria-label="Набор A на диаграмме Венна"></select></label>
+            <label>Набор B<select id="vennB" aria-label="Набор B на диаграмме Венна"></select></label>
+            <label>Набор C<select id="vennC" aria-label="Набор C на диаграмме Венна"></select></label>
+            <label>Статус покрытия
+              <select id="vennStatus" aria-label="Статус покрытия на диаграмме Венна">
+                <option value="all">Все слова</option>
+                <option value="translated">Уже переведено</option>
+                <option value="untranslated">Нужно перевести</option>
+                <option value="absent">Нет в Jitendex</option>
               </select>
             </label>
           </div>
           <div class="venn-figure">
             <svg viewBox="0 0 520 430" role="img" aria-labelledby="vennSvgTitle vennSvgDescription">
-              <title id="vennSvgTitle">Headword overlap Venn diagram</title>
-              <desc id="vennSvgDescription">Exclusive headword counts for three selected frequency dictionaries.</desc>
+              <title id="vennSvgTitle">Диаграмма пересечения слов</title>
+              <desc id="vennSvgDescription">Количество слов в отдельных областях трёх выбранных частотных словарей.</desc>
               <circle class="venn-circle venn-circle-a" id="vennCircleA" cx="190" cy="175" r="140"></circle>
               <circle class="venn-circle venn-circle-b" id="vennCircleB" cx="330" cy="175" r="140"></circle>
               <circle class="venn-circle venn-circle-c" id="vennCircleC" cx="260" cy="285" r="140"></circle>
@@ -218,40 +232,42 @@
       </article>
 
       <article class="panel full">
-        <h2 id="FREQ-WORDS">Headword explorer</h2>
-        <p class="subhead" id="FREQ-WORDS-P">Filter the selected union by coverage status, search Japanese text, and inspect the best rank in every source.</p>
+        <h2 id="FREQ-WORDS">Список слов</h2>
+        <p class="subhead" id="FREQ-WORDS-P">Отфильтруйте объединение по статусу, найдите японское слово и посмотрите его лучший ранг в каждом источнике.</p>
         <div class="controls">
           <div id="statusToggles"></div>
-          <input type="search" id="wordSearch" placeholder="Search headwords…" aria-label="Search headwords">
-          <select id="sortOrder" aria-label="Sort words">
-            <option value="rank">Best rank</option>
-            <option value="coverage">Most dictionaries</option>
-            <option value="word">Headword</option>
+          <input type="search" id="wordSearch" placeholder="Найти слово…" aria-label="Поиск слов">
+          <select id="sortOrder" aria-label="Сортировка слов">
+            <option value="rank">Лучший ранг</option>
+            <option value="coverage">Больше словарей</option>
+            <option value="word">По написанию</option>
           </select>
-          <button type="button" id="downloadCsv">Download filtered CSV</button>
+          <button type="button" id="downloadCsv">Скачать отфильтрованный CSV</button>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Headword</th><th>Status</th><th>Sources and ranks</th></tr></thead>
+            <thead><tr><th>Слово</th><th>Статус</th><th>Источники и ранги</th></tr></thead>
             <tbody id="wordRows"></tbody>
           </table>
         </div>
         <div class="pagination">
           <span id="resultCount"></span>
-          <div><button type="button" id="previousPage">Previous</button><button type="button" id="nextPage">Next</button></div>
+          <div><button type="button" id="previousPage">Назад</button><button type="button" id="nextPage">Вперёд</button></div>
         </div>
       </article>
     </section>
 
     <p class="method" id="FREQ-METHOD"></p>
   </main>
+  <footer class="site-footer wrap"><span>Колобок 400k · общественный словарный проект</span><span><a href="../">На главную</a> · <a href="https://github.com/ganqqwerty/jp-ru-kolobok-dictionary">GitHub</a></span></footer>
   <script src="data.js"></script>
+  <script src="../site-theme.js"></script>
   <script>
     (() => {
       const data = window.FREQUENCY_ANALYSIS;
       const byId = Object.fromEntries(data.dictionaries.map(d => [d.id, d]));
       const labels = Object.fromEntries(data.dictionaries.map(d => [d.id, d.label]));
-      const format = new Intl.NumberFormat('en-US');
+      const format = new Intl.NumberFormat('ru-RU');
       const state = {
         selected: new Set(data.dictionaries.map(d => d.id)),
         statuses: new Set(['untranslated']),
@@ -276,7 +292,7 @@
           render();
         });
         const statuses = [
-          ['translated', 'Already Russian'], ['untranslated', 'Needs translation'], ['absent', 'Not in Jitendex']
+          ['translated', 'Уже переведено'], ['untranslated', 'Нужно перевести'], ['absent', 'Нет в Jitendex']
         ];
         el('statusToggles').innerHTML = statuses.map(([id, label]) =>
           `<label class="status-toggle" data-status="${id}"><input type="checkbox" value="${id}" ${id === 'untranslated' ? 'checked' : ''}><span>${label}</span></label>`
@@ -414,7 +430,8 @@
           el(id).setAttribute('y', labelPoints[id].y);
         });
         el('vennKey').innerHTML = ids.map((id, index) => `<span><b>${String.fromCharCode(65 + index)}</b> · ${escapeHtml(labels[id])} · ${format.format(totals[index])}</span>`).join('');
-        el('vennSvgDescription').textContent = `Exclusive ${status === 'all' ? 'headword' : status} counts for ${ids.map(id => labels[id]).join(', ')}.`;
+        const statusDescription = {all: 'всех слов', translated: 'переведённых слов', untranslated: 'непереведённых слов', absent: 'слов, которых нет в Jitendex'};
+        el('vennSvgDescription').textContent = `Отдельные области ${statusDescription[status]} для словарей ${ids.map(id => labels[id]).join(', ')}.`;
       }
 
       function renderSummary(words) {
@@ -422,12 +439,12 @@
         words.forEach(word => counts[word.s]++);
         el('unionTotal').textContent = format.format(words.length);
         el('unionScope').textContent = state.selected.size === data.dictionaries.length
-          ? `Rank ≤ 20,000 union · full dictionary union ${format.format(data.union.allUniqueHeadwords)}`
-          : 'Rank ≤ 20,000 union for selected dictionaries';
+          ? `Объединение до ранга 20 000 · во всех полных словарях ${format.format(data.union.allUniqueHeadwords)} слов`
+          : 'Объединение до ранга 20 000 для выбранных словарей';
         el('translatedTotal').textContent = format.format(counts.translated);
         el('untranslatedTotal').textContent = format.format(counts.untranslated);
         el('absentTotal').textContent = format.format(counts.absent);
-        el('translatedShare').textContent = `${words.length ? (100 * counts.translated / words.length).toFixed(1) : '0.0'}% of selected union`;
+        el('translatedShare').textContent = `${words.length ? (100 * counts.translated / words.length).toFixed(1).replace('.', ',') : '0,0'}% выбранного объединения`;
       }
 
       function renderCoverage() {
@@ -436,7 +453,7 @@
           const opacity = state.selected.has(d.id) ? 1 : .35;
           return `<tr style="opacity:${opacity}"><td><strong>${escapeHtml(d.label)}</strong></td><td>${format.format(total)}</td><td>${format.format(d.allUniqueHeadwords)}</td>` +
             `<td>${format.format(d.translated)}</td><td>${format.format(d.untranslated)}</td><td>${format.format(d.absent)}</td>` +
-            `<td><div class="coverage-bar" aria-label="${d.translated} Russian, ${d.untranslated} untranslated, ${d.absent} absent">` +
+            `<td><div class="coverage-bar" aria-label="Переведено: ${d.translated}; нужно перевести: ${d.untranslated}; нет в Jitendex: ${d.absent}">` +
             `<span class="translated" style="width:${100*d.translated/total}%"></span>` +
             `<span class="untranslated" style="width:${100*d.untranslated/total}%"></span>` +
             `<span class="absent" style="width:${100*d.absent/total}%"></span></div></td></tr>`;
@@ -452,7 +469,8 @@
         const max = Math.max(...counts.values(), 1);
         el('overlapHistogram').innerHTML = Array.from({length: state.selected.size}, (_, index) => index + 1).map(count => {
           const value = counts.get(count) || 0;
-          return `<div class="hist-row"><span>${count} source${count === 1 ? '' : 's'}</span>` +
+          const sourceLabel = count === 1 ? 'источник' : count < 5 ? 'источника' : 'источников';
+          return `<div class="hist-row"><span>${count} ${sourceLabel}</span>` +
             `<div class="hist-track"><div class="hist-fill" style="width:${100*value/max}%"></div></div>` +
             `<span class="hist-value">${format.format(value)}</span></div>`;
         }).join('');
@@ -477,20 +495,20 @@
         const pages = Math.max(1, Math.ceil(words.length / state.pageSize));
         state.page = Math.min(state.page, pages - 1);
         const slice = words.slice(state.page * state.pageSize, (state.page + 1) * state.pageSize);
-        const statusLabels = {translated: 'Already Russian', untranslated: 'Needs translation', absent: 'Not in Jitendex'};
+        const statusLabels = {translated: 'Уже переведено', untranslated: 'Нужно перевести', absent: 'Нет в Jitendex'};
         el('wordRows').innerHTML = slice.map(word => {
           const ranks = selectedRanks(word).sort((a, b) => a[1] - b[1]);
           return `<tr><td class="word">${escapeHtml(word.w)}</td>` +
             `<td><span class="status-mark ${word.s}"></span>${statusLabels[word.s]}</td>` +
             `<td><div class="rank-list">${ranks.map(([id, rank]) => `<span class="rank">${escapeHtml(labels[id])} · ${format.format(rank)}</span>`).join('')}</div></td></tr>`;
-        }).join('') || '<tr><td colspan="3">No matching headwords.</td></tr>';
-        el('resultCount').textContent = `${format.format(words.length)} results · page ${state.page + 1} of ${pages}`;
+        }).join('') || '<tr><td colspan="3">Подходящих слов не найдено.</td></tr>';
+        el('resultCount').textContent = `${format.format(words.length)} результатов · страница ${state.page + 1} из ${pages}`;
         el('previousPage').disabled = state.page === 0;
         el('nextPage').disabled = state.page >= pages - 1;
       }
 
       function downloadCsv() {
-        const rows = [['headword', 'status', ...data.dictionaries.filter(d => state.selected.has(d.id)).map(d => `${d.label} rank`)]];
+        const rows = [['слово', 'статус', ...data.dictionaries.filter(d => state.selected.has(d.id)).map(d => `${d.label}: ранг`)]];
         filteredWords().forEach(word => rows.push([
           word.w, word.s, ...data.dictionaries.filter(d => state.selected.has(d.id)).map(d => word.r[d.id] || '')
         ]));
@@ -510,9 +528,9 @@
         renderWords();
       }
 
-      el('baselineStamp').innerHTML = `Source Jitendex · ${format.format(data.baselines.source.headwords)} headwords<br>` +
-        `Russian export · ${format.format(data.baselines.russian.headwords)} headwords<br>Rank ceiling · ${format.format(data.method.rankLimit)}`;
-      el('FREQ-METHOD').innerHTML = `Method: exact headword-string matching. “Needs translation” means present in source Jitendex but absent from the Russian export; “Not in Jitendex” is kept separate. Source SHA-256: <code>${data.baselines.source.sha256}</code>. Russian export SHA-256: <code>${data.baselines.russian.sha256}</code>.`;
+      el('baselineStamp').innerHTML = `Исходный Jitendex · ${format.format(data.baselines.source.headwords)} слов<br>` +
+        `Русский выпуск · ${format.format(data.baselines.russian.headwords)} слов<br>Предельный ранг · ${format.format(data.method.rankLimit)}`;
+      el('FREQ-METHOD').innerHTML = `Методика: точное совпадение написания слова. «Нужно перевести» означает, что статья есть в исходном Jitendex, но отсутствует в русском выпуске. Слова, которых нет в Jitendex, считаются отдельно. SHA-256 исходника: <code>${data.baselines.source.sha256}</code>. SHA-256 русского выпуска: <code>${data.baselines.russian.sha256}</code>.`;
       makeToggles();
       makeVennControls();
       el('wordSearch').addEventListener('input', event => { state.query = event.target.value; state.page = 0; renderWords(); });

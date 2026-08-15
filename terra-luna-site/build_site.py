@@ -460,6 +460,8 @@ def build_document(
     active_path: str,
     columns: tuple[tuple[str, str], ...],
 ) -> str:
+    asset_prefix = ".." if active_path == "/" else "../.."
+    comparison_href = "./" if active_path == "/" else "../"
     script = (
         APP_JS.replace("__PAGE_SIZE__", str(PAGE_SIZE))
         .replace("__PAGE_COUNT__", str(page_count))
@@ -481,13 +483,29 @@ def build_document(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e8462a">
   <meta name="description" content="{html.escape(description, quote=True)}">
   <title>{html.escape(title)}</title>
   <style>{APP_CSS}\n{styles}</style>
+  <link rel="stylesheet" href="{asset_prefix}/site-theme.css">
 </head>
-<body>
+<body class="comparison-page">
+  <header class="site-header wrap">
+    <a class="brand" href="{asset_prefix}/"><span class="brand-mark">辞</span><span>Колобок 400k</span></a>
+    <div class="header-actions">
+      <nav class="site-nav" aria-label="Основная навигация">
+        <a href="{asset_prefix}/">Главная</a>
+        <a href="{comparison_href}" aria-current="page">Сравнение</a>
+        <a href="{asset_prefix}/frequency/">Частотность</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему"><span aria-hidden="true">☾</span></button>
+    </div>
+  </header>
   <main class="page">
-    <h1 class="page-title">{html.escape(title)}</h1>
+    <div class="comparison-intro">
+      <div class="eyebrow">Сравнение переводов</div>
+      <h1 class="page-title">{html.escape(title)}</h1>
+    </div>
     {navigation_markup(active_path)}
     <div class="term-search">
       <label for="term-search-input">Поиск</label>
@@ -507,6 +525,8 @@ def build_document(
     </div>
     {pagination_markup()}
   </main>
+  <footer class="site-footer wrap"><span>Колобок 400k · общественный словарный проект</span><span><a href="{asset_prefix}/">На главную</a> · <a href="https://github.com/ganqqwerty/jp-ru-kolobok-dictionary">GitHub</a></span></footer>
+  <script src="{asset_prefix}/site-theme.js"></script>
   <script>{script}</script>
 </body>
 </html>
