@@ -20,7 +20,9 @@ from xml.etree import ElementTree
 from mdict_utils import reader as mdict_reader
 from mdict_utils import writer as mdict_writer
 
-from .attribution import ATTRIBUTION, PRODUCT_ID
+from .attribution import (
+    ATTRIBUTION, COMPILATION_DATETIME_UTC, DICTIONARY_VERSION, VERSIONED_PRODUCT_ID,
+)
 from .database import ConnectionLike
 from .export_model import (
     ExportCorpus,
@@ -37,13 +39,14 @@ from .export_render import (
     record_export,
     require_xml_text,
     verify_recorded_export,
+    verify_release_manifest,
     verify_zip_members,
     write_deterministic_zip,
     write_manifest_file,
     zip_member_sha256,
 )
 
-BASENAME = PRODUCT_ID
+BASENAME = VERSIONED_PRODUCT_ID
 CAPABILITY_PROFILE = "mdict-2.0-experimental-v1"
 WRITER_VERSION = "mdict-utils-1.3.14"
 ALLOWED_TAGS = {
@@ -63,7 +66,7 @@ CSS = """.jr-entry{font-family:system-ui,-apple-system,sans-serif;line-height:1.
 """
 INSTALLATION = (
     "Experimental unencrypted MDict 2.0 package. Official clients are not yet verified.\n"
-    f"Keep {PRODUCT_ID}.mdx and {PRODUCT_ID}.mdd together when importing them.\n"
+    f"Keep {BASENAME}.mdx and {BASENAME}.mdd together when importing them.\n"
 )
 _LOCALE_LOCK = threading.Lock()
 
@@ -316,7 +319,7 @@ class _DeterministicWriter(mdict_writer.MDictWriter):
             header = (
                 '<Dictionary GeneratedByEngineVersion="2.0" RequiredEngineVersion="2.0" '
                 f'Encrypted="No" Encoding="{self._encoding}" Format="Html" Stripkey="Yes" '
-                'CreationDate="1980-1-1" Compact="Yes" Compat="Yes" KeyCaseSensitive="No" '
+                f'CreationDate="{COMPILATION_DATETIME_UTC[:10]}" Compact="Yes" Compat="Yes" KeyCaseSensitive="No" '
                 f'Description="{html.escape(self._description, quote=True)}" '
                 f'Title="{html.escape(self._title, quote=True)}" DataSourceFormat="106" '
                 'StyleSheet="" Left2Right="Yes" RegisterBy="" />\r\n\x00'
@@ -324,7 +327,7 @@ class _DeterministicWriter(mdict_writer.MDictWriter):
         else:
             header = (
                 '<Library_Data GeneratedByEngineVersion="2.0" RequiredEngineVersion="2.0" '
-                'Encrypted="No" Encoding="" Format="" CreationDate="1980-1-1" '
+                f'Encrypted="No" Encoding="" Format="" CreationDate="{COMPILATION_DATETIME_UTC[:10]}" '
                 'KeyCaseSensitive="No" Stripkey="No" '
                 f'Description="{html.escape(self._description, quote=True)}" '
                 f'Title="{html.escape(self._title, quote=True)}" RegisterBy="" />\r\n\x00'
@@ -407,7 +410,7 @@ def _independent_header_stream(stream: Any, *, mdd: bool) -> dict[str, str]:
         "GeneratedByEngineVersion": "2.0",
         "RequiredEngineVersion": "2.0",
         "Encrypted": "No",
-        "CreationDate": "1980-1-1",
+        "CreationDate": COMPILATION_DATETIME_UTC[:10],
     }
     if any(attributes.get(key) != value for key, value in required.items()):
         raise ValueError("unsupported or nondeterministic MDict header")
@@ -466,7 +469,7 @@ def build_mdict(connection: ConnectionLike, run_id: int, output: Path) -> dict[s
             ledger=ledger,
             tools={
                 "writer": WRITER_VERSION,
-                "header_date": "1980-1-1",
+                "header_date": COMPILATION_DATETIME_UTC[:10],
                 "collation": "C",
                 **counts,
                 "mdd_records": len(mdd_records),
@@ -503,6 +506,7 @@ def verify_mdict(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         manifest = json.loads(archive.read("manifest.json"))
         if manifest.get("format") != "mdict-2.0" or manifest.get("capability_profile") != CAPABILITY_PROFILE:
             raise ValueError("unexpected MDict manifest profile")
+        verify_release_manifest(manifest)
         for item in manifest.get("files", []):
             name = item.get("path")
             if name not in names or zip_member_sha256(archive, name) != item.get("sha256"):
@@ -514,8 +518,13 @@ def verify_mdict(connection: ConnectionLike, path: Path) -> dict[str, Any]:
             for name, destination in ((f"{BASENAME}.mdx", mdx_path), (f"{BASENAME}.mdd", mdd_path)):
                 with archive.open(name) as source, destination.open("wb") as target:
                     shutil.copyfileobj(source, target, length=1024 * 1024)
-            _independent_header_path(mdx_path, mdd=False)
-            _independent_header_path(mdd_path, mdd=True)
+            mdx_header = _independent_header_path(mdx_path, mdd=False)
+            mdd_header = _independent_header_path(mdd_path, mdd=True)
+            for header in (mdx_header, mdd_header):
+                if f"v{DICTIONARY_VERSION}" not in header.get("Title", ""):
+                    raise ValueError("MDict title lacks the dictionary version")
+                if COMPILATION_DATETIME_UTC not in header.get("Description", ""):
+                    raise ValueError("MDict description lacks the compilation datetime")
             mdx_meta = mdict_reader.meta(str(mdx_path))
             mdd_meta = mdict_reader.meta(str(mdd_path))
             keys = list(mdict_reader.get_keys(str(mdx_path)))

@@ -46,7 +46,7 @@ emitted bank against those pinned copies.
 
 ## README-GD — GoldenDict export
 
-README-GD-1 — `export-goldendict --run-id ID --output dist/jitendex-ru-goldendict.zip`
+README-GD-1 — `export-goldendict --run-id ID --output dist/jp-ru-kolobok-400k-v1.0-goldendict.zip`
 builds the accepted database run as a reproducible StarDict 2.4.2 bundle. Run
 `verify-goldendict PATH` before release.
 
@@ -71,10 +71,10 @@ The package remains experimental until the device gates in
 `reports/exporters/pocketbook-capabilities.md` pass.
 
 ```sh
-translationctl export-pocketbook --run-id ID --output dist/jitendex-ru-pocketbook.zip \
+translationctl export-pocketbook --run-id ID --output dist/jp-ru-kolobok-400k-v1.0-pocketbook.zip \
   --compiler /path/to/converter.exe --compiler-sha256 SHA256 \
   --language-dir /path/to/jaK
-translationctl verify-pocketbook dist/jitendex-ru-pocketbook.zip
+translationctl verify-pocketbook dist/jp-ru-kolobok-400k-v1.0-pocketbook.zip
 ```
 
 README-EX-3 — Apple Dictionary requires the archived Dictionary Development Kit
@@ -83,10 +83,10 @@ but required to close the release gate. The exporter does not install the bundle
 
 ```sh
 translationctl export-apple-dictionary --run-id ID \
-  --output dist/jitendex-ru-apple-dictionary.zip \
+  --output dist/jp-ru-kolobok-400k-v1.0-apple-dictionary.zip \
   --build-tool /path/to/build_dict.sh --build-tool-sha256 SHA256 \
   --schema /path/to/AppleDictionarySchema.rng --schema-sha256 SHA256
-translationctl verify-apple-dictionary dist/jitendex-ru-apple-dictionary.zip
+translationctl verify-apple-dictionary dist/jp-ru-kolobok-400k-v1.0-apple-dictionary.zip
 ```
 
 README-EX-4 — MDict uses the pinned `mdict-utils` writer to emit deterministic,
@@ -95,22 +95,24 @@ the real-client matrix in `reports/exporters/mdict-capabilities.md` passes.
 
 | ID | Format | Export | SHA-256 |
 |---|---|---|---|
-| README-STATE-1 | Yomitan `tags-ru-v1` | 78 | `063893f6d9453de4fec184b17860ea7e7608f9875a667e45d6046029e7736723` |
-| README-STATE-2 | GoldenDict | 79 | `c3180d533c3f472eed1e1d91004591117d9d40701aa4e25d19a2dbaaade923a0` |
-| README-STATE-3 | MDict | 80 | `2dd86064af2fbd62d4e40ad2a24a8b1f19b7e229260acc0a2d998b2ddc3de36d` |
-| README-STATE-4 | PocketBook | 81 | `be97c6bd3d3b49ec24bd08fe2e7ad45343994fa3d2832e295208daefdd2664ee` |
-| README-STATE-5 | Apple Dictionary | 82 | `1b1116b61db7369621de8cf443f42de26d1ad39c03715f0aeaed4d0ecfd42b64` |
+| README-STATE-1 | Yomitan `v1.0` | 83 | `24c0164f6d645f6426bef5b09f5dfdc46952cf132aed6d8bc033800f9ff7824b` |
+| README-STATE-2 | GoldenDict `v1.0` | 84 | `774a4ec87862451f05992c7765b5a9bbc32ac96e54d134cadc5d81397f384aee` |
+| README-STATE-3 | MDict `v1.0` | 85 | `589608c811d6eb72f2b16f83c2929ce1e356a7eb12f466977ad34bcaad23ddb3` |
+| README-STATE-4 | PocketBook `v1.0` | 86 | `d03c892fe2db5fb0f93a65c54de729d41f1674ba7a89e97470b69a66a75e5d3f` |
+| README-STATE-5 | Apple Dictionary `v1.0` | 87 | `f7879e122e6260e47def25c05a9b2846655ba8a52ad28c89f485a0a21ce26d46` |
 
 ```sh
-translationctl export-mdict --run-id ID --output dist/jitendex-ru-mdict.zip
-translationctl verify-mdict dist/jitendex-ru-mdict.zip
+translationctl export-mdict --run-id ID --output dist/jp-ru-kolobok-400k-v1.0-mdict.zip
+translationctl verify-mdict dist/jp-ru-kolobok-400k-v1.0-mdict.zip
 ```
 
 README-EX-5 — Every exporter writes a deterministic ZIP manifest, loss ledger,
 capability profile, source and tool hashes, attribution, and installation note.
 Any omitted rich-content feature fails the build.
 
-README-STATE-8 — Every current `Колобок 400k` archive credits Yuri Katkov as co-author of the Russian edition. The five archives use the Latin base name `jp-ru-kolobok-400k` and are published in release `run59-tags-ru-v1`.
+README-STATE-8 — Every current `Колобок 400k v1.0` archive credits Yuri Katkov as co-author of the Russian edition. The five archives and their internal payloads use the versioned Latin base name `jp-ru-kolobok-400k-v1.0` and are published in release `run59-tags-ru-v1`.
+
+README-STATE-9 — Version `1.0` records compilation datetime `2026-08-15T21:04:30Z` in installed dictionary metadata and technical manifests.
 
 ## README-DB — Database schema
 

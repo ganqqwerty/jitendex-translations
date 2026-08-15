@@ -17,7 +17,10 @@ from urllib.parse import parse_qs, quote, urlsplit
 
 from PIL import Image, ImageOps
 
-from .attribution import DICTIONARY_AUTHORS, PRODUCT_ID, PRODUCT_NAME
+from .attribution import (
+    COMPILATION_DATETIME_UTC, DICTIONARY_AUTHORS, DICTIONARY_VERSION,
+    VERSIONED_PRODUCT_ID, VERSIONED_PRODUCT_NAME, release_description,
+)
 from .build_dictionary import FIXED_ZIP_TIME, _frequency_metadata, _paths, materialize_run
 from .database import ConnectionLike
 from .db import audit
@@ -28,7 +31,7 @@ from .jitendex_tags import (
 from .util import canonical_json, sha256_bytes, sha256_file
 
 
-BASENAME = PRODUCT_ID
+BASENAME = VERSIONED_PRODUCT_ID
 ALLOWED_TAGS = {
     "a", "br", "details", "div", "img", "li", "ol", "rp", "rt", "ruby",
     "span", "summary", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul",
@@ -392,11 +395,11 @@ def build_goldendict(
                         raise ValueError("reading contains NUL")
                     synonym_file.write(encoded + b"\0" + struct.pack(">I", entry_index))
         frequency_metadata = _frequency_metadata(connection, run_id)
-        title = frequency_metadata[0] if frequency_metadata else PRODUCT_NAME
-        description = frequency_metadata[2] if frequency_metadata else (
+        title = frequency_metadata[0] if frequency_metadata else VERSIONED_PRODUCT_NAME
+        description = release_description(frequency_metadata[2] if frequency_metadata else (
             "Производный русскоязычный словарь на основе Jitendex. "
             "Атрибуция Jitendex/JMdict/Tatoeba и условия CC BY-SA 4.0 сохранены."
-        )
+        ))
         ifo_lines = [
             "StarDict's dict ifo file", "version=2.4.2", f"bookname={_ifo_value(title)} (ja-ru)",
             f"wordcount={len(expressions)}", f"idxfilesize={idx_path.stat().st_size}",
@@ -405,6 +408,7 @@ def build_goldendict(
             ifo_lines.append(f"synwordcount={len(synonyms)}")
         ifo_lines.extend([
             "sametypesequence=h", f"author={DICTIONARY_AUTHORS}",
+            f"dictionaryversion={DICTIONARY_VERSION}",
             "website=https://ganqqwerty.github.io/jp-ru-kolobok-dictionary/", f"description={_ifo_value(description)}",
         ])
         (root / f"{BASENAME}.ifo").write_text("\n".join(ifo_lines) + "\n", encoding="utf-8", newline="\n")
@@ -576,6 +580,10 @@ def verify_goldendict(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         info = _parse_ifo(archive.read(f"{BASENAME}.ifo"))
         if info.get("version") != "2.4.2" or info.get("sametypesequence") != "h":
             raise ValueError("unsupported StarDict metadata")
+        if info.get("dictionaryversion") != DICTIONARY_VERSION:
+            raise ValueError("StarDict dictionary version mismatch")
+        if COMPILATION_DATETIME_UTC not in info.get("description", ""):
+            raise ValueError("StarDict description lacks the compilation datetime")
         index_data = archive.read(f"{BASENAME}.idx")
         if int(info.get("idxfilesize", -1)) != len(index_data):
             raise ValueError("StarDict idxfilesize mismatch")

@@ -24,6 +24,7 @@ from .export_model import (
     stable_text_key,
 )
 from .util import canonical_json, sha256_bytes, sha256_file
+from .attribution import COMPILATION_DATETIME_UTC, DICTIONARY_VERSION
 
 Fidelity = Literal["exact", "lossless-transform", "degraded", "omitted"]
 FIDELITY_LEVELS: tuple[Fidelity, ...] = (
@@ -200,6 +201,8 @@ def write_manifest_file(
     ledger.require_no_omissions()
     manifest = {
         "schema_version": 1,
+        "dictionary_version": DICTIONARY_VERSION,
+        "compilation_datetime_utc": COMPILATION_DATETIME_UTC,
         "format": format_name,
         "capability_profile": capability_profile,
         "run_id": corpus.run_id,
@@ -215,6 +218,14 @@ def write_manifest_file(
     }
     path.write_bytes(canonical_json(manifest) + b"\n")
     return manifest
+
+
+def verify_release_manifest(manifest: Mapping[str, Any]) -> None:
+    """Require the release identity that users and support tooling depend on."""
+    if manifest.get("dictionary_version") != DICTIONARY_VERSION:
+        raise ValueError("manifest dictionary version mismatch")
+    if manifest.get("compilation_datetime_utc") != COMPILATION_DATETIME_UTC:
+        raise ValueError("manifest compilation datetime mismatch")
 
 
 def record_export(

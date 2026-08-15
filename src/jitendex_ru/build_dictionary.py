@@ -9,7 +9,10 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .apply_translations import apply_article
-from .attribution import DICTIONARY_AUTHORS, PRODUCT_ID, PRODUCT_NAME
+from .attribution import (
+    DICTIONARY_AUTHORS, DICTIONARY_VERSION, PRODUCT_ID, PRODUCT_NAME,
+    VERSIONED_PRODUCT_ID, VERSIONED_PRODUCT_NAME, release_description,
+)
 from .db import audit
 from .jitendex_tags import (
     TAG_CATALOG_VERSION, load_approved_tag_catalog, localize_embedded_tags,
@@ -42,8 +45,8 @@ def _frequency_metadata(connection: ConnectionLike, run_id: int) -> tuple[str, s
               SELECT jitendex_snapshot_id FROM run WHERE id=?)""", (run_id,),
         ).fetchone()[0]
         complete = run_articles == total_articles
-        label = PRODUCT_NAME if complete else f"{PRODUCT_NAME} — {run_articles:,} статей".replace(",", " ")
-        suffix = PRODUCT_ID if complete else f"{PRODUCT_ID}-articles-{run_articles}"
+        label = VERSIONED_PRODUCT_NAME if complete else f"{VERSIONED_PRODUCT_NAME} — {run_articles:,} статей".replace(",", " ")
+        suffix = VERSIONED_PRODUCT_ID if complete else f"{PRODUCT_ID}-articles-{run_articles}-v{DICTIONARY_VERSION}"
         description = (
             f"{PRODUCT_NAME} — полный производный русскоязычный словарь на основе Jitendex. "
             if complete else
@@ -179,14 +182,14 @@ def build(
     with zipfile.ZipFile(source_row["local_path"]) as source:
         index = json.loads(source.read("index.json"))
         frequency_metadata = _frequency_metadata(connection, run_id)
-        index["title"] = frequency_metadata[0] if frequency_metadata else PRODUCT_NAME
+        index["title"] = frequency_metadata[0] if frequency_metadata else VERSIONED_PRODUCT_NAME
         suffix = frequency_metadata[1] if frequency_metadata else (
             "kaishi-ru-lexicographer-v2" if run["pipeline_version"] == "lexicographer-v2" else "kaishi-ru-v1"
         )
         index["revision"] = f"{index.get('revision', '')}-{suffix}-{TAG_CATALOG_VERSION}"
         index["targetLanguage"] = "ru"
         index["author"] = DICTIONARY_AUTHORS
-        index["description"] = (
+        index["description"] = release_description(
             frequency_metadata[2]
             if frequency_metadata else
             "Производный русскоязычный словарь на основе Jitendex; выбор статей ограничен лексикой Kaishi 1.5k. "
@@ -269,6 +272,10 @@ def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         index = json.loads(archive.read("index.json"))
         if index.get("targetLanguage") != "ru":
             raise ValueError("targetLanguage is not ru")
+        if f"v{DICTIONARY_VERSION}" not in str(index.get("title", "")):
+            raise ValueError("archive title lacks the dictionary version")
+        if f"v{DICTIONARY_VERSION}" not in str(index.get("revision", "")):
+            raise ValueError("archive revision lacks the dictionary version")
         if not str(index.get("revision", "")).endswith(f"-{TAG_CATALOG_VERSION}"):
             raise ValueError("archive revision lacks the approved tag-catalog version")
         tag_names = sorted(
