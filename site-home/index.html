@@ -99,7 +99,7 @@
     .header-actions { display: flex; align-items: center; gap: 22px; }
     .nav { display: flex; gap: 22px; font-size: 13px; font-weight: 750; }
     .nav a { text-decoration: none; }
-    .nav a:hover { color: var(--red-dark); }
+    .nav a:hover, .nav a[aria-current="page"] { color: var(--red-dark); }
     .theme-toggle { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; color: var(--ink); border: 1px solid var(--line); border-radius: 50%; background: var(--surface); cursor: pointer; font: inherit; font-size: 18px; line-height: 1; }
     .theme-toggle:hover { border-color: var(--red); }
     .theme-toggle:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
@@ -204,14 +204,12 @@
 </head>
 <body>
   <header class="wrap topbar">
-    <a class="brand" href="#top"><span class="brand-mark">辞</span><span>Колобок 400k</span></a>
+    <a class="brand" href="./"><span class="brand-mark">辞</span><span>Колобок 400k</span></a>
     <div class="header-actions">
       <nav class="nav" aria-label="Основная навигация">
-        <a href="#inside">Что внутри</a>
-        <a href="#download">Скачать</a>
-        <a href="comparison/">Сравнить</a>
-        <a href="#authors">Авторы</a>
-        <a href="#feedback">Обратная связь</a>
+        <a href="./" aria-current="page">Главная</a>
+        <a href="comparison/">Сравнение</a>
+        <a href="frequency/">Частотность</a>
       </nav>
       <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему"><span aria-hidden="true">☾</span></button>
     </div>
