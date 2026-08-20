@@ -68,6 +68,12 @@ YRP-EXEC-24 — `FIXED` for PostgreSQL integrity evidence. `run_history_fingerpr
 
 YRP-EXEC-25 — `DONE` for the pre-write automated test gate. The suite collected 164 tests: 162 passed and two documented existing tests skipped.
 
+YRP-EXEC-26 — `DONE` for production canonicalization. The first transaction changed 2,447 targets: 288 from `approved_yomitan_v1_0_1_remediation` and 2,159 from the existing `approved_jitendex_tag_catalog` final-run rule. The second transaction changed zero targets. Canonicalization history contains exactly 2,447 immutable rows.
+
+YRP-EXEC-27 — `DONE` for post-change data gates. The database audit scanned all 2,053,045 accepted targets and found zero mixed-alphabet or raw-template findings. Validation reports zero blocking issues, zero batch-membership mismatches, and unchanged accepted coverage of 2,053,045/2,053,045.
+
+YRP-EXEC-28 — `DONE` for Run 59 integrity comparison. The post-change fingerprint is `352420963a88cc1d14875fdcd1a0c32ff1e61c3407f18f8a8b458629c9a3386b`. `run`, `run_article`, `translation_unit`, `batch`, `batch_item`, `attempt`, `review`, `validation_issue`, and all existing export tables are byte-identical to the pre-change fingerprint. Only `translation` and the new `translation_canonicalization_history` rows changed.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.

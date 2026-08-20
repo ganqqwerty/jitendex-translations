@@ -1,0 +1,54 @@
+{
+  "run_id": 59,
+  "sha256": "352420963a88cc1d14875fdcd1a0c32ff1e61c3407f18f8a8b458629c9a3386b",
+  "tables": {
+    "attempt": {
+      "rows": 734,
+      "sha256": "7a6a76f8468f91103da02f2317f74890833c5ef77a51bf50a612e1438f1cd1cb"
+    },
+    "batch": {
+      "rows": 728,
+      "sha256": "97f53e1fa70539d530f04d9180aec569cb0a9db6fcac7fd8a838fe328572d71c"
+    },
+    "batch_item": {
+      "rows": 28519,
+      "sha256": "fe5dd5e05fc3b5120a47390a701a5a6e1f52f2b66d36324a98dd5d9ed2806cd6"
+    },
+    "export": {
+      "rows": 23,
+      "sha256": "43e5800a1b711d66d8a13eb4b1f2f84a462d8e0a46df880f6eb7c0268209f909"
+    },
+    "export_file": {
+      "rows": 5391,
+      "sha256": "f1c142150cfaa2607fcfce29ddc0980a6a9d0af01fea247d9f22de4ba8bd208e"
+    },
+    "review": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "run": {
+      "rows": 1,
+      "sha256": "61d8fcdcb32550a7f058b3dd38c5afb9cac8a7536d1fecf177885306eacf2253"
+    },
+    "run_article": {
+      "rows": 433885,
+      "sha256": "48e2f6d2465d406fb580301892444ae4d0f0ad36cc8870bb710cdb8c5ce5f62b"
+    },
+    "translation": {
+      "rows": 2053045,
+      "sha256": "135759b393e82a6a51a426735ee427f583000dc06fc8c79ea6ed1104c70d527c"
+    },
+    "translation_canonicalization_history": {
+      "rows": 2447,
+      "sha256": "a74ef5b01990a6d82ee2af2376dddfac8343be76b0ff773e762d92ff90234904"
+    },
+    "translation_unit": {
+      "rows": 2053045,
+      "sha256": "0d5c0c5e7dd7659bc3b1cee4c6147924c38981f90524288ba0581a549bc06475"
+    },
+    "validation_issue": {
+      "rows": 5,
+      "sha256": "9f19e8e4f74ef1209905e495eca4c273b2f9041c09bea66be91280d8b36de4b7"
+    }
+  }
+}
