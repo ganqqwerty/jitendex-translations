@@ -36,6 +36,8 @@ from .run_integrity import run_history_fingerprint, source_identity_report
 from .schema_validation import validate_archive
 from .util import canonical_json, sha256_bytes, sha256_file
 from .validate_response import ValidationFailure, ingest_response
+from .yomitan_audit import write_yomitan_archive_audit
+from .yomitan_remediation import write_yomitan_update_index
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -76,6 +78,7 @@ def _parser() -> argparse.ArgumentParser:
     accept.add_argument("--run-id", type=int, required=True)
     canonicalize = commands.add_parser("canonicalize-final-run")
     canonicalize.add_argument("--run-id", type=int, required=True)
+    canonicalize.add_argument("--remediation-manifest", type=Path)
     resolution_batches = commands.add_parser("make-resolution-batches")
     resolution_batches.add_argument("--max-notes", type=int, default=10)
     resolution = commands.add_parser("apply-resolutions")
@@ -165,6 +168,13 @@ def _parser() -> argparse.ArgumentParser:
     smoke_parser = commands.add_parser("record-yomitan-smoke")
     smoke_parser.add_argument("path", type=Path)
     smoke_parser.add_argument("--actor", required=True)
+    localization_audit = commands.add_parser("audit-yomitan-archive")
+    localization_audit.add_argument("path", type=Path)
+    localization_audit.add_argument("--output", type=Path, required=True)
+    localization_audit.add_argument("--run-id", type=int)
+    update_index = commands.add_parser("generate-yomitan-update-index")
+    update_index.add_argument("path", type=Path)
+    update_index.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -307,6 +317,19 @@ def _validation_report(connection, run_id: int) -> dict[str, Any]:
 
 
 def execute(args: argparse.Namespace) -> Any:
+    if args.command == "audit-yomitan-archive":
+        report = write_yomitan_archive_audit(
+            args.path.resolve(), args.output.resolve(), run_id=args.run_id,
+        )
+        return {
+            "output": str(args.output.resolve()),
+            "archive_sha256": report["archive_sha256"],
+            "article_count": report["article_count"],
+            "issue_counts": report["issue_counts"],
+        }
+    if args.command == "generate-yomitan-update-index":
+        index = write_yomitan_update_index(args.path.resolve(), args.output.resolve())
+        return {"output": str(args.output.resolve()), "revision": index["revision"]}
     config = Config.load(args.config)
     database = Database(config)
     if args.command == "init-db":
@@ -394,7 +417,9 @@ def execute(args: argparse.Namespace) -> Any:
             connection.commit()
             return result
         if args.command == "canonicalize-final-run":
-            result = canonicalize_final_run(connection, args.run_id)
+            result = canonicalize_final_run(
+                connection, args.run_id, remediation_manifest=args.remediation_manifest,
+            )
             connection.commit()
             return result
         if args.command == "make-resolution-batches":

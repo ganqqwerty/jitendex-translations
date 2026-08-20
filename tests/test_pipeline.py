@@ -6,7 +6,7 @@ import pytest
 from PIL import Image
 
 from jitendex_ru.batch import claim, make_batches
-from jitendex_ru.apply_translations import _compose_glossary, _localize_mixed_form_restrictions
+from jitendex_ru.apply_translations import _compose_glossary
 from jitendex_ru.build_dictionary import _chunk, build, record_yomitan_smoke, verify
 from jitendex_ru.db import connect, initialize
 from jitendex_ru.extract_units import extract_selected
@@ -63,18 +63,6 @@ def test_lexicographer_composes_a_different_number_of_russian_definitions():
     scalar_wrapper = {"tag": "li", "content": "to begin"}
     expanded = _compose_glossary(scalar_wrapper, canonical_json(["начинать", "приступать к"]).decode(), "/glossary")
     assert [item["content"] for item in expanded] == ["начинать", "приступать к"]
-
-
-def test_mixed_japanese_form_restrictions_are_localized():
-    article = {
-        "content": [
-            {"tag": "span", "lang": "ja", "content": "始める only"},
-            {"tag": "span", "lang": "ja", "content": "始める"},
-        ]
-    }
-    _localize_mixed_form_restrictions(article)
-    assert article["content"][0] == {"tag": "span", "lang": "ru", "content": "только 始める"}
-    assert article["content"][1] == {"tag": "span", "lang": "ja", "content": "始める"}
 
 
 def test_term_bank_chunking_uses_exact_serialized_byte_boundary():
@@ -202,9 +190,11 @@ def test_translation_review_and_reproducible_build(tmp_path):
     assert verify(connection, first)["verified"]
     with zipfile.ZipFile(first) as archive:
         index = json.loads(archive.read("index.json"))
-        assert index["title"].startswith("Колобок 400k v1.0")
+        assert index["title"] == "Колобок 400k"
         assert index["author"] == "Stephen Kraus; Yuri Katkov"
         assert "jp-ru-kolobok-400k" in index["revision"]
+        assert "jitendex.org" not in json.dumps(index)
+        assert not {"isUpdatable", "indexUrl", "downloadUrl"} & set(index)
         emitted = json.loads(archive.read("term_bank_1.json"))[0]
         assert emitted[5]["content"]["content"][0]["content"] == "есть"
         assert emitted[5]["content"]["content"][0]["lang"] == "ru"

@@ -44,6 +44,14 @@ README-8 — `acquire` also downloads the two Yomitan JSON schemas from an immut
 commit and verifies their configured SHA-256 values. `verify` validates every
 emitted bank against those pinned copies.
 
+## README-YU — Yomitan v1.0 update warning
+
+README-YU-1 — Do not use Yomitan's update button for the published `Колобок 400k v1.0` archive. Its update metadata points to upstream Jitendex and can replace the Russian dictionary with English Jitendex.
+
+README-YU-2 — The installed v1.0 metadata cannot be repaired remotely. Keep the current archive installed until v1.0.1 is published, then download and import v1.0.1 manually once.
+
+README-YU-3 — Jitendex, JMdict, Tatoeba, creator names, and license text intentionally remain in attribution. They are not evidence that the updater is safe; only operational `indexUrl` and `downloadUrl` determine the update channel.
+
 ## README-GD — GoldenDict export
 
 README-GD-1 — `export-goldendict --run-id ID --output dist/jp-ru-kolobok-400k-v1.0-goldendict.zip`

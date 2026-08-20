@@ -10,7 +10,7 @@ from typing import Any, Iterator
 
 from .apply_translations import apply_article
 from .attribution import (
-    DICTIONARY_AUTHORS, DICTIONARY_VERSION, PRODUCT_ID, PRODUCT_NAME,
+    DICTIONARY_VERSION, PRODUCT_ID, PRODUCT_NAME,
     VERSIONED_PRODUCT_ID, VERSIONED_PRODUCT_NAME, release_description,
 )
 from .db import audit
@@ -21,6 +21,10 @@ from .jitendex_tags import (
     verify_localized_term_tag_references,
 )
 from .util import canonical_json, sha256_bytes, sha256_file
+from .yomitan_remediation import (
+    YOMITAN_TITLE, build_yomitan_index, localize_yomitan_rows,
+    scan_yomitan_rows, validate_yomitan_metadata, yomitan_revision,
+)
 
 
 MEDIA_SUFFIXES = {".avif", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp3", ".ogg"}
@@ -175,25 +179,28 @@ def build(
     connection: ConnectionLike, run_id: int, output: Path,
 ) -> dict[str, Any]:
     run, source_row, rows = materialize_run(connection, run_id)
+    localization = localize_yomitan_rows(rows)
     catalog = load_approved_tag_catalog(connection, run["jitendex_snapshot_id"])
     embedded = localize_embedded_tags(rows, catalog)
     media = sorted({path for row in rows for path in _paths(row)})
     files: dict[str, bytes] = {}
     with zipfile.ZipFile(source_row["local_path"]) as source:
-        index = json.loads(source.read("index.json"))
+        source_index = json.loads(source.read("index.json"))
         frequency_metadata = _frequency_metadata(connection, run_id)
-        index["title"] = frequency_metadata[0] if frequency_metadata else VERSIONED_PRODUCT_NAME
         suffix = frequency_metadata[1] if frequency_metadata else (
             "kaishi-ru-lexicographer-v2" if run["pipeline_version"] == "lexicographer-v2" else "kaishi-ru-v1"
         )
-        index["revision"] = f"{index.get('revision', '')}-{suffix}-{TAG_CATALOG_VERSION}"
-        index["targetLanguage"] = "ru"
-        index["author"] = DICTIONARY_AUTHORS
-        index["description"] = release_description(
+        description = release_description(
             frequency_metadata[2]
             if frequency_metadata else
             "Производный русскоязычный словарь на основе Jitendex; выбор статей ограничен лексикой Kaishi 1.5k. "
             "Jitendex/JMdict/Tatoeba attribution and CC BY-SA 4.0 terms are retained. No affiliation with Kaishi."
+        )
+        index = build_yomitan_index(
+            source_index,
+            description=description,
+            revision=f"{yomitan_revision(suffix)}-{TAG_CATALOG_VERSION}",
+            updatable=False,
         )
         files["index.json"] = canonical_json(index)
         if "styles.css" in source.namelist():
@@ -244,11 +251,11 @@ def build(
         **tag_references,
     }
     audit(connection, "build", "export", export_id, {
-        "output": str(output), "zip_sha256": zip_hash, **tag_summary,
+        "output": str(output), "zip_sha256": zip_hash, **localization, **tag_summary,
     })
     return {
         "export_id": export_id, "files": len(files), "articles": len(rows),
-        "zip_sha256": zip_hash, **tag_summary,
+        "zip_sha256": zip_hash, **localization, **tag_summary,
     }
 
 
@@ -270,12 +277,9 @@ def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         if len(names) != len(set(names)):
             raise ValueError("duplicate ZIP members")
         index = json.loads(archive.read("index.json"))
-        if index.get("targetLanguage") != "ru":
-            raise ValueError("targetLanguage is not ru")
-        if f"v{DICTIONARY_VERSION}" not in str(index.get("title", "")):
-            raise ValueError("archive title lacks the dictionary version")
-        if f"v{DICTIONARY_VERSION}" not in str(index.get("revision", "")):
-            raise ValueError("archive revision lacks the dictionary version")
+        validate_yomitan_metadata(index, require_updatable=False)
+        if index.get("title") != YOMITAN_TITLE:
+            raise ValueError("archive title is not the stable Yomitan title")
         if not str(index.get("revision", "")).endswith(f"-{TAG_CATALOG_VERSION}"):
             raise ValueError("archive revision lacks the approved tag-catalog version")
         tag_names = sorted(
@@ -289,6 +293,7 @@ def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         embedded_tag_occurrences = 0
         tag_bank_references = 0
         missing_media: set[str] = set()
+        localization_issue_counts: dict[str, int] = {}
         for name in term_names:
             rows = json.loads(archive.read(name))
             article_count += len(rows)
@@ -296,8 +301,13 @@ def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
                 "embedded_tag_occurrences"
             ]
             tag_bank_references += verify_localized_term_tag_references(rows, tag_mapping)
+            scan = scan_yomitan_rows(rows)
+            for code, count in scan["issue_counts"].items():
+                localization_issue_counts[code] = localization_issue_counts.get(code, 0) + count
             for row in rows:
                 missing_media.update(path for path in _paths(row) if path not in names)
+        if localization_issue_counts:
+            raise ValueError(f"Yomitan localization gate failed: {localization_issue_counts}")
         if missing_media:
             raise ValueError(f"missing media: {sorted(missing_media)}")
     expected = connection.execute("SELECT COUNT(*) FROM run_article WHERE run_id=?", (export["run_id"],)).fetchone()[0]
@@ -310,6 +320,7 @@ def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         "tag_catalog_sha256": catalog["source_sha256"],
         "embedded_tag_occurrences": embedded_tag_occurrences,
         "tag_bank_rows": len(tag_mapping), "tag_bank_references": tag_bank_references,
+        "localization_issue_counts": localization_issue_counts,
     }
 
 

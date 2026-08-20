@@ -59,3 +59,91 @@ def test_missing_approved_structured_tag_fails_without_mutation(tmp_path):
         canonicalize_final_run(connection, 1)
     assert connection.execute("SELECT target_text FROM translation WHERE accepted=1").fetchone()[0] == "вариант"
     assert connection.execute("SELECT COUNT(*) FROM translation_canonicalization_history").fetchone()[0] == 0
+
+
+def _remediation_database(tmp_path):
+    connection = _database(tmp_path)
+    article = [None, None, None, None, None, [{"content": "broken"}]]
+    raw = canonical_json(article).decode()
+    connection.execute(
+        "UPDATE article SET raw_json=?,source_sha256=? WHERE id=1",
+        (raw, sha256_bytes(raw.encode())),
+    )
+    connection.execute(
+        "UPDATE translation_unit SET json_pointer='/5/0/content',source_text='broken',source_sha256='source-hash',role='glossary' WHERE id='u-1'"
+    )
+    target = "ошибка гikun"
+    connection.execute(
+        "UPDATE translation SET target_text=?,target_sha256=? WHERE unit_id='u-1'",
+        (target, sha256_bytes(target.encode())),
+    )
+    (tmp_path / "manifest.json").write_text(json.dumps({"articles": []}), encoding="utf-8")
+    connection.commit()
+    return connection, target
+
+
+def _write_remediation(tmp_path, previous_target, **change_overrides):
+    change = {
+        "unit_id": "u-1",
+        "source_sha256": "source-hash",
+        "previous_target_sha256": sha256_bytes(previous_target.encode()),
+        "canonical_target_text": "ошибка гикун",
+    }
+    change.update(change_overrides)
+    path = tmp_path / "remediation.json"
+    path.write_text(json.dumps({
+        "schema_version": 1,
+        "run_id": 1,
+        "mapping_source": "approved_yomitan_v1_0_1_remediation",
+        "changes": [change],
+    }), encoding="utf-8")
+    return path
+
+
+def test_applies_approved_remediation_manifest_and_is_idempotent(tmp_path):
+    connection, previous = _remediation_database(tmp_path)
+    path = _write_remediation(tmp_path, previous)
+
+    result = canonicalize_final_run(connection, 1, remediation_manifest=path)
+    connection.commit()
+
+    assert result["remediation_units"] == 1
+    assert result["changed_units"] == 1
+    assert connection.execute("SELECT target_text FROM translation WHERE unit_id='u-1'").fetchone()[0] == "ошибка гикун"
+    history = connection.execute(
+        "SELECT previous_target_sha256,mapping_source,mapping_identity_json FROM translation_canonicalization_history"
+    ).fetchone()
+    assert history[0] == sha256_bytes(previous.encode())
+    assert history[1] == "approved_yomitan_v1_0_1_remediation"
+    assert json.loads(history[2])["manifest_sha256"] == sha256_bytes(path.read_bytes())
+    assert canonicalize_final_run(connection, 1, remediation_manifest=path)["changed_units"] == 0
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"unit_id": "missing"}, "unknown or unaccepted"),
+        ({"source_sha256": "wrong"}, "source hash mismatch"),
+        ({"previous_target_sha256": "0" * 64}, "previous target hash mismatch"),
+    ],
+)
+def test_remediation_manifest_fails_closed_without_mutation(tmp_path, overrides, message):
+    connection, previous = _remediation_database(tmp_path)
+    path = _write_remediation(tmp_path, previous, **overrides)
+
+    with pytest.raises(ValueError, match=message):
+        canonicalize_final_run(connection, 1, remediation_manifest=path)
+
+    assert connection.execute("SELECT target_text FROM translation WHERE unit_id='u-1'").fetchone()[0] == previous
+    assert connection.execute("SELECT COUNT(*) FROM translation_canonicalization_history").fetchone()[0] == 0
+
+
+def test_remediation_manifest_rejects_duplicate_units(tmp_path):
+    connection, previous = _remediation_database(tmp_path)
+    path = _write_remediation(tmp_path, previous)
+    payload = json.loads(path.read_text())
+    payload["changes"].append(dict(payload["changes"][0]))
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="duplicate remediation unit"):
+        canonicalize_final_run(connection, 1, remediation_manifest=path)

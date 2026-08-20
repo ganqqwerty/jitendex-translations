@@ -246,6 +246,8 @@
     .stat strong { display: block; font-family: var(--serif); font-size: clamp(34px, 4vw, 54px); font-weight: 500; line-height: 1; }
     .stat span { display: block; margin-top: 10px; color: var(--stats-muted); font-size: 13px; }
     .section { padding: 100px 0; border-bottom: 1px solid var(--line); }
+    .update-warning { margin: 24px auto 0; padding: 18px 20px; border: 2px solid var(--red); background: var(--surface); }
+    .update-warning strong { color: var(--red-dark); }
     .section-head { display: grid; grid-template-columns: .72fr 1.28fr; gap: 54px; margin-bottom: 52px; }
     .kicker { color: var(--red-dark); font-size: 12px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
     h2 { max-width: 810px; margin: 0; font-family: var(--serif); font-size: clamp(38px, 5.4vw, 62px); font-weight: 500; line-height: 1.1; }
@@ -349,6 +351,10 @@
         <div class="tags"><span class="tag">глагол годан</span><span class="tag">переходный</span><span class="tag">частотное</span></div>
       </a>
     </section>
+
+    <aside class="wrap update-warning" id="YOMITAN-UPDATE-WARNING" aria-label="Предупреждение об обновлении Yomitan">
+      <strong>Важно для Yomitan v1.0.</strong> Не нажимайте кнопку обновления словаря: старые метаданные могут заменить русский «Колобок» английским Jitendex. Дождитесь v1.0.1 и один раз установите его вручную.
+    </aside>
 
     <section class="stats" aria-label="Масштаб словаря">
       <div class="wrap stats-grid">

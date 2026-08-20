@@ -34,6 +34,14 @@ def test_valid_response(tmp_path):
     assert validate_worker_payload(connection, attempt, payload) == []
 
 
+def test_rejects_adjacent_mixed_alphabets_but_allows_hyphenated_terms():
+    assert "mixed_alphabet_token" in _plain_text_issues("ошибка гikun", [])
+    assert "mixed_alphabet_token" in _plain_text_issues("это emphатично", [])
+    assert "mixed_alphabet_token" not in _plain_text_issues(
+        "JIT-компилятор, 3D-принтер и USB-концентратор", ["JIT", "3D", "USB"],
+    )
+
+
 def test_stale_attempt_cannot_ingest_after_lease_changes(tmp_path):
     connection, _ = fixture_db(tmp_path)
     response_path = tmp_path / "stale.json"

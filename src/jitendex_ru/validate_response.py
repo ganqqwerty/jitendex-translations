@@ -11,7 +11,8 @@ from .db import audit
 from .extract_units import SOURCE_ACRONYM_RE
 from .util import (
     ASCII_WORD_RE, CONTROL_RE, CYRILLIC_RE, KEY_CHORD_RE, LANGUAGE_ORIGIN_RE,
-    LATIN_TAXON_RE, TAG_RE, canonical_json, sha256_bytes, source_xref_taxa,
+    LATIN_TAXON_RE, MIXED_ALPHABET_RE, TAG_RE, canonical_json, sha256_bytes,
+    source_xref_taxa,
 )
 
 
@@ -55,6 +56,8 @@ def _plain_text_issues(
     for token in allowed_english or []:
         unprotected = re.sub(rf"\b{re.escape(token)}\b", "", unprotected, flags=re.IGNORECASE)
     unprotected = LATIN_TAXON_RE.sub("", unprotected)
+    if MIXED_ALPHABET_RE.search(unprotected):
+        issues.append("mixed_alphabet_token")
     if len(ASCII_WORD_RE.findall(unprotected)) > 2:
         issues.append("too_much_english")
     return issues

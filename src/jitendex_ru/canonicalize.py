@@ -11,7 +11,8 @@ from .db import audit
 from .util import json_pointer_get, sha256_bytes
 
 
-CANONICALIZER_VERSION = "final-run-v1"
+CANONICALIZER_VERSION = "final-run-v2"
+REMEDIATION_SCHEMA_VERSION = 1
 
 
 def _structured_tag_requirement(
@@ -65,7 +66,43 @@ def _manifest_requirements(connection: ConnectionLike, run_id: int) -> dict[str,
     return requirements
 
 
-def canonicalize_final_run(connection: ConnectionLike, run_id: int) -> dict[str, int | str]:
+def _remediation_requirements(path: Path, run_id: int) -> tuple[str, str, dict[str, dict[str, str]]]:
+    if not path.is_file():
+        raise ValueError(f"missing remediation manifest: {path}")
+    payload_bytes = path.read_bytes()
+    payload = json.loads(payload_bytes)
+    if not isinstance(payload, dict) or set(payload) != {
+        "schema_version", "run_id", "mapping_source", "changes",
+    }:
+        raise ValueError("invalid remediation manifest fields")
+    if payload["schema_version"] != REMEDIATION_SCHEMA_VERSION:
+        raise ValueError("unsupported remediation manifest schema")
+    if payload["run_id"] != run_id:
+        raise ValueError("remediation manifest run mismatch")
+    mapping_source = payload["mapping_source"]
+    if not isinstance(mapping_source, str) or not mapping_source.startswith("approved_yomitan_"):
+        raise ValueError("remediation mapping source is not approved")
+    changes = payload["changes"]
+    if not isinstance(changes, list) or not changes:
+        raise ValueError("remediation manifest changes must be a non-empty array")
+    requirements: dict[str, dict[str, str]] = {}
+    for change in changes:
+        if not isinstance(change, dict) or set(change) != {
+            "unit_id", "source_sha256", "previous_target_sha256", "canonical_target_text",
+        }:
+            raise ValueError("invalid remediation change fields")
+        if not all(isinstance(change[key], str) and change[key] for key in change):
+            raise ValueError("remediation change values must be non-empty strings")
+        unit_id = change["unit_id"]
+        if unit_id in requirements:
+            raise ValueError(f"duplicate remediation unit {unit_id}")
+        requirements[unit_id] = change
+    return mapping_source, sha256_bytes(payload_bytes), requirements
+
+
+def canonicalize_final_run(
+    connection: ConnectionLike, run_id: int, remediation_manifest: Path | None = None,
+) -> dict[str, int | str]:
     run = connection.execute("SELECT * FROM run WHERE id=?", (run_id,)).fetchone()
     if run is None:
         raise ValueError(f"unknown run {run_id}")
@@ -80,7 +117,7 @@ def canonicalize_final_run(connection: ConnectionLike, run_id: int) -> dict[str,
     requirements = _manifest_requirements(connection, run_id)
     rows = connection.execute(
         """WITH selected AS (
-          SELECT tu.id unit_id,tu.article_id,tu.role,tu.json_pointer,
+          SELECT tu.id unit_id,tu.article_id,tu.role,tu.json_pointer,tu.source_sha256,
           t.id translation_id,t.target_text,t.target_sha256,
           ROW_NUMBER() OVER (PARTITION BY tu.article_id ORDER BY tu.id) article_row
           FROM translation_unit tu
@@ -93,6 +130,36 @@ def canonicalize_final_run(connection: ConnectionLike, run_id: int) -> dict[str,
         ORDER BY selected.article_id,selected.unit_id""", (run_id,),
     ).fetchall()
 
+    remediation_source = ""
+    remediation_hash = ""
+    remediation: dict[str, dict[str, str]] = {}
+    if remediation_manifest is not None:
+        remediation_source, remediation_hash, remediation = _remediation_requirements(
+            remediation_manifest, run_id,
+        )
+    rows_by_unit = {row["unit_id"]: row for row in rows}
+    for unit_id, requirement in remediation.items():
+        row = rows_by_unit.get(unit_id)
+        if row is None:
+            raise ValueError(f"unknown or unaccepted remediation unit {unit_id}")
+        if row["source_sha256"] != requirement["source_sha256"]:
+            raise ValueError(f"remediation source hash mismatch for {unit_id}")
+        if sha256_bytes(row["target_text"].encode()) != row["target_sha256"]:
+            raise ValueError(f"stored target hash mismatch for {unit_id}")
+        canonical_hash = sha256_bytes(requirement["canonical_target_text"].encode())
+        if row["target_sha256"] == requirement["previous_target_sha256"]:
+            continue
+        if row["target_sha256"] != canonical_hash:
+            raise ValueError(f"remediation previous target hash mismatch for {unit_id}")
+        history = connection.execute(
+            """SELECT 1 FROM translation_canonicalization_history
+            WHERE run_id=? AND unit_id=? AND previous_target_sha256=?
+              AND canonical_target_sha256=? AND mapping_source=? LIMIT 1""",
+            (run_id, unit_id, requirement["previous_target_sha256"], canonical_hash, remediation_source),
+        ).fetchone()
+        if history is None and requirement["previous_target_sha256"] != canonical_hash:
+            raise ValueError(f"remediation canonical target lacks matching history for {unit_id}")
+
     replacements: list[tuple[RowLike, str, str, dict[str, Any]]] = []
     structured = 0
     source: dict[str, Any] | None = None
@@ -103,17 +170,39 @@ def canonicalize_final_run(connection: ConnectionLike, run_id: int) -> dict[str,
             raise ValueError(f"missing article JSON for {row['unit_id']}")
         tag = _structured_tag_requirement(source, row["json_pointer"], catalog)
         manifest = requirements.get(row["unit_id"])
+        approved_repair = remediation.get(row["unit_id"])
         if tag is not None:
             structured += 1
             target, identity = tag
             if manifest is not None and manifest[0] != target:
                 raise ValueError(f"conflicting structured and manifest mapping for {row['unit_id']}")
             mapping_source = "approved_jitendex_tag_catalog"
+            if approved_repair is not None and approved_repair["canonical_target_text"] != target:
+                raise ValueError(f"conflicting structured and remediation mapping for {row['unit_id']}")
         elif manifest is not None:
             target, identity = manifest
             mapping_source = "manifest_required_terminology"
+            if approved_repair is not None and approved_repair["canonical_target_text"] != target:
+                raise ValueError(f"conflicting manifest and remediation mapping for {row['unit_id']}")
+        elif approved_repair is not None:
+            target = approved_repair["canonical_target_text"]
+            mapping_source = remediation_source
+            identity = {
+                "manifest_path": str(remediation_manifest),
+                "manifest_sha256": remediation_hash,
+                "source_sha256": approved_repair["source_sha256"],
+                "previous_target_sha256": approved_repair["previous_target_sha256"],
+            }
         else:
             continue
+        if approved_repair is not None:
+            mapping_source = remediation_source
+            identity = {
+                "manifest_path": str(remediation_manifest),
+                "manifest_sha256": remediation_hash,
+                "source_sha256": approved_repair["source_sha256"],
+                "previous_target_sha256": approved_repair["previous_target_sha256"],
+            }
         if row["role"] == "glossary_set":
             raise ValueError(f"required terminology is not a whole scalar leaf for {row['unit_id']}")
         replacements.append((row, target, mapping_source, identity))
@@ -145,6 +234,7 @@ def canonicalize_final_run(connection: ConnectionLike, run_id: int) -> dict[str,
         "run_id": run_id,
         "canonicalizer_version": CANONICALIZER_VERSION,
         "structured_tag_units": structured,
+        "remediation_units": len(remediation),
         "required_units": len(replacements),
         "changed_units": changed,
         "already_canonical_units": already_canonical,
