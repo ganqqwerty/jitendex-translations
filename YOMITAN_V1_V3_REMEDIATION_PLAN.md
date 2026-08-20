@@ -20,7 +20,7 @@ YRP-STATUS-7 — The plan ends only after the corrected archives, update index, 
 
 YRP-EXEC-1 — `LOCAL PASS COMPLETE` as of 2026-08-20 on `main`. This pass used the main thread and local Python tooling only. It did not spawn agents and did not call the Codex CLI.
 
-YRP-EXEC-2 — `DONE` for YRP-V1A and YRP-CODE-1–2. `yomitan_remediation.py` localizes redirects, the long forms tooltip, and structurally identified `<form> only` labels. The full 433,885-article snapshot must match the pinned counts 136,668, 4,307, and 74. Build and verification results expose the counters or issue counts.
+YRP-EXEC-2 — `DONE` for YRP-V1A and YRP-CODE-1–2. `yomitan_remediation.py` localizes redirects, the long forms tooltip, and structurally identified `<form> only` labels. The full 433,885-article source snapshot must match 136,668 redirects, 4,307 tooltips, and 4,307 total short restrictions. Of those restrictions, 74 were still broken in the published v1.0 archive; the other 4,233 had been localized earlier inside `apply_article()`. Build and verification results expose the counters or issue counts.
 
 YRP-EXEC-3 — `PARTIAL` for YRP-V1B and YRP-CODE-3–5. The released v1.0 ZIP now has a reproducible archive audit, worker validation rejects adjacent mixed alphabets, and the canonicalizer accepts a hash-locked approved remediation manifest with immutable history and idempotence checks. The database-target audit with source text and local context, semantic review, approval of the 172 findings, and production application remain pending.
 
@@ -73,6 +73,8 @@ YRP-EXEC-26 — `DONE` for production canonicalization. The first transaction ch
 YRP-EXEC-27 — `DONE` for post-change data gates. The database audit scanned all 2,053,045 accepted targets and found zero mixed-alphabet or raw-template findings. Validation reports zero blocking issues, zero batch-membership mismatches, and unchanged accepted coverage of 2,053,045/2,053,045.
 
 YRP-EXEC-28 — `DONE` for Run 59 integrity comparison. The post-change fingerprint is `352420963a88cc1d14875fdcd1a0c32ff1e61c3407f18f8a8b458629c9a3386b`. `run`, `run_article`, `translation_unit`, `batch`, `batch_item`, `attempt`, `review`, `validation_issue`, and all existing export tables are byte-identical to the pre-change fingerprint. Only `translation` and the new `translation_canonicalization_history` rows changed.
+
+YRP-EXEC-29 — `FIXED` after the first full materialization preflight. Moving all form-restriction localization into the counted build pass correctly exposed 4,307 source `<form> only` labels, not only the 74 labels left broken by the legacy partial pass. The pinned build count now covers all 4,307 transformations while YRP-BASELINE-3 continues to describe the 74 v1.0 residual defects.
 
 ## YRP-SOURCE — Source of truth
 
@@ -176,7 +178,7 @@ YRP-V1A-13 — Store those counters in the export audit event and expose them in
 
 YRP-V1A-14 — Make `verify()` independently rerun the check and fail if any raw `redirected from`, raw long tooltip, or unapproved restriction `only` remains.
 
-YRP-V1A-15 — Require final counts of 136,668 redirects, 4,307 long tooltips, and 74 short restrictions for this pinned Jitendex snapshot. A source snapshot change must require a reviewed baseline change rather than silently accepting new counts.
+YRP-V1A-15 — Require source transformation counts of 136,668 redirects, 4,307 long tooltips, and 4,307 short restrictions for this pinned Jitendex snapshot. The short-restriction total includes the 4,233 Japanese-form labels already repaired by the legacy v1.0 build path and the 74 residual numeric, Greek, and fullwidth-Latin defects. A source snapshot change must require a reviewed baseline change rather than silently accepting new counts.
 
 ## YRP-V1B — Audit and repair accepted translations
 

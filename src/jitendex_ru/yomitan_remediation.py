@@ -42,7 +42,7 @@ PINNED_FULL_ARTICLE_COUNT = 433_885
 PINNED_LOCALIZATION_COUNTS = {
     "redirects_localized": 136_668,
     "tooltips_localized": 4_307,
-    "short_restrictions_localized": 74,
+    "short_restrictions_localized": 4_307,
 }
 
 
