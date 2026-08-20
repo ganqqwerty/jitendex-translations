@@ -203,8 +203,14 @@ def canonicalize_final_run(
                 "source_sha256": approved_repair["source_sha256"],
                 "previous_target_sha256": approved_repair["previous_target_sha256"],
             }
-        if row["role"] == "glossary_set":
+        if row["role"] == "glossary_set" and approved_repair is None:
             raise ValueError(f"required terminology is not a whole scalar leaf for {row['unit_id']}")
+        if row["role"] == "glossary_set":
+            definitions = json.loads(target)
+            if not isinstance(definitions, list) or not definitions or not all(
+                isinstance(definition, str) and definition.strip() for definition in definitions
+            ):
+                raise ValueError(f"remediation glossary_set is invalid for {row['unit_id']}")
         replacements.append((row, target, mapping_source, identity))
 
     changed = 0

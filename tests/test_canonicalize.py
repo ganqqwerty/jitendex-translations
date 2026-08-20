@@ -119,6 +119,30 @@ def test_applies_approved_remediation_manifest_and_is_idempotent(tmp_path):
     assert canonicalize_final_run(connection, 1, remediation_manifest=path)["changed_units"] == 0
 
 
+def test_applies_approved_remediation_to_whole_glossary_set(tmp_path):
+    connection, _ = _remediation_database(tmp_path)
+    previous = '["ошибка гikun"]'
+    canonical = '["ошибка гикун"]'
+    connection.execute(
+        "UPDATE translation_unit SET role='glossary_set' WHERE id='u-1'"
+    )
+    connection.execute(
+        "UPDATE translation SET target_text=?,target_sha256=? WHERE unit_id='u-1'",
+        (previous, sha256_bytes(previous.encode())),
+    )
+    connection.commit()
+    path = _write_remediation(
+        tmp_path, previous, canonical_target_text=canonical,
+    )
+
+    result = canonicalize_final_run(connection, 1, remediation_manifest=path)
+
+    assert result["changed_units"] == 1
+    assert connection.execute(
+        "SELECT target_text FROM translation WHERE unit_id='u-1'"
+    ).fetchone()[0] == canonical
+
+
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
