@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from .database import ConnectionLike, RowLike
 
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from .util import canonical_json, sha256_bytes
@@ -17,6 +19,23 @@ EXPECTED_LEXICOGRAPHER_V2_ROLES = {
     "register": 1108,
     "label": 1056,
 }
+
+
+def _database_json_value(value: Any) -> Any:
+    """Normalize backend-native scalar types before deterministic hashing."""
+    if isinstance(value, dict):
+        return {key: _database_json_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_database_json_value(item) for item in value]
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, memoryview):
+        return value.tobytes().hex()
+    if isinstance(value, bytes):
+        return value.hex()
+    return value
 
 
 def headword_progress(connection: ConnectionLike, run_id: int) -> tuple[int, int]:
@@ -147,6 +166,10 @@ def run_history_fingerprint(connection: ConnectionLike, run_id: int) -> dict[str
             (run_id,),
         ),
         "translation": ("SELECT * FROM translation WHERE run_id=? ORDER BY id", (run_id,)),
+        "translation_canonicalization_history": (
+            "SELECT * FROM translation_canonicalization_history WHERE run_id=? ORDER BY id",
+            (run_id,),
+        ),
         "review": (
             "SELECT r.* FROM review r JOIN translation t ON t.id=r.translation_id WHERE t.run_id=? ORDER BY r.id",
             (run_id,),
@@ -160,7 +183,7 @@ def run_history_fingerprint(connection: ConnectionLike, run_id: int) -> dict[str
     }
     tables: dict[str, dict[str, Any]] = {}
     for table, (sql, parameters) in queries.items():
-        rows = [dict(row) for row in connection.execute(sql, parameters)]
+        rows = [_database_json_value(dict(row)) for row in connection.execute(sql, parameters)]
         tables[table] = {"rows": len(rows), "sha256": sha256_bytes(canonical_json(rows))}
     return {
         "run_id": run_id,

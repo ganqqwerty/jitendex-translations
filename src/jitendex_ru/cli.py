@@ -36,7 +36,7 @@ from .run_integrity import run_history_fingerprint, source_identity_report
 from .schema_validation import validate_archive
 from .util import canonical_json, sha256_bytes, sha256_file
 from .validate_response import ValidationFailure, ingest_response
-from .yomitan_audit import write_yomitan_archive_audit
+from .yomitan_audit import write_yomitan_archive_audit, write_yomitan_database_audit
 from .yomitan_remediation import write_yomitan_update_index
 
 
@@ -172,6 +172,10 @@ def _parser() -> argparse.ArgumentParser:
     localization_audit.add_argument("path", type=Path)
     localization_audit.add_argument("--output", type=Path, required=True)
     localization_audit.add_argument("--run-id", type=int)
+    database_localization_audit = commands.add_parser("audit-yomitan-localization")
+    database_localization_audit.add_argument("--run-id", type=int, required=True)
+    database_localization_audit.add_argument("--output", type=Path, required=True)
+    database_localization_audit.add_argument("--archive", type=Path)
     update_index = commands.add_parser("generate-yomitan-update-index")
     update_index.add_argument("path", type=Path)
     update_index.add_argument("--output", type=Path, required=True)
@@ -422,6 +426,18 @@ def execute(args: argparse.Namespace) -> Any:
             )
             connection.commit()
             return result
+        if args.command == "audit-yomitan-localization":
+            report = write_yomitan_database_audit(
+                connection,
+                args.run_id,
+                args.output.resolve(),
+                archive_path=args.archive.resolve() if args.archive else None,
+            )
+            return {
+                "output": str(args.output.resolve()),
+                "accepted_target_count": report["accepted_target_count"],
+                "issue_counts": report["issue_counts"],
+            }
         if args.command == "make-resolution-batches":
             result = make_resolution_batches(connection, config.work_dir / "selection-inbox", args.max_notes)
             connection.commit()

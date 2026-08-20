@@ -14,7 +14,9 @@ from .attribution import (
     PRODUCT_ID,
     PRODUCT_NAME,
 )
-from .util import atomic_write, canonical_json
+from .util import (
+    LATIN_LETTER_CLASS, MIXED_ALPHABET_RE, atomic_write, canonical_json,
+)
 
 
 REDIRECT_SOURCE_PREFIX = "redirected from "
@@ -22,10 +24,7 @@ REDIRECT_RU_PREFIX = "вариант написания: "
 FORMS_TOOLTIP_SOURCE = "valid only for these forms and/or readings"
 FORMS_TOOLTIP_RU = "допустимо только для этих форм и/или чтений"
 FORM_ONLY_RE = re.compile(r"^(.+?) only$")
-MIXED_ALPHABET_RE = re.compile(
-    r"(?:[A-Za-z][\u0400-\u04ff]|[\u0400-\u04ff][A-Za-z])"
-)
-VISIBLE_TOKEN_RE = re.compile(r"[A-Za-z\u0400-\u04ff]+")
+VISIBLE_TOKEN_RE = re.compile(rf"[{LATIN_LETTER_CLASS}\u0400-\u04ff]+")
 
 YOMITAN_TITLE = PRODUCT_NAME
 PROJECT_URL = "https://ganqqwerty.github.io/jp-ru-kolobok-dictionary/"

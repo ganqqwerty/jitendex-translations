@@ -1,5 +1,9 @@
+from datetime import datetime, timezone
+
 from jitendex_ru.db import connect, initialize
-from jitendex_ru.run_integrity import run_history_fingerprint, source_identity_report
+from jitendex_ru.run_integrity import (
+    _database_json_value, run_history_fingerprint, source_identity_report,
+)
 
 
 def _seed(connection):
@@ -47,3 +51,10 @@ def test_history_fingerprint_is_run_scoped(tmp_path):
         assert run_history_fingerprint(connection, 2) == before
         connection.execute("UPDATE run SET state='complete' WHERE id=2")
         assert run_history_fingerprint(connection, 2)["sha256"] != before["sha256"]
+
+
+def test_history_fingerprint_normalizes_postgresql_datetime_values():
+    value = datetime(2026, 8, 21, 10, 20, 30, tzinfo=timezone.utc)
+    assert _database_json_value({"created_at": value}) == {
+        "created_at": "2026-08-21T10:20:30+00:00",
+    }

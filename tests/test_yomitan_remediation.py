@@ -70,6 +70,7 @@ def test_scanner_rejects_raw_templates_and_adjacent_alphabets_only():
         {"title": "valid only for these forms and/or readings"},
         {"lang": "ja", "content": "Ω only"},
         "ошибки гikun и emphатично",
+        "сталagmíт",
         "JIT-компилятор; 3D-принтер; USB-концентратор",
     ])]
 
@@ -78,10 +79,12 @@ def test_scanner_rejects_raw_templates_and_adjacent_alphabets_only():
     assert scan["issue_counts"] == {
         "raw_redirect_template": 1,
         "raw_forms_tooltip": 1,
-        "mixed_alphabet_token": 2,
+        "mixed_alphabet_token": 3,
         "raw_short_restriction": 1,
     }
-    assert {issue.get("token") for issue in scan["issues"]} >= {"гikun", "emphатично"}
+    assert {issue.get("token") for issue in scan["issues"]} >= {
+        "гikun", "emphатично", "сталagmíт",
+    }
 
 
 def test_yomitan_metadata_is_stable_and_foreign_update_fields_are_removed():

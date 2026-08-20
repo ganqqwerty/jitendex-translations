@@ -37,6 +37,7 @@ def test_valid_response(tmp_path):
 def test_rejects_adjacent_mixed_alphabets_but_allows_hyphenated_terms():
     assert "mixed_alphabet_token" in _plain_text_issues("ошибка гikun", [])
     assert "mixed_alphabet_token" in _plain_text_issues("это emphатично", [])
+    assert "mixed_alphabet_token" in _plain_text_issues("сталagmíт", [])
     assert "mixed_alphabet_token" not in _plain_text_issues(
         "JIT-компилятор, 3D-принтер и USB-концентратор", ["JIT", "3D", "USB"],
     )

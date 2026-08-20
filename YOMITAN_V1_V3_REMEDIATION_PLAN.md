@@ -56,6 +56,18 @@ YRP-EXEC-18 — `COMMIT MESSAGE` for this pass is `Fix Yomitan localization and 
 
 YRP-EXEC-19 — `.idea/` remains untouched and untracked as required by YRP-COMMIT-2.
 
+YRP-EXEC-20 — `IN PROGRESS` as of 2026-08-21. The production continuation still runs on `main` without worker agents or the Codex CLI. Run 59 has zero active batches, zero active attempts, zero unresolved blocking errors, and 2,053,045 accepted translations for 2,053,045 units.
+
+YRP-EXEC-21 — `DONE` for the database-level pre-change audit. Unicode-aware detector `yomitan-visible-text-v2` scanned every accepted target and found 295 mixed-alphabet occurrences in 288 units. The report is `reports/yomitan_localization/run59-v1.0.1-before.json` with SHA-256 `4dbc55a9427adf175c98c7175c43e5eb8cc3e4adab95ee9a58755e09f8e5bf56`.
+
+YRP-EXEC-22 — `DONE` for remediation review and approval. `terminology/yomitan-v1.0.1-approved-remediation.json` contains 288 hash-locked changes and has SHA-256 `4d77c055656e9c6e59825cbee6a68de541cafbdb05a57d514459e4992a3d9e15`. The separate before/after approval record has SHA-256 `d67037ca7d528334aa59b94dc215af0f50297a2c3fb07837d2f2249e5b3c9372`.
+
+YRP-EXEC-23 — `DONE` for the pre-write backup. `work/backups/jitendex-postgresql-before-yomitan-v1.0.1.dump` is a validated PostgreSQL custom-format dump, is 4.6 GB, and has SHA-256 `8285e75871536c1f2a0debd4534ccafa1a556d0303a85bd98d29cedc041c0bb7`. The dump is not committed.
+
+YRP-EXEC-24 — `FIXED` for PostgreSQL integrity evidence. `run_history_fingerprint()` now normalizes backend-native timestamps and includes `translation_canonicalization_history`; the previous implementation failed before producing a PostgreSQL fingerprint. The pre-change Run 59 fingerprint is `222f939fdea6c279300fd0a97302e214e4f0be5880952bcd3417c3d60822c0f1` with zero canonicalization-history rows.
+
+YRP-EXEC-25 — `DONE` for the pre-write automated test gate. The suite collected 164 tests: 162 passed and two documented existing tests skipped.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.

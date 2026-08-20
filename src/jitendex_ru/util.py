@@ -10,8 +10,9 @@ from typing import Any
 
 
 CYRILLIC_RE = re.compile(r"[\u0400-\u04ff]")
+LATIN_LETTER_CLASS = r"A-Za-z\u00c0-\u024f\u1e00-\u1eff"
 MIXED_ALPHABET_RE = re.compile(
-    r"(?:[A-Za-z][\u0400-\u04ff]|[\u0400-\u04ff][A-Za-z])"
+    rf"(?:[{LATIN_LETTER_CLASS}][\u0400-\u04ff]|[\u0400-\u04ff][{LATIN_LETTER_CLASS}])"
 )
 TAG_RE = re.compile(r"<\/?[A-Za-z][^>]*>|```|\[[^\]]+\]\([^)]+\)")
 CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
