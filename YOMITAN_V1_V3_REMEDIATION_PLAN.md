@@ -118,6 +118,8 @@ YRP-EXEC-49 — `BLOCKED ON MANUAL UI` for YRP-SMOKE-1 through YRP-SMOKE-9. Chro
 
 YRP-EXEC-50 — `DONE` for local site smoke. A two-hour-watchdog HTTP server served `site-home`; browser DOM and viewport checks confirmed the v1.0.1 hero links, five download cards, release link, readable manual-upgrade warning, preserved intended brand attribution, and a single copy of every page section. The server was stopped after the check.
 
+YRP-EXEC-51 — `READY` for GitHub publication preflight. GitHub CLI is authenticated as repository owner `ganqqwerty`; the default branch is `main`; `origin/main` is `bead7e7252a24069016e8843f3d9671870f3433e`; and no tag or release named `v1.0.1` exists. Local `main` remains unpushed while YRP-EXEC-49 blocks publication, so the staged Pages links cannot become public before their release assets exist.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.
