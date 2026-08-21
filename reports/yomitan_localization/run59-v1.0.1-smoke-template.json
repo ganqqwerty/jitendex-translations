@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "examples": false,
+    "expression_lookup": false,
+    "inflected_lookup": false,
+    "kana_only_lookup": false,
+    "links": false,
+    "long_entry": false,
+    "multiple_readings": false,
+    "no_jitendex": false,
+    "owned_update_upgrade": false,
+    "preserved_terminology": false,
+    "reading_lookup": false,
+    "redirect_localization": false,
+    "repaired_mixed_alphabet": false,
+    "restriction_localization": false,
+    "ruby": false,
+    "settings_preserved": false,
+    "tables": false,
+    "xrefs": false
+  },
+  "clean_profile": false,
+  "imported": false,
+  "notes": "Template only. Set a check to true only after observing it in a clean Yomitan profile. Verify 社会情報學, numeric/Greek/fullwidth restrictions, retained JMdict/Tatoeba/brands, repaired mixed-alphabet entries, and an owned-channel upgrade that preserves dictionary settings and does not install Jitendex.",
+  "schema_version": 1,
+  "zip_sha256": "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7"
+}

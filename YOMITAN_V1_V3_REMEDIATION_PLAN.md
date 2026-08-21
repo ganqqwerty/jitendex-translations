@@ -114,6 +114,10 @@ YRP-EXEC-47 — `STAGED` for release documentation and the public home page. REA
 
 YRP-EXEC-48 — `DONE` for the post-documentation automated gate. The suite collected 167 tests: 165 passed and the same two documented PostgreSQL integration tests skipped. New tests require every staged v1.0.1 asset name, the manual-upgrade warning, and the exact owned Yomitan update tuple.
 
+YRP-EXEC-49 — `BLOCKED ON MANUAL UI` for YRP-SMOKE-1 through YRP-SMOKE-9. Chrome is connected and the Yomitan extension is installed, but the browser security policy forbids control of `chrome-extension://` pages and explicitly forbids alternate UI or low-level workarounds. No clean-profile import or lookup was claimed. `reports/yomitan_localization/run59-v1.0.1-smoke-template.json` contains the exact required checks, all left `false` until a human observes them. YRP-PUB remains blocked by YRP-PUB-1.
+
+YRP-EXEC-50 — `DONE` for local site smoke. A two-hour-watchdog HTTP server served `site-home`; browser DOM and viewport checks confirmed the v1.0.1 hero links, five download cards, release link, readable manual-upgrade warning, preserved intended brand attribution, and a single copy of every page section. The server was stopped after the check.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.
