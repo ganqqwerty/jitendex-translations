@@ -86,14 +86,16 @@ translationctl verify-pocketbook dist/jp-ru-kolobok-400k-v1.0-pocketbook.zip
 ```
 
 README-EX-3 — Apple Dictionary requires the archived Dictionary Development Kit
-`build_dict.sh`. A matching RELAX NG schema and hash are optional command inputs
-but required to close the release gate. The exporter does not install the bundle.
+`build_dict.sh`. The standard build performs a streaming full-corpus structure check,
+runs the pinned DDK compiler, and verifies the compiled bundle. Full-corpus RELAX NG
+validation is intentionally outside the release path because `xmllint` did not finish
+within 90 minutes. Use the pinned schema only on the representative probe after a
+renderer change. The exporter does not install the bundle.
 
 ```sh
 translationctl export-apple-dictionary --run-id ID \
   --output dist/jp-ru-kolobok-400k-v1.0-apple-dictionary.zip \
-  --build-tool /path/to/build_dict.sh --build-tool-sha256 SHA256 \
-  --schema /path/to/AppleDictionarySchema.rng --schema-sha256 SHA256
+  --build-tool /path/to/build_dict.sh --build-tool-sha256 SHA256
 translationctl verify-apple-dictionary dist/jp-ru-kolobok-400k-v1.0-apple-dictionary.zip
 ```
 

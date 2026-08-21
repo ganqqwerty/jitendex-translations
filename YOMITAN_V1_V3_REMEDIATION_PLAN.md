@@ -98,6 +98,10 @@ YRP-EXEC-39 — `FROZEN` for release identity at content/code commit `7d223f891b
 
 YRP-EXEC-40 — `FIXED BEFORE PUBLICATION` for the cross-format structural-localization gate. An archive-level scan found 136,668 raw `redirected from` labels in each first-pass GoldenDict and PocketBook build. All rich exporters now use one localized materialization function before their format-specific renderer, and a regression test fixes that contract. The full suite now collects 165 tests: 163 pass and the same two documented tests skip. The affected first-pass archives are rejected and must be rebuilt; commit message: `Localize source templates before every rich export` because Russian structural labels must not depend on the selected output format.
 
+YRP-EXEC-41 — `SUPERSEDED BEFORE RELEASE` for Apple Dictionary schema work. The shipped schema has 26 obsolete HTTP includes. Resolving them from primary `relaxng/jing-trang` sources allowed the grammar to compile, but `xmllint` also rejected the generated DDK entry order and remained CPU-bound for more than 76 minutes on the 493 MB XML before this run was stopped. Prior evidence already showed more than 90 minutes without completion. The user explicitly removed full-corpus `xmllint` from this and future release gates.
+
+YRP-EXEC-42 — `IMPLEMENTED` for future Apple builds. The standard exporter no longer accepts schema arguments or invokes full-corpus `xmllint`. It stream-parses the complete XML, verifies entry and index counts, runs the pinned DDK compiler, verifies the compiled bundle, and retains RELAX NG validation only for the representative probe after renderer changes. Export 98 passed these gates with 415,836 headwords, 656,024 indexes, and ZIP SHA-256 `57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c`. Commit message: `Keep Apple releases bounded by replacing full-corpus xmllint` because an unbounded redundant schema pass blocked publication without adding proportionate assurance.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.
@@ -477,7 +481,7 @@ YRP-BUILD-4 — Export MDict to `dist/jp-ru-kolobok-400k-v1.0.1-mdict.zip` and r
 
 YRP-BUILD-5 — Export PocketBook to `dist/jp-ru-kolobok-400k-v1.0.1-pocketbook.zip` with the pinned compiler and language directory, then run `verify-pocketbook`.
 
-YRP-BUILD-6 — Export Apple Dictionary to `dist/jp-ru-kolobok-400k-v1.0.1-apple-dictionary.zip` with the pinned DDK tool and schema hashes, then run `verify-apple-dictionary`.
+YRP-BUILD-6 — Export Apple Dictionary to `dist/jp-ru-kolobok-400k-v1.0.1-apple-dictionary.zip` with the pinned DDK tool hash and mandatory streaming full-corpus structure check, then run `verify-apple-dictionary`. Do not run full-corpus `xmllint`.
 
 YRP-BUILD-7 — Run the V1 lexical scanner against the Yomitan archive and against every rich exporter that renders the same accepted text.
 
@@ -654,16 +658,14 @@ PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   "dist/jp-ru-kolobok-400k-v1.0.1-pocketbook.zip"
 ```
 
-YRP-CMD-11 — Build and verify Apple Dictionary with the existing pinned DDK tool and schema.
+YRP-CMD-11 — Build and verify Apple Dictionary with the existing pinned DDK tool. The exporter performs the bounded streaming full-corpus check and does not run `xmllint`.
 
 ```sh
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   export-apple-dictionary --run-id "$KOL_RUN_ID" \
   --output "dist/jp-ru-kolobok-400k-v1.0.1-apple-dictionary.zip" \
   --build-tool "$KOL_APPLE_BUILD_TOOL" \
-  --build-tool-sha256 "$KOL_APPLE_BUILD_TOOL_SHA256" \
-  --schema "$KOL_APPLE_SCHEMA" \
-  --schema-sha256 "$KOL_APPLE_SCHEMA_SHA256"
+  --build-tool-sha256 "$KOL_APPLE_BUILD_TOOL_SHA256"
 
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   verify-apple-dictionary \

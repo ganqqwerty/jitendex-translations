@@ -330,25 +330,10 @@ def _compile(
     build_tool: Path,
     *,
     build_tool_sha256: str,
-    schema: Path | None,
-    schema_sha256: str | None,
 ) -> tuple[Path, dict[str, Any]]:
     if not build_tool.is_file() or sha256_file(build_tool) != build_tool_sha256:
         raise ValueError("Apple Dictionary build tool is missing or its SHA-256 differs")
     tools: dict[str, Any] = {"build_tool_sha256": build_tool_sha256}
-    if schema is not None:
-        if not schema.is_file() or not schema_sha256 or sha256_file(schema) != schema_sha256:
-            raise ValueError("Apple Dictionary schema is missing or its SHA-256 differs")
-        validator = shutil.which("xmllint")
-        if validator is None:
-            raise ValueError("xmllint is required for the supplied Apple Dictionary schema")
-        validation = subprocess.run(
-            [validator, "--noout", "--relaxng", str(schema), str(project["xml_path"])],
-            cwd=root, text=True, capture_output=True, check=False,
-        )
-        if validation.returncode:
-            raise ValueError(f"Apple Dictionary XML schema validation failed: {validation.stderr.strip()[:500]}")
-        tools["schema_sha256"] = schema_sha256
     command = [
         str(build_tool), BASENAME, Path(project["xml_path"]).name,
         Path(project["css_path"]).name, Path(project["plist_path"]).name,
@@ -378,8 +363,6 @@ def build_apple_dictionary(
     *,
     build_tool: Path,
     build_tool_sha256: str,
-    schema: Path | None = None,
-    schema_sha256: str | None = None,
 ) -> dict[str, Any]:
     corpus = prepare_export(connection, run_id)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -387,12 +370,24 @@ def build_apple_dictionary(
     with tempfile.TemporaryDirectory(prefix="apple-dictionary-", dir=output.parent) as temporary:
         root = Path(temporary)
         project = render_apple_project(corpus, root, ledger)
+        source_validation = verify_apple_source_xml(project["xml_path"])
+        expected_validation = {
+            "headwords": project["headwords"],
+            "indexes": project["indexes"],
+        }
+        if source_validation != expected_validation:
+            raise ValueError(
+                "Apple Dictionary streaming source validation count mismatch: "
+                f"expected {expected_validation}, found {source_validation}"
+            )
         bundle, tools = _compile(
             root, project, build_tool.resolve(),
             build_tool_sha256=build_tool_sha256,
-            schema=schema.resolve() if schema else None,
-            schema_sha256=schema_sha256,
         )
+        tools["source_validation"] = {
+            "profile": "streaming-structure-v1",
+            **source_validation,
+        }
         (root / "ATTRIBUTION.txt").write_text(ATTRIBUTION, encoding="utf-8", newline="\n")
         (root / "INSTALL.txt").write_text(INSTALLATION, encoding="utf-8", newline="\n")
         source_report = {
@@ -402,6 +397,7 @@ def build_apple_dictionary(
             "headwords": project["headwords"],
             "indexes": project["indexes"],
             "resources": len(corpus.resources),
+            "validation_profile": "streaming-structure-v1",
         }
         (root / "source-report.json").write_bytes(canonical_json(source_report) + b"\n")
         payload = [

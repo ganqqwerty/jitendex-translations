@@ -162,8 +162,6 @@ def _parser() -> argparse.ArgumentParser:
     apple_parser.add_argument("--output", type=Path, required=True)
     apple_parser.add_argument("--build-tool", type=Path, required=True)
     apple_parser.add_argument("--build-tool-sha256", required=True)
-    apple_parser.add_argument("--schema", type=Path)
-    apple_parser.add_argument("--schema-sha256")
     verify_apple_parser = commands.add_parser("verify-apple-dictionary")
     verify_apple_parser.add_argument("path", type=Path)
     mdict_parser = commands.add_parser("export-mdict")
@@ -628,14 +626,10 @@ def execute(args: argparse.Namespace) -> Any:
             connection.commit()
             return result
         if args.command == "export-apple-dictionary":
-            if bool(args.schema) != bool(args.schema_sha256):
-                raise ValueError("--schema and --schema-sha256 must be supplied together")
             result = build_apple_dictionary(
                 connection, _active_run(connection, args.run_id), args.output.resolve(),
                 build_tool=args.build_tool.resolve(),
                 build_tool_sha256=args.build_tool_sha256,
-                schema=args.schema.resolve() if args.schema else None,
-                schema_sha256=args.schema_sha256,
             )
             connection.commit()
             return result

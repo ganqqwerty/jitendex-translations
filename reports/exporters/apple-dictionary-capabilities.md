@@ -8,7 +8,7 @@ APP-CAP-SCOPE-2 — The source profile follows Apple's archived markup and build
 
 APP-CAP-SCOPE-3 — Dictionary.app and Dictionary Development Kit 26.6 are installed on macOS 26.5.2. The kit is outside iCloud under `~/Library/Application Support/jitendex-translations/export-tools/`.
 
-APP-CAP-SCOPE-4 — The native client gate remains `OPEN`. A release command fails unless the user supplies the pinned build tool. Schema validation is optional because Apple's schema depends on obsolete remote modules that are not shipped in the kit.
+APP-CAP-SCOPE-4 — The native client gate remains `OPEN`. A release command fails unless the user supplies the pinned build tool. The standard build uses streaming full-corpus structure validation and the real DDK compiler. Full-corpus `xmllint` is not a release gate because a prior run remained CPU-bound for 90 minutes without completing.
 
 APP-CAP-SCOPE-5 — Project generation is allowed for schema research. It is not evidence that the bundle installs or works in contextual Look Up.
 
@@ -18,12 +18,12 @@ APP-CAP-SCOPE-5 — Project generation is allowed for schema research. It is not
 |---|---|---|---|
 | APP-CAP-TOOL-1 | Build kit | Apple Dictionary Development Kit with provenance and SHA-256 | Installed from Additional Tools for Xcode 26.6 |
 | APP-CAP-TOOL-2 | Schema | RELAX NG schema shipped with the same kit | Installed; remote XHTML includes are unavailable |
-| APP-CAP-TOOL-3 | Static validator | `xmllint --relaxng` with the pinned schema | Available; blocked by the schema's obsolete remote includes |
+| APP-CAP-TOOL-3 | Static validator | `xmllint --relaxng` with the resolved pinned schema | Probe and renderer-research use only; not a full-corpus release gate |
 | APP-CAP-TOOL-4 | Full client | Dictionary.app on macOS 26.5.2 | Available, unprobed |
 | APP-CAP-TOOL-5 | Compact client | System contextual Look Up | Available, unprobed |
 | APP-CAP-TOOL-6 | Project generator | XML, CSS, plist, Makefile, and `OtherResources` | Implemented; common probe passes |
 
-APP-CAP-TOOL-7 — The build records the tool and schema hashes and the exact command. A hash mismatch is a hard failure.
+APP-CAP-TOOL-7 — The build records the DDK tool hash, exact command, and streaming source-validation profile and counts. A DDK hash mismatch is a hard failure. Schema-bundle hashes belong to separate probe provenance, not the release build manifest.
 
 APP-CAP-TOOL-8 — The Apple DMG SHA-256 is `d7138cebe372b3bf9a4a06669036f6ee75cbe246dcc990e1b71fc98eca241004`. The `build_dict.sh` SHA-256 is `96c60abedd89f1932bf5a54fe65ed03f739423b0434a1afe9e0cec9aae124ffc`. The shipped schema SHA-256 is `dacdb7713f1a73f47be8446184f58de8fc1a13c0d2f8b822b37c35b137bd63cf`.
 
@@ -76,6 +76,8 @@ APP-CAP-IMPL-2 — The build-contract test uses a local fake tool. It does not c
 
 APP-CAP-IMPL-3 — DDK 26.6 compiled the full Run 59 corpus into export 72 with 433,885 articles, 415,836 headwords, and 656,024 indexes. The verified archive SHA-256 is `3bedac203b1591184563b6cda2d348d6e21ee041d5b97b910e8723d11c72e3dc`.
 
+APP-CAP-IMPL-4 — Every standard build parses the complete generated XML as a stream, requires every non-front-matter entry to contain an index, and compares the observed headword and index counts with the renderer counts before invoking DDK.
+
 ## APP-CAP-GATE — Release gate
 
 | ID | Required probe | Status |
@@ -90,3 +92,5 @@ APP-CAP-IMPL-3 — DDK 26.6 compiled the full Run 59 corpus into export 72 with 
 | APP-CAP-GATE-8 | Repeated native build reproducibility measured | OPEN |
 
 APP-CAP-GATE-9 — Until every gate is closed, the implementation may emit a complete DDK project but must not claim Apple Dictionary release compatibility.
+
+APP-CAP-GATE-10 — Full-corpus `xmllint` is not required. APP-CAP-GATE-2 applies to the representative common probe when the renderer or supported markup changes.

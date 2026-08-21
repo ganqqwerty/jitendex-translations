@@ -233,7 +233,7 @@ def test_apple_project_preserves_xhtml_yomi_and_compiler_contract(tmp_path):
     tool.chmod(0o755)
     bundle, details = compile_apple(
         root, project, tool,
-        build_tool_sha256=sha256_file(tool), schema=None, schema_sha256=None,
+        build_tool_sha256=sha256_file(tool),
     )
     assert bundle.name == f"{APPLE_BASENAME}.dictionary"
     assert (bundle / "Contents" / "Body.data").is_file()
@@ -337,6 +337,13 @@ def test_compiled_export_packages_build_and_verify_with_probe_tools(tmp_path, mo
         assert any(name.startswith(f"{apple_module.BUNDLE_NAME}/") for name in archive.namelist())
         manifest = json.loads(archive.read("manifest.json"))
         assert manifest["dictionary_version"] == DICTIONARY_VERSION
+        assert manifest["tools"]["source_validation"] == {
+            "profile": "streaming-structure-v1",
+            "headwords": 5,
+            "indexes": apple_result["indexes"],
+        }
+        source_report = json.loads(archive.read("source-report.json"))
+        assert source_report["validation_profile"] == "streaming-structure-v1"
 
     monkeypatch.setattr(mdict_module, "prepare_export", lambda connection, run_id: corpus)
     mdict_connection = _ExportConnection()
