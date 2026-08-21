@@ -1,0 +1,16 @@
+{
+  "articles": 433885,
+  "capability_profile": "mdict-2.0-experimental-v1",
+  "converted_images": 201,
+  "disambiguations": 37551,
+  "export_id": 96,
+  "files": 5,
+  "format": "mdict-2.0",
+  "headwords": 415836,
+  "mdd_records": 237,
+  "records": 570588,
+  "redirects": 117201,
+  "related_links": 5278,
+  "resources": 236,
+  "zip_sha256": "f22238c020b7ddebfeffc2df83256816fc23e00e02042b3eff321ce8c5145b4d"
+}

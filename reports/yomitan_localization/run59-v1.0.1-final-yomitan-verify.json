@@ -1,0 +1,27 @@
+{
+  "articles": 433885,
+  "classification_counts": {
+    "MUST_PRESERVE": 353433,
+    "MUST_TRANSLATE": 0,
+    "REVIEW": 19973
+  },
+  "embedded_tag_occurrences": 654503,
+  "files": 370,
+  "localization_issue_counts": {},
+  "must_preserve_rule_counts": {
+    "attribution": 341018,
+    "code_name_formula_or_source_term": 890,
+    "japanese_source": 4084,
+    "source_quotation": 7441
+  },
+  "review_records_sha256": "291c18de9c52a5a18b8826c62f79f9ca00568cdee537c8b27e5a15337e8411d5",
+  "schema_validated_banks": 131,
+  "tag_bank_references": 167269,
+  "tag_bank_rows": 8,
+  "tag_catalog_sha256": "f3f3649806a9de4fc7a0c1a96cffafc343d8d7d31592b0547266809c127a95fa",
+  "tag_catalog_version": "tags-ru-v1",
+  "updatable": true,
+  "verified": true,
+  "visible_latin_approved": true,
+  "zip_sha256": "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7"
+}

@@ -1,0 +1,17 @@
+{
+  "articles": 433885,
+  "converted_images": 201,
+  "embedded_labels_replaced": 0,
+  "embedded_tag_occurrences": 654503,
+  "embedded_tooltips_replaced": 0,
+  "export_id": 95,
+  "files": 241,
+  "format": "stardict-2.4.2",
+  "headwords": 415836,
+  "synonyms": 224722,
+  "tag_bank_references_replaced": 167269,
+  "tag_bank_rows": 8,
+  "tag_catalog_sha256": "f3f3649806a9de4fc7a0c1a96cffafc343d8d7d31592b0547266809c127a95fa",
+  "tag_catalog_version": "tags-ru-v1",
+  "zip_sha256": "506396de7a00009074d956a62fc66c56cf0f8645c0470ad1a75868b622c5be51"
+}

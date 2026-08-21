@@ -1,0 +1,9 @@
+{
+  "capability_profile": "pocketbook-xdxf-experimental-v1",
+  "files": 241,
+  "format": "pocketbook-dic",
+  "headwords": 415836,
+  "index_keys": 640558,
+  "verified": true,
+  "zip_sha256": "e757ea8ddde01a2380485c6f498610f86565dda2076a993e3c9c9611374d31cc"
+}

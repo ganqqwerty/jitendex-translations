@@ -1,0 +1,12 @@
+{
+  "articles": 433885,
+  "capability_profile": "apple-dictionary-ddk-experimental-v1",
+  "converted_images": 201,
+  "export_id": 98,
+  "files": 247,
+  "format": "apple-dictionary",
+  "headwords": 415836,
+  "indexes": 656024,
+  "resources": 236,
+  "zip_sha256": "57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c"
+}

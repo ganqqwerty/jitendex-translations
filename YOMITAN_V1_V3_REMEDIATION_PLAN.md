@@ -102,6 +102,12 @@ YRP-EXEC-41 — `SUPERSEDED BEFORE RELEASE` for Apple Dictionary schema work. Th
 
 YRP-EXEC-42 — `IMPLEMENTED` for future Apple builds. The standard exporter no longer accepts schema arguments or invokes full-corpus `xmllint`. It stream-parses the complete XML, verifies entry and index counts, runs the pinned DDK compiler, verifies the compiled bundle, and retains RELAX NG validation only for the representative probe after renderer changes. Export 98 passed these gates with 415,836 headwords, 656,024 indexes, and ZIP SHA-256 `57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c`. Commit message: `Keep Apple releases bounded by replacing full-corpus xmllint` because an unbounded redundant schema pass blocked publication without adding proportionate assurance.
 
+YRP-EXEC-43 — `DONE` for the corrected final release builds. Export 91 produced Yomitan SHA-256 `f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7`; export 95 produced GoldenDict `506396de7a00009074d956a62fc66c56cf0f8645c0470ad1a75868b622c5be51`; export 96 produced MDict `f22238c020b7ddebfeffc2df83256816fc23e00e02042b3eff321ce8c5145b4d`; export 97 produced PocketBook `e757ea8ddde01a2380485c6f498610f86565dda2076a993e3c9c9611374d31cc`; export 98 produced Apple Dictionary `57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c`. Every format-specific verifier passed.
+
+YRP-EXEC-44 — `DONE` for reproducibility. Independent exports 99 through 103 rebuilt all five formats into `work/repro-v1.0.1-second/`; byte-for-byte comparisons matched every final archive. `dist/jp-ru-kolobok-400k-v1.0.1-SHA256SUMS.txt` records the five verified hashes.
+
+YRP-EXEC-45 — `DONE` for the permanent cross-format lexical gate. `scripts/audit_rich_export_archives.py` scanned the shared materialized source for all 433,885 articles, scanned every ZIP payload, and decompressed every MDict record. All five archives contain zero raw `redirected from ` and zero raw `valid only for these forms and/or readings`; the shared source has zero localization issues. Evidence is stored in `reports/exporters/run59-v1.0.1-rich-lexical-audit.json`. Intended commit message: `Prove every release archive uses the repaired Russian corpus` because format verification alone did not detect untranslated structural labels, and this gate prevents that regression across all exporters.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.

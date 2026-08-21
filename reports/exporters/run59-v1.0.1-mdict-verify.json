@@ -1,0 +1,9 @@
+{
+  "capability_profile": "mdict-2.0-experimental-v1",
+  "files": 5,
+  "format": "mdict-2.0",
+  "records": 570588,
+  "resources": 237,
+  "verified": true,
+  "zip_sha256": "f22238c020b7ddebfeffc2df83256816fc23e00e02042b3eff321ce8c5145b4d"
+}
