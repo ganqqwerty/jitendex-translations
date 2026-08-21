@@ -1,6 +1,8 @@
 import copy
+import importlib.util
 import json
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -22,6 +24,14 @@ from jitendex_ru.yomitan_remediation import (
     write_yomitan_update_index,
     yomitan_revision,
 )
+from jitendex_ru.util import sha256_file
+
+
+SMOKE_FIXTURE_PATH = Path(__file__).parents[1] / "scripts" / "prepare_yomitan_update_smoke_fixture.py"
+SMOKE_FIXTURE_SPEC = importlib.util.spec_from_file_location("yomitan_smoke_fixture", SMOKE_FIXTURE_PATH)
+assert SMOKE_FIXTURE_SPEC is not None and SMOKE_FIXTURE_SPEC.loader is not None
+SMOKE_FIXTURE = importlib.util.module_from_spec(SMOKE_FIXTURE_SPEC)
+SMOKE_FIXTURE_SPEC.loader.exec_module(SMOKE_FIXTURE)
 
 
 def _row(glossary):
@@ -182,6 +192,32 @@ def test_hosted_index_is_generated_from_archive_metadata(tmp_path):
     with zipfile.ZipFile(updatable_archive, "w") as archive:
         archive.writestr("index.json", json.dumps(updatable_index))
     assert write_yomitan_update_index(updatable_archive, output_path) == updatable_index
+
+
+def test_local_update_smoke_fixture_keeps_title_and_serves_final_archive(tmp_path):
+    final_archive = tmp_path / "jp-ru-kolobok-400k-v1.0.1-yomitan.zip"
+    final_index = build_yomitan_index(
+        {"format": 3, "attribution": "Jitendex/JMdict/Tatoeba"},
+        description="Описание", revision=yomitan_revision("full"), updatable=True,
+    )
+    with zipfile.ZipFile(final_archive, "w") as archive:
+        archive.writestr("index.json", json.dumps(final_index))
+        archive.writestr("term_bank_1.json", "[]")
+
+    fixture_dir = tmp_path / "fixture"
+    report = SMOKE_FIXTURE.prepare_fixture(final_archive, fixture_dir)
+
+    hosted = json.loads((fixture_dir / "yomitan.json").read_text())
+    with zipfile.ZipFile(fixture_dir / report["old_archive"]) as archive:
+        old = json.loads(archive.read("index.json"))
+        assert archive.read("term_bank_1.json") == b"[]"
+    assert old["title"] == hosted["title"] == "Колобок 400k"
+    assert old["revision"] == SMOKE_FIXTURE.OLD_REVISION
+    assert hosted["revision"] == final_index["revision"]
+    assert old["indexUrl"] == f"{SMOKE_FIXTURE.LOCAL_BASE_URL}yomitan.json"
+    assert hosted["downloadUrl"].endswith(final_archive.name)
+    assert report["final_archive_sha256"] == sha256_file(final_archive)
+    assert "jitendex.org" not in json.dumps(hosted).lower()
 
 
 def test_archive_audit_records_reproducible_locations_and_counts(tmp_path):

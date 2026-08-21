@@ -1,0 +1,13 @@
+{
+  "base_url": "http://127.0.0.1:8766/",
+  "final_archive": "jp-ru-kolobok-400k-v1.0.1-yomitan.zip",
+  "final_archive_sha256": "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7",
+  "final_revision": "2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1",
+  "index": "yomitan.json",
+  "index_sha256": "8fc25069e756c81514b5aa94abe6e7e5876f2d339739a722eb8a84995d3051b9",
+  "old_archive": "jp-ru-kolobok-400k-v1.0.0-local-smoke-yomitan.zip",
+  "old_archive_sha256": "ee4a0af11752964261d1cccd93b1223245796b7a56bddd3808b61174f8429107",
+  "old_revision": "2026.08.20.0-jp-ru-kolobok-400k-v1.0.0-local-smoke",
+  "schema_version": 1,
+  "title": "Колобок 400k"
+}

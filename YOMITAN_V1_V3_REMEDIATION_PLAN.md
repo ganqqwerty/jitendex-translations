@@ -120,6 +120,10 @@ YRP-EXEC-50 — `DONE` for local site smoke. A two-hour-watchdog HTTP server ser
 
 YRP-EXEC-51 — `READY` for GitHub publication preflight. GitHub CLI is authenticated as repository owner `ganqqwerty`; the default branch is `main`; `origin/main` is `bead7e7252a24069016e8843f3d9671870f3433e`; and no tag or release named `v1.0.1` exists. Local `main` remains unpushed while YRP-EXEC-49 blocks publication, so the staged Pages links cannot become public before their release assets exist.
 
+YRP-EXEC-52 — `READY FOR MANUAL UI` for the owned-updater smoke. `scripts/prepare_yomitan_update_smoke_fixture.py` created a stable-title old archive, local update index, and byte-identical final archive under `work/yomitan-v1.0.1-smoke-server/`. HTTP fetches reproduced index SHA-256 `8fc25069e756c81514b5aa94abe6e7e5876f2d339739a722eb8a84995d3051b9` and final ZIP SHA-256 `f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7`. The human procedure is `reports/yomitan_localization/v1.0.1-manual-smoke-runbook.md`; fixture evidence is `reports/yomitan_localization/run59-v1.0.1-smoke-fixture.json`.
+
+YRP-EXEC-53 — `DONE` for the fixture-aware automated gate. The suite collected 168 tests: 166 passed and the same two documented PostgreSQL integration tests skipped. The new test proves the local old-to-final updater fixture keeps the stable title, preserves dictionary payloads, serves the exact final archive, changes revision, and contains no foreign operational endpoint.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.
@@ -527,7 +531,7 @@ YRP-SMOKE-8 — Install an older test Kolobok archive with the stable title, poi
 
 YRP-SMOKE-9 — Confirm that the update downloads the Kolobok v1.0.1 asset, keeps Russian target metadata, preserves profile dictionary settings, and does not install Jitendex.
 
-YRP-SMOKE-10 — Fetch every final release asset into a clean temporary directory and rerun hash checks and format verifiers where practical.
+YRP-SMOKE-10 — `POST-PUBLICATION` — After YRP-PUB-9, fetch every final release asset into a clean temporary directory and rerun hash checks and format verifiers where practical.
 
 ## YRP-DOC — Documentation before publication
 
@@ -732,7 +736,7 @@ YRP-CMD-15 — Download draft assets to a newly created explicit temporary direc
 
 ## YRP-PUB — Publish version 1.0.1
 
-YRP-PUB-1 — Require every YRP-TEST, YRP-DATA, YRP-BUILD, YRP-SMOKE, and YRP-DOC gate to pass before creating a public release.
+YRP-PUB-1 — Require every YRP-TEST, YRP-DATA, YRP-BUILD, YRP-SMOKE-1 through YRP-SMOKE-9, and YRP-DOC gate to pass before creating a public release. YRP-SMOKE-10 is the post-publication download audit and cannot be a pre-publication dependency.
 
 YRP-PUB-2 — Create the v1.0.1 GitHub release as a draft from the frozen `main` commit.
 
