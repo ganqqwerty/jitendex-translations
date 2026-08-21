@@ -22,41 +22,41 @@ YRP-EXEC-1 — `LOCAL PASS COMPLETE` as of 2026-08-20 on `main`. This pass used 
 
 YRP-EXEC-2 — `DONE` for YRP-V1A and YRP-CODE-1–2. `yomitan_remediation.py` localizes redirects, the long forms tooltip, and structurally identified `<form> only` labels. The full 433,885-article source snapshot must match 136,668 redirects, 4,307 tooltips, and 4,307 total short restrictions. Of those restrictions, 74 were still broken in the published v1.0 archive; the other 4,233 had been localized earlier inside `apply_article()`. Build and verification results expose the counters or issue counts.
 
-YRP-EXEC-3 — `PARTIAL` for YRP-V1B and YRP-CODE-3–5. The released v1.0 ZIP now has a reproducible archive audit, worker validation rejects adjacent mixed alphabets, and the canonicalizer accepts a hash-locked approved remediation manifest with immutable history and idempotence checks. The database-target audit with source text and local context, semantic review, approval of the 172 findings, and production application remain pending.
+YRP-EXEC-3 — `DONE` for YRP-V1B and YRP-CODE-3–5. The released v1.0 ZIP has a reproducible archive audit, worker validation rejects adjacent mixed alphabets, and the canonicalizer consumes hash-locked manifests with immutable history and idempotence checks. YRP-EXEC-21 through YRP-EXEC-35 record the full database audit, semantic review, approved 288-row and 27-row manifests, production application, repeated zero-change passes, and final integrity fingerprint.
 
-YRP-EXEC-4 — `PARTIAL` for YRP-V1D. The scanner follows visible glossary scalars plus `content` and `title`, ignores structural keys, and blocks raw V1 templates and adjacent Cyrillic/Latin tokens. The full `MUST_PRESERVE`/`REVIEW` classifier, checked-in approval record, role-aware residual-English gate, and `lang: en` role gate remain pending.
+YRP-EXEC-4 — `DONE` for YRP-V1D. The scanner follows visible glossary scalars plus `content` and `title`, ignores structural keys, and blocks raw V1 templates and adjacent Cyrillic/Latin tokens. YRP-EXEC-37 records the complete `MUST_PRESERVE`/review classifier and checked-in approval; YRP-EXEC-45 records the zero-finding shared-source and five-archive gate.
 
-YRP-EXEC-5 — `PARTIAL` for YRP-V2A. The Yomitan title is now the exact stable `Колобок 400k`; version `1.0.1` lives in release metadata and the independent revision. Unit and integration tests reject the old versioned title. A real Yomitan upgrade simulation remains in YRP-SMOKE.
+YRP-EXEC-5 — `READY FOR MANUAL UI` for YRP-V2A. The Yomitan title is the exact stable `Колобок 400k`; version `1.0.1` lives in release metadata and the independent revision. Unit and integration tests reject the old versioned title, and YRP-EXEC-52 provides a local old-to-final updater fixture. Only the human-observed Yomitan upgrade remains.
 
-YRP-EXEC-6 — `PARTIAL` for YRP-V2B. Operational metadata is generated from an explicit Kolobok allowlist, upstream updater fields are discarded, and builds omit all updater fields until publication. Code can generate the staged owned `yomitan.json` from archive metadata and tests require exact owned URLs. Schema validation, HTTPS fetches, deployed asset hashes, and enabling the updater remain publication gates.
+YRP-EXEC-6 — `STAGED FOR PUBLICATION` for YRP-V2B. Operational metadata is generated from an explicit Kolobok allowlist, upstream updater fields are discarded, and non-release builds omit all updater fields. Final export 91 enables the exact owned update tuple; `site-home/yomitan.json` is byte-identical to its archive metadata and passed the pinned schema. Only deployed HTTPS and public asset-hash checks remain in YRP-PUB.
 
-YRP-EXEC-7 — `PARTIAL` for YRP-V2C. New revisions start with the frozen Kolobok compilation date and Kolobok release identity; they no longer copy the upstream Jitendex revision. Comparison with the last published Kolobok revision remains pending until release freeze.
+YRP-EXEC-7 — `DONE` for YRP-V2C. The last published Kolobok revision is `2026.07.09.0-jp-ru-kolobok-400k-v1.0-tags-ru-v1`; the frozen candidate revision is `2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1`. It is newer, keeps the independent Kolobok identity, and does not copy the upstream Jitendex revision.
 
-YRP-EXEC-8 — `PARTIAL` for YRP-V2D and YRP-DOC-7. README and the public-site source now warn v1.0 users not to press Yomitan's update button and to install v1.0.1 manually after publication. The warning is not public until the site commit is pushed and Pages succeeds.
+YRP-EXEC-8 — `STAGED FOR PUBLICATION` for YRP-V2D and YRP-DOC-7. README and the public-site source warn v1.0 users not to press Yomitan's update button and to install v1.0.1 manually after publication. Local browser smoke passed; public visibility remains YRP-PUB-9.
 
-YRP-EXEC-9 — `PARTIAL` for YRP-V3A. Build code rejects foreign operational Jitendex URLs and uses the stable Kolobok title, product ID, versioned output ID, and independent revision. Final site links, release filenames, state IDs, and immutable release history need final artifacts and therefore remain pending.
+YRP-EXEC-9 — `STAGED FOR PUBLICATION` for YRP-V3A. Build code rejects foreign operational Jitendex URLs and uses the stable Kolobok title, product ID, versioned output ID, and independent revision. Final filenames, site links, README state IDs, and immutable release history now name the verified v1.0.1 artifacts; only deployment remains.
 
 YRP-EXEC-10 — `DONE` for the code-level part of YRP-V3B. Explicit metadata generation preserves upstream attribution, Jitendex/JMdict/Tatoeba names, Stephen Kraus, creator and license text, while operational updater fields are not copied. Internal resource paths, acquisition input URLs, package names, and comparison labels were not renamed.
 
-YRP-EXEC-11 — `PARTIAL` for YRP-VERSION. `DICTIONARY_VERSION` is `1.0.1`, `PRODUCT_ID` and `PRODUCT_NAME` are unchanged, and the Yomitan title is stable. `COMPILATION_DATETIME_UTC` intentionally remains at the v1.0 value until content and code freeze, as required by YRP-VERSION-2.
+YRP-EXEC-11 — `DONE` for YRP-VERSION. `DICTIONARY_VERSION` is `1.0.1`, `PRODUCT_ID` and `PRODUCT_NAME` are unchanged, the Yomitan title is stable, and frozen `COMPILATION_DATETIME_UTC` is `2026-08-21T08:52:59Z`. All five final artifacts and the hosted index use this identity.
 
 YRP-EXEC-12 — `DONE` for the local pre-change archive audit. `reports/yomitan_localization/run59-v1.0-before.json` records Run 59, archive SHA-256 `24c0164f6d645f6426bef5b09f5dfdc46952cf132aed6d8bc033800f9ff7824b`, 433,885 articles, 136,668 raw redirects, 4,307 raw tooltips, 74 raw short restrictions, and 172 mixed-token occurrences with exact ZIP members and JSON pointers.
 
 YRP-EXEC-13 — `DONE` for the currently executable automated test gate. The full suite collected 163 tests: 161 passed and two documented existing tests skipped. No test failed.
 
-YRP-EXEC-14 — `NOT STARTED` for YRP-DATA. No production database write, backup, semantic review, candidate acceptance, or history mutation was attempted. These steps require an approved remediation manifest and the production safety sequence in YRP-DATA.
+YRP-EXEC-14 — `SUPERSEDED BY COMPLETED WORK` for YRP-DATA. This line described the initial local-only pass; YRP-EXEC-21 through YRP-EXEC-35 now prove backup, semantic review, approved manifests, production canonicalization, validation, idempotence, and integrity comparison.
 
-YRP-EXEC-15 — `BLOCKED BY YRP-DATA` for YRP-BUILD. The new lexical gate intentionally prevents a release build while mixed-alphabet defects remain in accepted translations. No v1.0.1 archive or export record was created.
+YRP-EXEC-15 — `SUPERSEDED BY COMPLETED WORK` for YRP-BUILD. The original data blocker was cleared. YRP-EXEC-43 through YRP-EXEC-45 prove final exports 91 and 95–98, all format verifiers, byte reproduction, and the cross-format lexical audit.
 
-YRP-EXEC-16 — `NOT STARTED` for YRP-SMOKE. Clean-profile import, rendering, and updater behavior require final archives and Yomitan client work.
+YRP-EXEC-16 — `IN PROGRESS ON MANUAL UI` for YRP-SMOKE. Final archives, fixture, runbook, report template, and local server are ready. Browser policy prevents automated control of extension pages, so human observation is the remaining pre-publication gate.
 
-YRP-EXEC-17 — `UNREACHABLE IN THIS PASS` for YRP-PUB. No release, upload, push, Pages deployment, or public endpoint change was performed.
+YRP-EXEC-17 — `BLOCKED ON YRP-EXEC-49` for YRP-PUB. GitHub authentication and publication inputs are ready, but no release, upload, push, Pages deployment, or public endpoint change will occur before the clean-profile Yomitan smoke passes.
 
 YRP-EXEC-18 — `COMMIT MESSAGE` for this pass is `Fix Yomitan localization and isolate updates from upstream`. The impact is that future Russian exports cannot retain the known English UI templates or silently direct users to an English Jitendex download; production text defects now fail closed until approved remediation.
 
 YRP-EXEC-19 — `.idea/` remains untouched and untracked as required by YRP-COMMIT-2.
 
-YRP-EXEC-20 — `IN PROGRESS` as of 2026-08-21. The production continuation still runs on `main` without worker agents or the Codex CLI. Run 59 has zero active batches, zero active attempts, zero unresolved blocking errors, and 2,053,045 accepted translations for 2,053,045 units.
+YRP-EXEC-20 — `DONE` as of 2026-08-21. The production continuation completed on `main` without worker agents or the Codex CLI. Run 59 has zero active batches, zero active attempts, zero unresolved blocking errors, and 2,053,045 accepted translations for 2,053,045 units.
 
 YRP-EXEC-21 — `DONE` for the database-level pre-change audit. Unicode-aware detector `yomitan-visible-text-v2` scanned every accepted target and found 295 mixed-alphabet occurrences in 288 units. The report is `reports/yomitan_localization/run59-v1.0.1-before.json` with SHA-256 `4dbc55a9427adf175c98c7175c43e5eb8cc3e4adab95ee9a58755e09f8e5bf56`.
 
@@ -78,7 +78,7 @@ YRP-EXEC-29 — `FIXED` after the first full materialization preflight. Moving a
 
 YRP-EXEC-30 — `DONE` for the corrected full Yomitan preflight at commit `391becc`. Export 88 built all 433,885 articles into 370 ZIP members with 136,668 redirects, 4,307 tooltips, and 4,307 short restrictions localized. Independent verification validated 131 banks, found zero localization issues, and confirmed ZIP SHA-256 `bad9acfcfa5ae5e59d1cc4071e0f2ce898a084b3e26c7d0d7f667497e913bb18`. This is a preflight artifact, not the frozen release.
 
-YRP-EXEC-31 — `IN PROGRESS` for the permanent lexical gate. A role-aware database scan confirmed that common English function words in Russian targets are intentional grammar quotations or product names. A stricter residual pass found a small set of genuine misses, including `proceedings`, `пу anything`, `Filipino marshal art`, `corn flour`, `Windows error screen`, and three raw `English:` language labels. These findings require an additional approved manifest pass before release freeze.
+YRP-EXEC-31 — `DONE` for the permanent lexical gate. A role-aware database scan separated intentional grammar quotations and product names from genuine misses such as `proceedings`, `пу anything`, `Filipino marshal art`, `corn flour`, `Windows error screen`, and three raw `English:` language labels. YRP-EXEC-32 through YRP-EXEC-37 record the approved 27-row repair, zero-finding rescan, frozen approval, and final verifier pass.
 
 YRP-EXEC-32 — `APPROVED` for the residual lexical repair. Detector `yomitan-visible-text-v3` scanned all 2,053,045 accepted targets and selected 27 exact target rows for correction while preserving reviewed brands, taxa, romanized Japanese, grammar quotations, JMdict, Tatoeba, Jitendex, author names, and license identifiers. The lexical audit SHA-256 is `e3447fb4d9e4ba31e0b6c8f3b643b2e26cfde781b17288d3ac2c335002f37775`; the 27-row hash-locked manifest is `terminology/yomitan-v1.0.1-approved-lexical-remediation.json` with SHA-256 `07746f61422324adc5bfd6d5fadb9a12cdc14fba76ca0af8e81883f98bdf0f26`; the separate approval record has SHA-256 `3292a446ff44a69622669889555184c1edd31b777fd40e87bf6718f5cabcf455`.
 
@@ -96,11 +96,11 @@ YRP-EXEC-38 — `DONE` for process watchdogs. All remaining long-running build, 
 
 YRP-EXEC-39 — `FROZEN` for release identity at content/code commit `7d223f891badf07e1881b8b561ee08a78fa3204b`. `COMPILATION_DATETIME_UTC` is set once to `2026-08-21T08:52:59Z`; version remains `1.0.1`, product ID remains `jp-ru-kolobok-400k`, and the Yomitan installed title remains `Колобок 400k`.
 
-YRP-EXEC-40 — `FIXED BEFORE PUBLICATION` for the cross-format structural-localization gate. An archive-level scan found 136,668 raw `redirected from` labels in each first-pass GoldenDict and PocketBook build. All rich exporters now use one localized materialization function before their format-specific renderer, and a regression test fixes that contract. The full suite now collects 165 tests: 163 pass and the same two documented tests skip. The affected first-pass archives are rejected and must be rebuilt; commit message: `Localize source templates before every rich export` because Russian structural labels must not depend on the selected output format.
+YRP-EXEC-40 — `DONE` for the cross-format structural-localization gate. An archive-level scan found 136,668 raw `redirected from` labels in each rejected first-pass GoldenDict and PocketBook build. All rich exporters now use one localized materialization function before their format-specific renderer, the affected archives were rebuilt as exports 95–98, and YRP-EXEC-45 proves zero raw templates in every final archive. Commit message: `Localize source templates before every rich export` because Russian structural labels must not depend on the selected output format.
 
 YRP-EXEC-41 — `SUPERSEDED BEFORE RELEASE` for Apple Dictionary schema work. The shipped schema has 26 obsolete HTTP includes. Resolving them from primary `relaxng/jing-trang` sources allowed the grammar to compile, but `xmllint` also rejected the generated DDK entry order and remained CPU-bound for more than 76 minutes on the 493 MB XML before this run was stopped. Prior evidence already showed more than 90 minutes without completion. The user explicitly removed full-corpus `xmllint` from this and future release gates.
 
-YRP-EXEC-42 — `IMPLEMENTED` for future Apple builds. The standard exporter no longer accepts schema arguments or invokes full-corpus `xmllint`. It stream-parses the complete XML, verifies entry and index counts, runs the pinned DDK compiler, verifies the compiled bundle, and retains RELAX NG validation only for the representative probe after renderer changes. Export 98 passed these gates with 415,836 headwords, 656,024 indexes, and ZIP SHA-256 `57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c`. Commit message: `Keep Apple releases bounded by replacing full-corpus xmllint` because an unbounded redundant schema pass blocked publication without adding proportionate assurance.
+YRP-EXEC-42 — `DONE` for current and future Apple builds. The standard exporter no longer accepts schema arguments or invokes full-corpus `xmllint`. It stream-parses the complete XML, verifies entry and index counts, runs the pinned DDK compiler, verifies the compiled bundle, and retains RELAX NG validation only for the representative probe after renderer changes. Export 98 passed these gates with 415,836 headwords, 656,024 indexes, and ZIP SHA-256 `57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c`. Commit message: `Keep Apple releases bounded by replacing full-corpus xmllint` because an unbounded redundant schema pass blocked publication without adding proportionate assurance.
 
 YRP-EXEC-43 — `DONE` for the corrected final release builds. Export 91 produced Yomitan SHA-256 `f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7`; export 95 produced GoldenDict `506396de7a00009074d956a62fc66c56cf0f8645c0470ad1a75868b622c5be51`; export 96 produced MDict `f22238c020b7ddebfeffc2df83256816fc23e00e02042b3eff321ce8c5145b4d`; export 97 produced PocketBook `e757ea8ddde01a2380485c6f498610f86565dda2076a993e3c9c9611374d31cc`; export 98 produced Apple Dictionary `57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c`. Every format-specific verifier passed.
 
@@ -130,9 +130,9 @@ YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.
 
 YRP-SOURCE-2 — Run 59 is the completed full-corpus run with 433,885 Jitendex articles and 431,545 translated headwords.
 
-YRP-SOURCE-3 — The current Yomitan release archive is `dist/jp-ru-kolobok-400k-v1.0-yomitan.zip`.
+YRP-SOURCE-3 — The currently published Yomitan release archive is `dist/jp-ru-kolobok-400k-v1.0-yomitan.zip`; the frozen candidate is `dist/jp-ru-kolobok-400k-v1.0.1-yomitan.zip`.
 
-YRP-SOURCE-4 — Its verified SHA-256 is `24c0164f6d645f6426bef5b09f5dfdc46952cf132aed6d8bc033800f9ff7824b`.
+YRP-SOURCE-4 — The published v1.0 SHA-256 is `24c0164f6d645f6426bef5b09f5dfdc46952cf132aed6d8bc033800f9ff7824b`; the frozen v1.0.1 candidate SHA-256 is `f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7`.
 
 YRP-SOURCE-5 — Its current release identity is recorded in `README-STATE-1`, `README-STATE-8`, `README-STATE-9`, and `HIST-TAGS-RU-V1-9`.
 
