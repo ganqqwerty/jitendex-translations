@@ -54,6 +54,12 @@ RUN-PREFLIGHT-3 — There is no next run now. If new source articles appear, cho
 
 RUN-PREFLIGHT-4 — Check live Codex usage status before the run and before each concurrency increase. The current account does not enforce a five-hour window; stop only on an actual quota or authentication boundary.
 
+RUN-PREFLIGHT-5 — Run the full suite from the repository root with the exact self-contained command below. Keep `PYTHONPATH=src` on the same command; do not rely on an earlier shell export or invoke bare `pytest`, because either mistake can stop collection before any test executes.
+
+~~~bash
+PYTHONPATH=src .venv/bin/python -m pytest -q
+~~~
+
 ## RUN-PREP — Create the next productive run
 
 RUN-PREP-1 — After authorization and backup, use the timed preparation driver. It selects the next scope, creates the run, reuses accepted translations, creates productive batches, and enforces the pre-Luna gates.
@@ -132,7 +138,7 @@ PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
 shasum -a 256 "dist/jp-ru-kolobok-400k-v1.0-yomitan.zip"
 ~~~
 
-RUN-FINISH-3 — Run the full test suite, record the verified export and online window results in [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md), and update only RUN-STOP for the following batch. Also add lessons learned to [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md) . If there were hiccups, add ideas on mitigating them to the history file. Times too need to be recorded there for future analysis. If the times are unusually long or short, the analysis must be added to the same history file.
+RUN-FINISH-3 — Run the full test suite with the exact RUN-PREFLIGHT-5 command, record the verified export and online window results in [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md), and update only RUN-STOP for the following batch. Also add lessons learned to [JPDB_LUNA_RUN_HISTORY.md](JPDB_LUNA_RUN_HISTORY.md) . If there were hiccups, add ideas on mitigating them to the history file. Times too need to be recorded there for future analysis. If the times are unusually long or short, the analysis must be added to the same history file.
 
 ## RUN-RECOVER — PostgreSQL recovery
 

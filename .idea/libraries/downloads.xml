@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="downloads">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/work/downloads/jitendex-yomitan.zip!/" />
+      <root url="jar://$PROJECT_DIR$/work/downloads/Freq.JPDB_2022-05-10T03_27_02.930Z.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

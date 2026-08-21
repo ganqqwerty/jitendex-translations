@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="parity-run44-postgresql">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/work/luna_performance/parity-run44-postgresql.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

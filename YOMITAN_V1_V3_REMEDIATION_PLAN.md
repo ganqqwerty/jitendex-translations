@@ -652,8 +652,10 @@ YRP-CMD-7 — Validate the authoritative run and execute the full automated test
 PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   validate --run-id "$KOL_RUN_ID"
 
-PYTHONPATH=src .venv/bin/pytest -q
+PYTHONPATH=src .venv/bin/python -m pytest -q
 ```
+
+YRP-CMD-7A — Keep `PYTHONPATH=src` on every direct pytest invocation. A collection failure with `ModuleNotFoundError: jitendex_ru` means zero tests ran and must never be reported as a test failure or a completed gate.
 
 YRP-CMD-8 — Build and verify the Yomitan archive.
 

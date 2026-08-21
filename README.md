@@ -44,6 +44,20 @@ README-8 — `acquire` also downloads the two Yomitan JSON schemas from an immut
 commit and verifies their configured SHA-256 values. `verify` validates every
 emitted bank against those pinned copies.
 
+## README-TEST — Test execution
+
+README-TEST-1 — Run tests from the repository root with the virtual-environment
+interpreter and an explicit `PYTHONPATH=src`. Do not call bare `pytest`: the project
+uses a `src/` layout, so an environment without an editable install otherwise stops
+during collection with `ModuleNotFoundError: jitendex_ru` and executes no tests.
+
+```sh
+PYTHONPATH=src .venv/bin/python -m pytest -q
+```
+
+README-TEST-2 — A collection error is not a failed test result. Record test counts
+only after pytest reaches execution and prints its final pass, fail, and skip summary.
+
 ## README-YU — Yomitan v1.0 update warning
 
 README-YU-1 — Do not use Yomitan's update button for the published `Колобок 400k v1.0` archive. Its update metadata points to upstream Jitendex and can replace the Russian dictionary with English Jitendex.
