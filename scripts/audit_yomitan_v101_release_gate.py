@@ -49,6 +49,7 @@ REQUIRED_REPORTS = (
     "reports/yomitan_localization/run59-v1.0.1-final-yomitan-build.json",
     "reports/yomitan_localization/run59-v1.0.1-final-yomitan-verify.json",
     "reports/yomitan_localization/run59-v1.0.1-update-index-verify.json",
+    "reports/yomitan_localization/run59-v1.0.1-smoke-cases.json",
     "reports/yomitan_localization/v1.0.1-release-notes.md",
 )
 FORBIDDEN_OPERATIONAL_TEXT = (

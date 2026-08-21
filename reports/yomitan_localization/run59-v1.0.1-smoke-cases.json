@@ -1,0 +1,158 @@
+{
+  "archive": "jp-ru-kolobok-400k-v1.0.1-yomitan.zip",
+  "archive_sha256": "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7",
+  "basic_lookups": {
+    "expression_lookup": {
+      "expected_expression": "食べる",
+      "query": "食べる"
+    },
+    "inflected_lookup": {
+      "expected_expression": "食べる",
+      "query": "食べました"
+    },
+    "kana_only_lookup": {
+      "expected_expression": "ありがとう",
+      "query": "ありがとう"
+    },
+    "multiple_readings": {
+      "expected_readings": [
+        "いく",
+        "うぶ",
+        "き",
+        "しょう",
+        "せい",
+        "なま",
+        "なまり",
+        "ふ"
+      ],
+      "query": "生"
+    },
+    "reading_lookup": {
+      "expected_expression": "食べる",
+      "query": "たべる"
+    }
+  },
+  "long_entry": {
+    "evidence": "largest structured glossary",
+    "expression": "掛ける",
+    "member": "term_bank_13.json",
+    "reading": "かける",
+    "row": 1126,
+    "serialized_chars": 33020
+  },
+  "render_cases": {
+    "acronym": {
+      "evidence": "синий экран смерти (экран ошибки Windows); BSoD",
+      "expression": "ブルーバック",
+      "member": "term_bank_108.json",
+      "reading": "ブルーバック",
+      "row": 1734
+    },
+    "brand": {
+      "evidence": "операционная система Windows компании Microsoft",
+      "expression": "Ｗｉｎｄｏｗｓ",
+      "member": "term_bank_68.json",
+      "reading": "ウィンドウズ",
+      "row": 2019
+    },
+    "example_and_tatoeba": {
+      "evidence": "example sentence with Tatoeba attribution",
+      "expression": "ＣＤプレーヤー",
+      "member": "term_bank_1.json",
+      "reading": "シーディープレーヤー",
+      "row": 12
+    },
+    "fullwidth_restriction": {
+      "evidence": "только ＡＮＤ; tooltip: допустимо только для этих форм и/или чтений",
+      "expression": "アンド",
+      "member": "term_bank_3.json",
+      "reading": "アンド",
+      "row": 235
+    },
+    "greek_restriction": {
+      "evidence": "только Ω; tooltip: допустимо только для этих форм и/или чтений",
+      "expression": "オメガ",
+      "member": "term_bank_3.json",
+      "reading": "オメガ",
+      "row": 2659
+    },
+    "jmdict_attribution": {
+      "evidence": "JMdict attribution is visible",
+      "expression": "悪どい",
+      "member": "term_bank_1.json",
+      "reading": "あくどい",
+      "row": 32
+    },
+    "links": {
+      "evidence": "internal dictionary and external attribution links",
+      "expression": "悪どい",
+      "member": "term_bank_1.json",
+      "reading": "あくどい",
+      "row": 32
+    },
+    "mixed_alphabet_repair": {
+      "evidence": "Мы вчера вечером, выпив, ходили по всему городу и вовсю кутили.",
+      "expression": "バカ騒ぎ",
+      "member": "term_bank_48.json",
+      "reading": "バカさわぎ",
+      "row": 1769
+    },
+    "numeric_restriction": {
+      "evidence": "только 中２・中二; tooltip: допустимо только для этих форм и/или чтений",
+      "expression": "中２",
+      "member": "term_bank_58.json",
+      "reading": "ちゅうに",
+      "row": 3695
+    },
+    "quoted_english_grammar": {
+      "evidence": "У слова «that» только два падежа — именительный и объектный; форма не изменяется в зависимости от падежа.",
+      "expression": "格",
+      "member": "term_bank_13.json",
+      "reading": "かく",
+      "row": 614
+    },
+    "redirect_localization": {
+      "evidence": "вариант написания: 社会情報學",
+      "expression": "社会情報學",
+      "member": "term_bank_129.json",
+      "reading": "",
+      "row": 1322
+    },
+    "ruby": {
+      "evidence": "tag=ruby",
+      "expression": "明白",
+      "member": "term_bank_1.json",
+      "reading": "めいはく",
+      "row": 23
+    },
+    "source_language_form": {
+      "evidence": "Португальский: «espada»",
+      "expression": "スベタ",
+      "member": "term_bank_1.json",
+      "reading": "スベタ",
+      "row": 1436
+    },
+    "table": {
+      "evidence": "tag=table",
+      "expression": "ＣＤプレーヤー",
+      "member": "term_bank_1.json",
+      "reading": "シーディープレーヤー",
+      "row": 12
+    },
+    "taxon": {
+      "evidence": "чавыча (Oncorhynchus tshawytscha), королевский лосось",
+      "expression": "鱒の介",
+      "member": "term_bank_97.json",
+      "reading": "ますのすけ",
+      "row": 2416
+    },
+    "xref": {
+      "evidence": "data.content=xref",
+      "expression": "悪どい",
+      "member": "term_bank_1.json",
+      "reading": "あくどい",
+      "row": 32
+    }
+  },
+  "schema_version": 1
+}

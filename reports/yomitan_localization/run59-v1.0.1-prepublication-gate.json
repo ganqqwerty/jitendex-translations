@@ -28,7 +28,7 @@
   "manual_smoke": "pending",
   "missing_report_count": 0,
   "release": "v1.0.1",
-  "required_report_count": 13,
+  "required_report_count": 14,
   "schema_version": 1,
   "status": "manual_smoke_pending"
 }
