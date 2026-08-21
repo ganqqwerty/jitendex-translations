@@ -1,0 +1,13 @@
+{
+  "archive_index_sha256": "90017a061ee25d82c1f4fd312175d02c57a792ac1cdea295d21b3ee02e7638c7",
+  "archive_sha256": "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7",
+  "canonical_fields_compared": 9,
+  "download_url": "https://github.com/ganqqwerty/jp-ru-kolobok-dictionary/releases/download/v1.0.1/jp-ru-kolobok-400k-v1.0.1-yomitan.zip",
+  "hosted_index_sha256": "90017a061ee25d82c1f4fd312175d02c57a792ac1cdea295d21b3ee02e7638c7",
+  "index_url": "https://ganqqwerty.github.io/jp-ru-kolobok-dictionary/yomitan.json",
+  "pinned_schema_sha256": "dde43ca9ef1580ab638f49bb13bd7d5c55646afd655ff99cf429492598feb69b",
+  "revision": "2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1",
+  "run_id": 59,
+  "schema_validation": "passed",
+  "title": "Колобок 400k"
+}

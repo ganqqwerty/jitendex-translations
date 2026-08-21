@@ -2412,3 +2412,21 @@ HIST-TAGS-RU-V1-9 — Dictionary version `1.0` uses compilation datetime `2026-0
 HIST-TAGS-RU-V1-10 — Build times were 133.97 seconds for Yomitan, 147.35 for GoldenDict, 159.39 for MDict, 252.95 for PocketBook, and 334.65 for Apple Dictionary. All five format verifiers passed. All 150 tests passed with two expected integration skips.
 
 HIST-TAGS-RU-V1-11 — The pinned Apple schema still points to retired HTTP module URLs. A local copy with the same schema rules and canonical HTTPS modules validated the DDK sample, but full-corpus `xmllint` remained CPU-bound for 90 minutes and was stopped. The version-only source change preserved dictionary structure. The pinned DDK build and the independent Apple bundle verifier passed. Future work should pin the module files and replace the non-streaming full-corpus schema gate before requiring it again.
+
+## HIST-YOMITAN-V101 — Yomitan V1–V3 remediation and v1.0.1
+
+HIST-YOMITAN-V101-1 — The published v1.0 Yomitan archive inherited Jitendex operational metadata. Its update button could read `https://jitendex.org/static/yomitan.json` and replace the Russian dictionary with English Jitendex. Installed v1.0 metadata cannot be repaired remotely, so users must manually import v1.0.1 once.
+
+HIST-YOMITAN-V101-2 — The content audit separated intended Latin text from translation defects. Jitendex, JMdict, Tatoeba, brands, creator names, scientific names, source-language forms, grammar quotations, acronyms, and license identifiers remain. Raw `redirected from`, raw form restrictions, mixed-alphabet accidents such as `losили`, and 27 reviewed lexical misses were repaired.
+
+HIST-YOMITAN-V101-3 — The pre-write backup is `work/backups/jitendex-postgresql-before-yomitan-v1.0.1.dump`, SHA-256 `8285e560a76c71e947695083469ece7f598046617d943a6838c8708d41f1ea61`. Run 59 contains 2,474 immutable canonicalization-history rows. The approved lexical manifest SHA-256 is `07746f61422324adc5bfd6d5fadb9a12cdc14fba76ca0af8e81883f98bdf0f26`, and the visible-Latin approval SHA-256 is `22c1fccd4a36bb74be8739ad2f0654362b595a461e6f5391af50faa9e0cd920b`.
+
+HIST-YOMITAN-V101-4 — Final exports are Yomitan 91, SHA-256 `f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7`; GoldenDict 95, `506396de7a00009074d956a62fc66c56cf0f8645c0470ad1a75868b622c5be51`; MDict 96, `f22238c020b7ddebfeffc2df83256816fc23e00e02042b3eff321ce8c5145b4d`; PocketBook 97, `e757ea8ddde01a2380485c6f498610f86565dda2076a993e3c9c9611374d31cc`; and Apple Dictionary 98, `57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c`.
+
+HIST-YOMITAN-V101-5 — Independent exports 99–103 reproduced all five archives byte-for-byte. The full test suite collected 165 tests: 163 passed and two expected PostgreSQL integration tests skipped. The archive-level lexical audit scanned all 433,885 articles and decompressed every MDict record; all formats contain zero raw English redirect and form-restriction templates.
+
+HIST-YOMITAN-V101-6 — The v1.0.1 Yomitan title remains `Колобок 400k`. Its revision is `2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1`; its owned update index is `https://ganqqwerty.github.io/jp-ru-kolobok-dictionary/yomitan.json`; and its owned release asset is `https://github.com/ganqqwerty/jp-ru-kolobok-dictionary/releases/download/v1.0.1/jp-ru-kolobok-400k-v1.0.1-yomitan.zip`.
+
+HIST-YOMITAN-V101-7 — Full-corpus Apple `xmllint` is intentionally removed from this and future release gates. It did not complete within 90 minutes and duplicated more useful bounded checks. Apple builds now stream-parse the complete source XML, verify counts, run the pinned DDK compiler, and independently verify the compiled bundle.
+
+HIST-YOMITAN-V101-8 — Clean-profile Yomitan rendering and owned-update smoke results must be recorded separately in `reports/yomitan_localization/run59-v1.0.1-smoke.json`; publication details are added only after the public release and Pages deployment are verified.

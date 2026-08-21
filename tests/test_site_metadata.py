@@ -5,6 +5,8 @@ import json
 import re
 from pathlib import Path
 
+from jitendex_ru.yomitan_remediation import validate_yomitan_metadata
+
 
 BUILD_SITE_PATH = Path(__file__).parents[1] / "terra-luna-site" / "build_site.py"
 SPEC = importlib.util.spec_from_file_location("terra_luna_build_site", BUILD_SITE_PATH)
@@ -87,3 +89,34 @@ def test_checked_in_pages_have_unique_canonical_urls_and_valid_schema() -> None:
         canonical_urls.add(canonical_match.group(1))
 
     assert len(pages) == 39
+
+
+def test_homepage_stages_v101_assets_and_manual_upgrade_warning() -> None:
+    homepage = (Path(__file__).parents[1] / "site-home" / "index.html").read_text(
+        encoding="utf-8",
+    )
+
+    assert "releases/tag/v1.0.1" in homepage
+    for format_name in ("yomitan", "goldendict", "mdict", "pocketbook", "apple-dictionary"):
+        assert f"jp-ru-kolobok-400k-v1.0.1-{format_name}.zip" in homepage
+    assert "один раз импортируйте его вручную" in homepage
+    assert "releases/download/run59-tags-ru-v1" not in homepage
+    assert "jitendex.org/static/yomitan.json" not in homepage.lower()
+
+
+def test_hosted_yomitan_index_uses_owned_release_channel() -> None:
+    project_root = Path(__file__).parents[1]
+    hosted = json.loads((project_root / "site-home" / "yomitan.json").read_text())
+
+    validate_yomitan_metadata(hosted, require_updatable=True)
+    assert hosted["title"] == "Колобок 400k"
+    assert hosted["revision"] == "2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1"
+    assert hosted["indexUrl"] == (
+        "https://ganqqwerty.github.io/jp-ru-kolobok-dictionary/yomitan.json"
+    )
+    assert hosted["downloadUrl"] == (
+        "https://github.com/ganqqwerty/jp-ru-kolobok-dictionary/releases/download/"
+        "v1.0.1/jp-ru-kolobok-400k-v1.0.1-yomitan.zip"
+    )
+    assert "jitendex.org" not in hosted["indexUrl"].lower()
+    assert "jitendex.org" not in hosted["downloadUrl"].lower()

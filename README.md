@@ -52,6 +52,8 @@ README-YU-2 — The installed v1.0 metadata cannot be repaired remotely. Keep th
 
 README-YU-3 — Jitendex, JMdict, Tatoeba, creator names, and license text intentionally remain in attribution. They are not evidence that the updater is safe; only operational `indexUrl` and `downloadUrl` determine the update channel.
 
+README-YU-4 — Version v1.0.1 uses the stable installed title `Колобок 400k` and the owned update index `https://ganqqwerty.github.io/jp-ru-kolobok-dictionary/yomitan.json`. After the one-time manual import from v1.0, future update checks stay inside the Kolobok release channel.
+
 ## README-GD — GoldenDict export
 
 README-GD-1 — `export-goldendict --run-id ID --output dist/jp-ru-kolobok-400k-v1.0-goldendict.zip`
@@ -110,6 +112,11 @@ the real-client matrix in `reports/exporters/mdict-capabilities.md` passes.
 | README-STATE-3 | MDict `v1.0` | 85 | `589608c811d6eb72f2b16f83c2929ce1e356a7eb12f466977ad34bcaad23ddb3` |
 | README-STATE-4 | PocketBook `v1.0` | 86 | `d03c892fe2db5fb0f93a65c54de729d41f1674ba7a89e97470b69a66a75e5d3f` |
 | README-STATE-5 | Apple Dictionary `v1.0` | 87 | `f7879e122e6260e47def25c05a9b2846655ba8a52ad28c89f485a0a21ce26d46` |
+| README-STATE-10 | Yomitan `v1.0.1` | 91 | `f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7` |
+| README-STATE-11 | GoldenDict `v1.0.1` | 95 | `506396de7a00009074d956a62fc66c56cf0f8645c0470ad1a75868b622c5be51` |
+| README-STATE-12 | MDict `v1.0.1` | 96 | `f22238c020b7ddebfeffc2df83256816fc23e00e02042b3eff321ce8c5145b4d` |
+| README-STATE-13 | PocketBook `v1.0.1` | 97 | `e757ea8ddde01a2380485c6f498610f86565dda2076a993e3c9c9611374d31cc` |
+| README-STATE-14 | Apple Dictionary `v1.0.1` | 98 | `57b828929cb674aeb1bc0be9c833aadfc4185ea81d40855a6cf20be93c150c1c` |
 
 ```sh
 translationctl export-mdict --run-id ID --output dist/jp-ru-kolobok-400k-v1.0-mdict.zip
@@ -123,6 +130,8 @@ Any omitted rich-content feature fails the build.
 README-STATE-8 — Every current `Колобок 400k v1.0` archive credits Yuri Katkov as co-author of the Russian edition. The five archives and their internal payloads use the versioned Latin base name `jp-ru-kolobok-400k-v1.0` and are published in release `run59-tags-ru-v1`.
 
 README-STATE-9 — Version `1.0` records compilation datetime `2026-08-15T21:04:30Z` in installed dictionary metadata and technical manifests.
+
+README-STATE-15 — Version `1.0.1` records compilation datetime `2026-08-21T08:52:59Z`. Independent exports 99–103 reproduced all five archives byte-for-byte, and the cross-format lexical audit found no raw English redirect or restriction templates.
 
 ## README-DB — Database schema
 
