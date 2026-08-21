@@ -35,6 +35,10 @@ def test_localizes_every_fixed_v1_shape_without_touching_correct_only_uses():
         {"tag": "span", "lang": "ja", "content": "３０ only"},
         {"tag": "span", "lang": "ja", "content": "Ω only"},
         {"tag": "span", "lang": "ja", "content": "ＡＮＤ only"},
+        {"tag": "div", "data": {"content": "graphic-attribution"}, "content": [
+            {"tag": "a", "content": "Photo"}, " by ",
+            {"tag": "a", "content": "Unknown author"},
+        ]},
         "read-only member",
         "download-only member",
         "IF-AND-ONLY-IF",
@@ -46,6 +50,9 @@ def test_localizes_every_fixed_v1_shape_without_touching_correct_only_uses():
         "redirects_localized": 3,
         "tooltips_localized": 1,
         "short_restrictions_localized": 4,
+        "graphic_by_localized": 1,
+        "graphic_photo_localized": 1,
+        "graphic_unknown_author_localized": 1,
     }
     glossary = rows[0][5]
     assert glossary[0][0] == f"{REDIRECT_RU_PREFIX}社会情報學"
@@ -56,11 +63,18 @@ def test_localizes_every_fixed_v1_shape_without_touching_correct_only_uses():
         "только 始める", "только ３０", "только Ω", "только ＡＮＤ",
     ]
     assert all(item["lang"] == "ru" for item in glossary[4:8])
-    assert glossary[8:] == ["read-only member", "download-only member", "IF-AND-ONLY-IF"]
+    assert glossary[8]["content"] == [
+        {"tag": "a", "content": "Фото"}, " — автор: ",
+        {"tag": "a", "content": "неизвестный автор"},
+    ]
+    assert glossary[9:] == ["read-only member", "download-only member", "IF-AND-ONLY-IF"]
     assert localize_yomitan_rows(rows) == {
         "redirects_localized": 0,
         "tooltips_localized": 0,
         "short_restrictions_localized": 0,
+        "graphic_by_localized": 0,
+        "graphic_photo_localized": 0,
+        "graphic_unknown_author_localized": 0,
     }
 
 

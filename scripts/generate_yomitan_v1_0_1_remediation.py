@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from jitendex_ru.util import canonical_json, sha256_bytes
-from jitendex_ru.yomitan_remediation import MIXED_ALPHABET_RE, VISIBLE_TOKEN_RE
+from jitendex_ru.yomitan_remediation import (
+    APPROVED_LEXICAL_REMEDIATIONS, MIXED_ALPHABET_RE, VISIBLE_TOKEN_RE,
+)
 
 
 TOOLTIP_SOURCE = (
@@ -76,6 +78,7 @@ EXPLICIT_TOKEN_REPLACEMENTS = {
 }
 
 SOURCE_OVERRIDES = {
+    **APPROVED_LEXICAL_REMEDIATIONS,
     TOOLTIP_SOURCE: TOOLTIP_TARGET,
     "We really painted the town red last night.": (
         "Мы вчера вечером, выпив, ходили по всему городу и вовсю кутили."
@@ -125,7 +128,11 @@ def _mixed_tokens(text: str) -> list[str]:
 def generate(audit: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     by_unit: dict[str, dict[str, Any]] = {}
     for finding in audit["findings"]:
-        record = by_unit.setdefault(finding["unit_id"], {**finding, "tokens": []})
+        record = by_unit.setdefault(
+            finding["unit_id"], {**finding, "tokens": [], "issue_codes": []},
+        )
+        if finding["issue_code"] not in record["issue_codes"]:
+            record["issue_codes"].append(finding["issue_code"])
         if finding["detected_token"] not in record["tokens"]:
             record["tokens"].append(finding["detected_token"])
 
@@ -154,6 +161,7 @@ def generate(audit: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
             "previous_target_sha256": record["target_sha256"],
             "canonical_target_text": canonical,
         })
+        lexical_remediation = "approved_residual_english_remediation" in record["issue_codes"]
         approvals.append({
             "unit_id": unit_id,
             "article_id": record["article_id"],
@@ -163,10 +171,15 @@ def generate(audit: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
             "previous_target": previous,
             "canonical_target": canonical,
             "detected_tokens": record["tokens"],
+            "issue_codes": record["issue_codes"],
             "classification": "MUST_TRANSLATE",
             "confidence": "high",
             "review_method": method,
-            "reason": "Remove adjacent Latin/Cyrillic corruption while preserving the source meaning.",
+            "reason": (
+                "Translate a reviewed residual English fragment while preserving terms that must remain."
+                if lexical_remediation else
+                "Remove adjacent Latin/Cyrillic corruption while preserving the source meaning."
+            ),
         })
 
     manifest = {

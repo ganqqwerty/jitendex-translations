@@ -76,6 +76,14 @@ YRP-EXEC-28 — `DONE` for Run 59 integrity comparison. The post-change fingerpr
 
 YRP-EXEC-29 — `FIXED` after the first full materialization preflight. Moving all form-restriction localization into the counted build pass correctly exposed 4,307 source `<form> only` labels, not only the 74 labels left broken by the legacy partial pass. The pinned build count now covers all 4,307 transformations while YRP-BASELINE-3 continues to describe the 74 v1.0 residual defects.
 
+YRP-EXEC-30 — `DONE` for the corrected full Yomitan preflight at commit `391becc`. Export 88 built all 433,885 articles into 370 ZIP members with 136,668 redirects, 4,307 tooltips, and 4,307 short restrictions localized. Independent verification validated 131 banks, found zero localization issues, and confirmed ZIP SHA-256 `bad9acfcfa5ae5e59d1cc4071e0f2ce898a084b3e26c7d0d7f667497e913bb18`. This is a preflight artifact, not the frozen release.
+
+YRP-EXEC-31 — `IN PROGRESS` for the permanent lexical gate. A role-aware database scan confirmed that common English function words in Russian targets are intentional grammar quotations or product names. A stricter residual pass found a small set of genuine misses, including `proceedings`, `пу anything`, `Filipino marshal art`, `corn flour`, `Windows error screen`, and three raw `English:` language labels. These findings require an additional approved manifest pass before release freeze.
+
+YRP-EXEC-32 — `APPROVED` for the residual lexical repair. Detector `yomitan-visible-text-v3` scanned all 2,053,045 accepted targets and selected 27 exact target rows for correction while preserving reviewed brands, taxa, romanized Japanese, grammar quotations, JMdict, Tatoeba, Jitendex, author names, and license identifiers. The lexical audit SHA-256 is `e3447fb4d9e4ba31e0b6c8f3b643b2e26cfde781b17288d3ac2c335002f37775`; the 27-row hash-locked manifest is `terminology/yomitan-v1.0.1-approved-lexical-remediation.json` with SHA-256 `07746f61422324adc5bfd6d5fadb9a12cdc14fba76ca0af8e81883f98bdf0f26`; the separate approval record has SHA-256 `3292a446ff44a69622669889555184c1edd31b777fd40e87bf6718f5cabcf455`.
+
+YRP-EXEC-33 — `DONE` for reviewed image-attribution chrome. The structured build pass now changes all 444 attribution connectors from `by` to `автор`, all 60 generic `Photo` labels to `Фото`, and the one generic `Unknown author` label to `неизвестный автор`. Creator names, original work titles, source links, and license identifiers remain unchanged.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.

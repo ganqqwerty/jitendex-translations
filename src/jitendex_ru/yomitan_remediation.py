@@ -43,7 +43,102 @@ PINNED_LOCALIZATION_COUNTS = {
     "redirects_localized": 136_668,
     "tooltips_localized": 4_307,
     "short_restrictions_localized": 4_307,
+    "graphic_by_localized": 444,
+    "graphic_photo_localized": 60,
+    "graphic_unknown_author_localized": 1,
 }
+
+APPROVED_LEXICAL_REMEDIATIONS = {
+    'English: "single hit"': 'Английский: «single hit»',
+    'English: "single player"': 'Английский: «single player»',
+    '[{"content":"to insert (e.g. a break into proceedings)","tag":"li"},'
+    '{"content":"to interpose (e.g. an objection)","tag":"li"},'
+    '{"content":"to interject","tag":"li"},'
+    '{"content":"to throw in (e.g. a joke)","tag":"li"}]': (
+        '["вставлять реплику или паузу в ход происходящего",'
+        '"вмешиваться с возражением","вклиниваться в разговор","вставлять шутку"]'
+    ),
+    '[{"content":"pointe shoes","tag":"li"},{"content":"toe shoes","tag":"li"}]': (
+        '["пуанты","балетные туфли с твёрдым носком"]'
+    ),
+    'Uighur (Turkic ethnic group); Uyghur; Uigur; Uygur': (
+        'уйгур (тюркская этническая группа); уйгур; уйгур; уйгур'
+    ),
+    '[{"content":"with a crackle (of a fire)","tag":"li"},'
+    '{"content":"with a rustle","tag":"li"},{"content":"with a burst","tag":"li"}]': (
+        '["с потрескиванием (об огне)","с шелестом","резким порывом"]'
+    ),
+    'common bean (Phaseolus vulgaris); kidney bean; navy bean; wax bean; green bean; '
+    'string bean; French bean': (
+        'фасоль обыкновенная (Phaseolus vulgaris); фасоль кидни; мелкая белая фасоль; '
+        'восковая фасоль; стручковая фасоль; спаржевая фасоль; французская фасоль'
+    ),
+    'arnis (Filipino marshal art)': 'арнис (филиппинское боевое искусство)',
+    'escrima (Filipino martial art)': 'эскрима (филиппинское боевое искусство)',
+    '[{"content":"outdoor clothing fashion style for young women","tag":"li"},'
+    '{"content":"young woman who dresses in outdoor clothing","tag":"li"},'
+    '{"content":"young woman who enjoys mountain climbing","tag":"li"}]': (
+        '["модный стиль одежды для молодых женщин в духе одежды для активного отдыха",'
+        '"молодая женщина, одевающаяся в туристическом стиле",'
+        '"молодая женщина, увлекающаяся альпинизмом"]'
+    ),
+    'Blue Screen of Death (Windows error screen); BSoD': (
+        'синий экран смерти (экран ошибки Windows); BSoD'
+    ),
+    'axolotl (Ambystoma mexicanum); Mexican salamander; Mexican walking fish': (
+        'аксолотль (Ambystoma mexicanum); мексиканская саламандра; '
+        'мексиканская ходячая рыба'
+    ),
+    '[{"content":"nonstandard","tag":"li"},{"content":"out of spec","tag":"li"},'
+    '{"content":"irregular","tag":"li"},'
+    '{"content":"unconventional (e.g. relationship)","tag":"li"},'
+    '{"content":"ugly (e.g. fruits and vegetables)","tag":"li"}]': (
+        '["нестандартный","не соответствующий стандарту","нетипичный",'
+        '"необычный, например об отношениях","некрасивый, например о фруктах и овощах"]'
+    ),
+    'Koreatown (Korean district of a city)': 'Корейтаун (корейский район города)',
+    'corn flour; maize flour': 'кукурузная мука; маисовая мука',
+    '{"content":"goal line","tag":"li"}': '["линия ворот"]',
+    'showily decorated truck (e.g. chrome, air-brushed pictures, colored lights); art truck': (
+        'показательно украшенный грузовик (например, с хромированными деталями, '
+        'аэрографией, цветными огнями); арт-трак'
+    ),
+    'pull up leather': 'кожа пулл-ап',
+}
+
+UNFINISHED_TARGET_TEXTS = frozenset({
+    'Язык-источник: English: "single hit"',
+    'Язык-источник: English: "single player"',
+    '["вставлять реплику или паузу в ход proceedings","вмешиваться с возражением",'
+    '"вставлять шутку"]',
+    '["вставлять паузу в ход proceedings","вставлять возражение",'
+    '"вклиниваться в разговор","вставлять шутку"]',
+    '["пу anything"]',
+    'уйгур (Turkic ethnic группа); уйгур; уйгур; уйгур',
+    'уйгур (Turkic ethnic group); уйгур; уйгур; уйгур',
+    '["с потрескиванием (о fire)","с шелестом","резко вспыхнув"]',
+    'фасоль обыкновенная (Phaseolus vulgaris); фасоль кидни; фасоль navy; '
+    'восковая фасоль; стручковая фасоль; спаржевая фасоль; французская фасоль',
+    'арнис (Filipino marshal art)',
+    'эскрима (Filipino martial art)',
+    '["модный стиль одежды для молодых женщин в духе одежды для активного отдыха",'
+    '"молодая женщина, одевающаяся в стиле outdoor",'
+    '"молодая женщина, увлекающаяся альпинизмом"]',
+    '«Синий экран смерти» (экран ошибки Windows error); BSoD',
+    'синий экран смерти (Windows error screen); BSoD',
+    'Синий экран смерти (Windows error screen); BSoD',
+    'аксолотль (Ambystoma mexicanum); Mexican salamander; Mexican walking fish',
+    '["нестандартный","не соответствующий стандарту","нетипичный",'
+    '"необычный, unconventional, например об отношениях",'
+    '"некрасивый, например о фруктах и овощах"]',
+    'Корейтаун (Korean district города)',
+    'Корейтаун (Korean district of a city)',
+    'corn flour; кукурузная мука',
+    '["линия ворот","линия goal в спортивной игре"]',
+    'показательно украшенный грузовик (например, с хромированными деталями, '
+    'аэрографией, цветными огнями); art truck',
+    'кожа pull-up',
+})
 
 
 def yomitan_revision(scope_id: str, *, compilation_datetime: str = COMPILATION_DATETIME_UTC) -> str:
@@ -108,8 +203,14 @@ def validate_yomitan_metadata(index: dict[str, Any], *, require_updatable: bool 
             raise ValueError(f"foreign operational metadata in {key}")
 
 
-def _localize_node(node: Any, counts: dict[str, int]) -> Any:
+def _localize_node(
+    node: Any, counts: dict[str, int], *, graphic_attribution: bool = False,
+) -> Any:
     if isinstance(node, dict):
+        is_graphic_attribution = (
+            isinstance(node.get("data"), dict)
+            and node["data"].get("content") == "graphic-attribution"
+        )
         content = node.get("content")
         match = (
             FORM_ONLY_RE.fullmatch(content)
@@ -121,13 +222,28 @@ def _localize_node(node: Any, counts: dict[str, int]) -> Any:
             node["lang"] = "ru"
             counts["short_restrictions_localized"] += 1
         for key, value in list(node.items()):
-            node[key] = _localize_node(value, counts)
+            node[key] = _localize_node(
+                value, counts,
+                graphic_attribution=graphic_attribution or is_graphic_attribution,
+            )
         return node
     if isinstance(node, list):
         for index, value in enumerate(node):
-            node[index] = _localize_node(value, counts)
+            node[index] = _localize_node(
+                value, counts, graphic_attribution=graphic_attribution,
+            )
         return node
     if isinstance(node, str):
+        if graphic_attribution:
+            if node.startswith(" by "):
+                counts["graphic_by_localized"] += 1
+                return f" — автор: {node[4:]}"
+            if node == "Photo":
+                counts["graphic_photo_localized"] += 1
+                return "Фото"
+            if node == "Unknown author":
+                counts["graphic_unknown_author_localized"] += 1
+                return "неизвестный автор"
         if node.startswith(REDIRECT_SOURCE_PREFIX) and len(node) > len(REDIRECT_SOURCE_PREFIX):
             counts["redirects_localized"] += 1
             return f"{REDIRECT_RU_PREFIX}{node[len(REDIRECT_SOURCE_PREFIX):]}"

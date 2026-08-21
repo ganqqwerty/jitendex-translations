@@ -9,12 +9,13 @@ from typing import Any
 from .database import ConnectionLike
 from .util import atomic_write, canonical_json, sha256_file
 from .yomitan_remediation import (
-    FORMS_TOOLTIP_SOURCE, MIXED_ALPHABET_RE, REDIRECT_SOURCE_PREFIX,
+    APPROVED_LEXICAL_REMEDIATIONS, FORMS_TOOLTIP_SOURCE, MIXED_ALPHABET_RE, REDIRECT_SOURCE_PREFIX,
+    UNFINISHED_TARGET_TEXTS,
     VISIBLE_TOKEN_RE, scan_yomitan_rows,
 )
 
 
-DETECTOR_VERSION = "yomitan-visible-text-v2"
+DETECTOR_VERSION = "yomitan-visible-text-v3"
 TEMPLATE_SAMPLE_LIMIT = 10
 
 
@@ -52,6 +53,22 @@ def audit_yomitan_database(
     accepted_targets = 0
     for row in rows:
         accepted_targets += 1
+        approved_target = APPROVED_LEXICAL_REMEDIATIONS.get(row["source_text"])
+        if approved_target is not None and row["target_text"] in UNFINISHED_TARGET_TEXTS:
+            findings.append({
+                "run_id": run_id,
+                "article_id": row["article_id"],
+                "unit_id": row["unit_id"],
+                "json_pointer": row["json_pointer"],
+                "target_pointer": "",
+                "role": row["role"],
+                "source_text": row["source_text"],
+                "source_sha256": row["source_sha256"],
+                "current_target": row["target_text"],
+                "target_sha256": row["target_sha256"],
+                "detected_token": None,
+                "issue_code": "approved_residual_english_remediation",
+            })
         for target_pointer, text in _target_leaves(row["role"], row["target_text"]):
             codes_and_tokens: list[tuple[str, str | None]] = []
             if text.startswith(REDIRECT_SOURCE_PREFIX):
