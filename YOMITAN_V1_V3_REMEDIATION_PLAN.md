@@ -128,6 +128,8 @@ YRP-EXEC-54 — `PASS EXCEPT MANUAL UI` for the consolidated prepublication gate
 
 YRP-EXEC-55 — `DONE` for deterministic manual-smoke selection. `scripts/select_yomitan_smoke_cases.py` scanned final export 91 and wrote `reports/yomitan_localization/run59-v1.0.1-smoke-cases.json`. It pins exact lookup queries and archive-backed entries for xref, ruby, examples, tables, links, the longest entry, all three restriction classes, `社会情報學`, JMdict, Tatoeba, Windows/Microsoft, a taxon, BSoD, quoted English grammar, a source-language form, and the repaired `losили` example. The manual runbook now names these cases directly.
 
+YRP-EXEC-56 — `BLOCKED ON USER-OBSERVED YOMITAN UI` after three consecutive goal turns reached the same browser-policy boundary. The two-hour-watchdog local updater server ran for 11 minutes and received no Yomitan request, then was stopped cleanly. The consolidated gate still has five correct artifacts, zero findings, zero missing reports, and only `manual_smoke_pending`. Resume with YSMOKE-V101-2; after a human returns the observed results, complete YRP-CMD-13, rerun YRP-CMD-13A without the pending override, and continue at YRP-PUB-2.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.
