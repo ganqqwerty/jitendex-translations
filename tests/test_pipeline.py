@@ -243,6 +243,8 @@ def test_translation_review_and_reproducible_build(tmp_path):
         "checks": {key: True for key in (
             "expression_lookup", "reading_lookup", "inflected_lookup", "kana_only_lookup",
             "multiple_readings", "xrefs", "ruby", "examples", "tables", "links", "long_entry",
+            "redirect_localization", "restriction_localization", "preserved_terminology",
+            "repaired_mixed_alphabet", "owned_update_upgrade", "settings_preserved", "no_jitendex",
         )},
         "notes": "manual clean-profile smoke passed",
     }), encoding="utf-8")

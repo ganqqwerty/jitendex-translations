@@ -314,7 +314,7 @@ def write_yomitan_update_index(archive_path: Path, output_path: Path) -> dict[st
     """Generate the staged owned update index from a verified archive's metadata."""
     with zipfile.ZipFile(archive_path) as archive:
         archive_index = json.loads(archive.read("index.json"))
-    validate_yomitan_metadata(archive_index, require_updatable=False)
+    validate_yomitan_metadata(archive_index, require_updatable=None)
     hosted_index = dict(archive_index)
     hosted_index.update({
         "isUpdatable": True,

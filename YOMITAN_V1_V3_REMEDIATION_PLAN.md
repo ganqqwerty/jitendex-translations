@@ -84,6 +84,12 @@ YRP-EXEC-32 — `APPROVED` for the residual lexical repair. Detector `yomitan-vi
 
 YRP-EXEC-33 — `DONE` for reviewed image-attribution chrome. The structured build pass now changes all 444 attribution connectors from `by` to `автор`, all 60 generic `Photo` labels to `Фото`, and the one generic `Unknown author` label to `неизвестный автор`. Creator names, original work titles, source links, and license identifiers remain unchanged.
 
+YRP-EXEC-34 — `DONE` for the second production canonicalization. The first transaction applied exactly 27 approved lexical repairs and the second applied zero. Run 59 now has 2,474 immutable canonicalization-history rows: the earlier 2,447 structured/mixed repairs plus these 27 lexical repairs. The final detector reports zero findings across all 2,053,045 accepted targets; validation again reports zero blocking issues and zero batch-membership mismatches.
+
+YRP-EXEC-35 — `DONE` for the final post-data fingerprint. The Run 59 fingerprint is `fa853b11f545436647f3ef1d2c3ad28b64fed5d8644ae459c2185f272cf93eaf`. Article scope, source units, attempts, batches, batch items, reviews, and validation issues are unchanged. Translation history grew only by the approved 27 rows; export tables also contain the separately recorded preflight export 88.
+
+YRP-EXEC-36 — `DONE` for staged owned-update mode. `translationctl build --enable-yomitan-updates` writes the complete Kolobok-owned update tuple, and `translationctl verify --require-yomitan-updates` fails unless that tuple is present and exact. Ordinary preflight builds continue to omit updater fields. The hosted index generator now accepts either staged form and still derives all canonical fields from the archive.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.

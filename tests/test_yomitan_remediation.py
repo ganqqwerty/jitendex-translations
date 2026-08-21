@@ -170,6 +170,15 @@ def test_hosted_index_is_generated_from_archive_metadata(tmp_path):
     assert hosted["revision"] == archive_index["revision"]
     assert hosted["isUpdatable"] is True
 
+    updatable_archive = tmp_path / "updatable.zip"
+    updatable_index = build_yomitan_index(
+        {"format": 3, "attribution": "Jitendex/JMdict/Tatoeba"},
+        description="Описание", revision=yomitan_revision("full"), updatable=True,
+    )
+    with zipfile.ZipFile(updatable_archive, "w") as archive:
+        archive.writestr("index.json", json.dumps(updatable_index))
+    assert write_yomitan_update_index(updatable_archive, output_path) == updatable_index
+
 
 def test_archive_audit_records_reproducible_locations_and_counts(tmp_path):
     archive_path = tmp_path / "v1.zip"

@@ -176,7 +176,7 @@ def materialize_run(
 
 
 def build(
-    connection: ConnectionLike, run_id: int, output: Path,
+    connection: ConnectionLike, run_id: int, output: Path, *, updatable: bool = False,
 ) -> dict[str, Any]:
     run, source_row, rows = materialize_run(connection, run_id)
     localization = localize_yomitan_rows(rows)
@@ -200,7 +200,7 @@ def build(
             source_index,
             description=description,
             revision=f"{yomitan_revision(suffix)}-{TAG_CATALOG_VERSION}",
-            updatable=False,
+            updatable=updatable,
         )
         files["index.json"] = canonical_json(index)
         if "styles.css" in source.namelist():
@@ -251,15 +251,18 @@ def build(
         **tag_references,
     }
     audit(connection, "build", "export", export_id, {
-        "output": str(output), "zip_sha256": zip_hash, **localization, **tag_summary,
+        "output": str(output), "zip_sha256": zip_hash, "updatable": updatable,
+        **localization, **tag_summary,
     })
     return {
         "export_id": export_id, "files": len(files), "articles": len(rows),
-        "zip_sha256": zip_hash, **localization, **tag_summary,
+        "zip_sha256": zip_hash, "updatable": updatable, **localization, **tag_summary,
     }
 
 
-def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
+def verify(
+    connection: ConnectionLike, path: Path, *, require_updatable: bool = False,
+) -> dict[str, Any]:
     zip_hash = sha256_file(path)
     export = connection.execute(
         """SELECT e.run_id,r.jitendex_snapshot_id FROM export e
@@ -277,7 +280,7 @@ def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         if len(names) != len(set(names)):
             raise ValueError("duplicate ZIP members")
         index = json.loads(archive.read("index.json"))
-        validate_yomitan_metadata(index, require_updatable=False)
+        validate_yomitan_metadata(index, require_updatable=require_updatable)
         if index.get("title") != YOMITAN_TITLE:
             raise ValueError("archive title is not the stable Yomitan title")
         if not str(index.get("revision", "")).endswith(f"-{TAG_CATALOG_VERSION}"):
@@ -321,12 +324,15 @@ def verify(connection: ConnectionLike, path: Path) -> dict[str, Any]:
         "embedded_tag_occurrences": embedded_tag_occurrences,
         "tag_bank_rows": len(tag_mapping), "tag_bank_references": tag_bank_references,
         "localization_issue_counts": localization_issue_counts,
+        "updatable": index.get("isUpdatable") is True,
     }
 
 
 YOMITAN_SMOKE_CHECKS = {
     "expression_lookup", "reading_lookup", "inflected_lookup", "kana_only_lookup",
     "multiple_readings", "xrefs", "ruby", "examples", "tables", "links", "long_entry",
+    "redirect_localization", "restriction_localization", "preserved_terminology",
+    "repaired_mixed_alphabet", "owned_update_upgrade", "settings_preserved", "no_jitendex",
 }
 
 

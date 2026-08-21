@@ -136,8 +136,10 @@ def _parser() -> argparse.ArgumentParser:
     build_parser = commands.add_parser("build")
     build_parser.add_argument("--run-id", type=int)
     build_parser.add_argument("--output", type=Path, required=True)
+    build_parser.add_argument("--enable-yomitan-updates", action="store_true")
     verify_parser = commands.add_parser("verify")
     verify_parser.add_argument("path", type=Path)
+    verify_parser.add_argument("--require-yomitan-updates", action="store_true")
     goldendict_parser = commands.add_parser("export-goldendict")
     goldendict_parser.add_argument("--run-id", type=int)
     goldendict_parser.add_argument("--output", type=Path, required=True)
@@ -569,11 +571,17 @@ def execute(args: argparse.Namespace) -> Any:
             connection.commit()
             return result
         if args.command == "build":
-            result = build(connection, _active_run(connection, args.run_id), args.output.resolve())
+            result = build(
+                connection, _active_run(connection, args.run_id), args.output.resolve(),
+                updatable=args.enable_yomitan_updates,
+            )
             connection.commit()
             return result
         if args.command == "verify":
-            result = verify(connection, args.path.resolve())
+            result = verify(
+                connection, args.path.resolve(),
+                require_updatable=args.require_yomitan_updates,
+            )
             result.update(validate_archive(args.path.resolve(), config.work_dir / "schemas" / "pinned-yomitan"))
             connection.commit()
             return result
