@@ -571,10 +571,12 @@ HIST-10K-S13-2 — This checks index placement, duplicate members, target langua
 ### HIST-10K-S14 — 14. Run tests and run validation
 
 ~~~bash
-pytest -q
+PYTHONPATH=src .venv/bin/python -m pytest -q
 ~~~
 
 HIST-10K-S14-1 — Observed: 49 passed.
+
+HIST-10K-S14-3 — The original historical shell used bare `pytest -q` and inherited repository import settings. The code block now shows the equivalent self-contained command required for new runs. Without `PYTHONPATH=src`, collection can stop before any test executes.
 
 ~~~bash
 translationctl --config config.luna.clean-v1.toml \

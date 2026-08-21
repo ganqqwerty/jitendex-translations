@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="reproducibility">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/work/reproducibility/jitendex-tags-ru-v1-yomitan.zip!/" />
+      <root url="jar://$PROJECT_DIR$/work/reproducibility/jitendex-tags-ru-v1-goldendict.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
