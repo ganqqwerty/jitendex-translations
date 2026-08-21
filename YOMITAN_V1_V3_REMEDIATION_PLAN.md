@@ -124,6 +124,8 @@ YRP-EXEC-52 — `READY FOR MANUAL UI` for the owned-updater smoke. `scripts/prep
 
 YRP-EXEC-53 — `DONE` for the fixture-aware automated gate. The suite collected 168 tests: 166 passed and the same two documented PostgreSQL integration tests skipped. The new test proves the local old-to-final updater fixture keeps the stable title, preserves dictionary payloads, serves the exact final archive, changes revision, and contains no foreign operational endpoint.
 
+YRP-EXEC-54 — `PASS EXCEPT MANUAL UI` for the consolidated prepublication gate. `scripts/audit_yomitan_v101_release_gate.py` recomputed all five artifact hashes, matched the exact checksum manifest, schema-validated the hosted index, proved byte equality with archive `index.json`, checked all staged download links and the manual-upgrade warning, rejected foreign operational endpoints, and found all 13 required reports. `reports/yomitan_localization/run59-v1.0.1-prepublication-gate.json` has zero findings and status `manual_smoke_pending`; a separate run without `--allow-manual-pending` returned 2 with exactly one finding, `manual_smoke_pending`, proving the publication command fails closed.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.
@@ -713,6 +715,17 @@ PYTHONPATH=src .venv/bin/translationctl --config config.luna.toml \
   record-yomitan-smoke \
   "reports/yomitan_localization/run59-v1.0.1-smoke.json" \
   --actor "$KOL_SMOKE_ACTOR"
+```
+
+YRP-CMD-13A — Run the consolidated fail-closed release gate after recording the smoke report and before any push or draft release.
+
+```sh
+PYTHONPATH=src ./.venv/bin/python scripts/run_with_timeout.py 300 \
+  ./.venv/bin/python scripts/audit_yomitan_v101_release_gate.py \
+  --root . \
+  --schema work/schemas/pinned-yomitan/dictionary-index-schema.json \
+  --smoke reports/yomitan_localization/run59-v1.0.1-smoke.json \
+  --output reports/yomitan_localization/run59-v1.0.1-prepublication-gate.json
 ```
 
 YRP-CMD-14 — Create the draft release and upload only explicit v1.0.1 artifacts. Run this only after all local gates pass.
