@@ -92,7 +92,7 @@ def test_checked_in_pages_have_unique_canonical_urls_and_valid_schema() -> None:
     assert len(pages) == 39
 
 
-def test_homepage_stages_v101_assets_and_manual_upgrade_warning() -> None:
+def test_homepage_stages_v101_assets_without_obsolete_upgrade_warning() -> None:
     homepage = (Path(__file__).parents[1] / "site-home" / "index.html").read_text(
         encoding="utf-8",
     )
@@ -100,7 +100,7 @@ def test_homepage_stages_v101_assets_and_manual_upgrade_warning() -> None:
     assert "releases/tag/v1.0.1" in homepage
     for format_name in ("yomitan", "goldendict", "mdict", "pocketbook", "apple-dictionary"):
         assert f"jp-ru-kolobok-400k-v1.0.1-{format_name}.zip" in homepage
-    assert "один раз импортируйте его вручную" in homepage
+    assert "Важно для пользователей Yomitan v1.0" not in homepage
     assert "releases/download/run59-tags-ru-v1" not in homepage
     assert "jitendex.org/static/yomitan.json" not in homepage.lower()
 
