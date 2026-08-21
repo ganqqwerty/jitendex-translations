@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "examples": true,
+    "expression_lookup": true,
+    "inflected_lookup": true,
+    "kana_only_lookup": true,
+    "links": true,
+    "long_entry": true,
+    "multiple_readings": true,
+    "no_jitendex": true,
+    "owned_update_upgrade": true,
+    "preserved_terminology": true,
+    "reading_lookup": true,
+    "redirect_localization": true,
+    "repaired_mixed_alphabet": true,
+    "restriction_localization": true,
+    "ruby": true,
+    "settings_preserved": false,
+    "tables": true,
+    "xrefs": true
+  },
+  "clean_profile": true,
+  "imported": true,
+  "notes": "после нажатия кнопки обновить словарь, колобок задвоился. теперь у меня два словаря в списке :\n\n\nКолобок 400k rev.2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1\n\n\n\n\nКолобок 400k rev.2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1",
+  "schema_version": 1,
+  "zip_sha256": "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7"
+}

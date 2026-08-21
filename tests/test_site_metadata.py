@@ -137,6 +137,7 @@ def test_yomitan_smoke_page_covers_the_release_contract() -> None:
     assert "run59-v1.0.1-smoke.json" in page
     assert "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7" in page
     assert "http://127.0.0.1:8766/yomitan.json" in page
+    assert "один раз перезагрузи страницу настроек Yomitan" in page
     assert "jitendex.org/static/yomitan.json" not in page.lower()
     assert "github.com/stephenmk/" not in page.lower()
 
@@ -163,3 +164,21 @@ def test_yomitan_smoke_page_pins_every_manual_lookup_and_expected_result() -> No
         "Мы вчера вечером, выпив, ходили по всему городу и вовсю кутили.",
     ):
         assert evidence in page
+
+
+def test_completed_yomitan_smoke_records_the_observed_client_and_refresh() -> None:
+    project_root = Path(__file__).parents[1]
+    payload = json.loads(
+        (project_root / "reports/yomitan_localization/run59-v1.0.1-smoke.json").read_text(
+            encoding="utf-8",
+        )
+    )
+
+    assert payload["clean_profile"] is True
+    assert payload["imported"] is True
+    assert set(payload["checks"]) == YOMITAN_SMOKE_CHECKS
+    assert all(payload["checks"].values())
+    assert "Chrome 151.0.7922.169" in payload["notes"]
+    assert "Yomitan Popup Dictionary 26.7.29.0" in payload["notes"]
+    assert "После однократной перезагрузки" in payload["notes"]
+    assert "Итоговый список установленных словарей: Колобок 400k" in payload["notes"]

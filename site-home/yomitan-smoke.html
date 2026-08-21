@@ -361,14 +361,14 @@
       <div class="scenario-grid">
         <article class="scenario-card wide">
           <p class="card-kicker">owned_update_upgrade</p><h3 class="card-title">Нажми «Обновить словари» в Yomitan</h3>
-          <p class="card-copy">Перед обновлением запомни порядок словарей и включённость Колобка. Yomitan должен запросить локальный индекс и скачать финальный архив.</p>
+          <p class="card-copy">Перед обновлением запомни порядок словарей и включённость Колобка. Yomitan должен запросить локальный индекс и скачать финальный архив. После завершения один раз перезагрузи страницу настроек Yomitan и только затем оцени количество строк и настройки.</p>
           <code class="command">http://127.0.0.1:8766/yomitan.json</code>
           <p class="expected">После обновления название остаётся <code>Колобок 400k</code>, revision становится <code>2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1</code>.</p>
           <label class="check-row"><input type="checkbox" data-check="owned_update_upgrade"><span>Колобок обновился с локального v1.0.0 до финального v1.0.1</span></label>
         </article>
         <article class="scenario-card">
-          <p class="card-kicker">settings_preserved</p><h3 class="card-title">Настройки не сбросились</h3>
-          <p class="card-copy">Сравни порядок словарей и включённость Колобка с состоянием до обновления.</p>
+          <p class="card-kicker">settings_preserved</p><h3 class="card-title">После перезагрузки настройки не сбросились</h3>
+          <p class="card-copy">После однократной перезагрузки страницы настроек должна остаться одна строка Колобка. Сравни порядок словарей и включённость с состоянием до обновления.</p>
           <label class="check-row"><input type="checkbox" data-check="settings_preserved"><span>Порядок и включённость сохранены</span></label>
         </article>
         <article class="scenario-card">

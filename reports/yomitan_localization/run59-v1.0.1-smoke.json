@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "examples": true,
+    "expression_lookup": true,
+    "inflected_lookup": true,
+    "kana_only_lookup": true,
+    "links": true,
+    "long_entry": true,
+    "multiple_readings": true,
+    "no_jitendex": true,
+    "owned_update_upgrade": true,
+    "preserved_terminology": true,
+    "reading_lookup": true,
+    "redirect_localization": true,
+    "repaired_mixed_alphabet": true,
+    "restriction_localization": true,
+    "ruby": true,
+    "settings_preserved": true,
+    "tables": true,
+    "xrefs": true
+  },
+  "clean_profile": true,
+  "imported": true,
+  "notes": "Chrome 151.0.7922.169 Official Build arm64; Yomitan Popup Dictionary 26.7.29.0; Mac OS; en-US. После обновления страница настроек временно показала две одинаковые строки Колобок 400k с финальной revision. После однократной перезагрузки страницы настроек осталась одна строка; включённость словаря сохранилась. Локальный сервер получил один запрос update index и один запрос финального ZIP. Итоговый список установленных словарей: Колобок 400k.",
+  "schema_version": 1,
+  "zip_sha256": "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7"
+}
