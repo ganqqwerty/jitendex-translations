@@ -94,6 +94,8 @@ YRP-EXEC-37 — `DONE` for the permanent visible-Latin gate. The content-freeze 
 
 YRP-EXEC-38 — `DONE` for process watchdogs. All remaining long-running build, verify, packaging, and publication-wait commands must run through `scripts/run_with_timeout.py`, which terminates the complete process group and returns 124 after the declared limit.
 
+YRP-EXEC-39 — `FROZEN` for release identity at content/code commit `7d223f891badf07e1881b8b561ee08a78fa3204b`. `COMPILATION_DATETIME_UTC` is set once to `2026-08-21T08:52:59Z`; version remains `1.0.1`, product ID remains `jp-ru-kolobok-400k`, and the Yomitan installed title remains `Колобок 400k`.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.
