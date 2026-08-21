@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -51,6 +52,9 @@ REQUIRED_REPORTS = (
     "reports/yomitan_localization/run59-v1.0.1-update-index-verify.json",
     "reports/yomitan_localization/run59-v1.0.1-smoke-cases.json",
     "reports/yomitan_localization/v1.0.1-release-notes.md",
+)
+REQUIRED_SUPPORT_FILES = (
+    "site-home/yomitan-smoke.html",
 )
 FORBIDDEN_OPERATIONAL_TEXT = (
     "jitendex.org/static/yomitan.json",
@@ -129,13 +133,28 @@ def audit_release_gate(
             findings.append({"code": "homepage_missing_asset", "path": filename})
     if "один раз импортируйте его вручную" not in homepage:
         findings.append({"code": "homepage_missing_manual_upgrade_warning", "path": str(homepage_path)})
-    operational_text = (hosted_raw.decode("utf-8", errors="replace") + "\n" + homepage).lower()
+    smoke_page_path = root / "site-home" / "yomitan-smoke.html"
+    smoke_page = smoke_page_path.read_text(encoding="utf-8") if smoke_page_path.is_file() else ""
+    smoke_page_check_list = re.findall(r'data-check="([^"]+)"', smoke_page)
+    smoke_page_checks = set(smoke_page_check_list)
+    if smoke_page_checks != YOMITAN_SMOKE_CHECKS or len(smoke_page_check_list) != len(smoke_page_checks):
+        findings.append({"code": "smoke_page_check_contract_mismatch", "path": str(smoke_page_path)})
+    operational_text = (
+        hosted_raw.decode("utf-8", errors="replace") + "\n" + homepage + "\n" + smoke_page
+    ).lower()
     for forbidden in FORBIDDEN_OPERATIONAL_TEXT:
         if forbidden in operational_text:
             findings.append({"code": "foreign_operational_endpoint", "path": forbidden})
 
     missing_reports = [relative for relative in REQUIRED_REPORTS if not (root / relative).is_file()]
     findings.extend({"code": "missing_report", "path": relative} for relative in missing_reports)
+    missing_support_files = [
+        relative for relative in REQUIRED_SUPPORT_FILES if not (root / relative).is_file()
+    ]
+    findings.extend(
+        {"code": "missing_support_file", "path": relative}
+        for relative in missing_support_files
+    )
 
     manual_smoke = "passed"
     if not smoke.is_file():
@@ -171,6 +190,8 @@ def audit_release_gate(
         "manual_smoke": manual_smoke,
         "required_report_count": len(REQUIRED_REPORTS),
         "missing_report_count": len(missing_reports),
+        "required_support_file_count": len(REQUIRED_SUPPORT_FILES),
+        "missing_support_file_count": len(missing_support_files),
         "findings": findings,
         "status": "ready_for_draft" if not findings and manual_smoke == "passed" else (
             "manual_smoke_pending" if not findings and manual_smoke == "pending" else "blocked"

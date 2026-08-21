@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e8462a">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Локальная интерактивная карта ручного smoke-теста Колобок 400k v1.0.1 в Yomitan.">
+  <title>Yomitan smoke · Колобок 400k v1.0.1</title>
+  <link rel="stylesheet" href="site-theme.css">
+  <style>
+    body.smoke-page {
+      margin: 0;
+      background:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        var(--paper);
+      background-size: 32px 32px;
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.55;
+    }
+    .smoke-page main { padding-bottom: 88px; }
+    .smoke-page .page-intro { align-items: start; }
+    .smoke-page .page-intro h1 { max-width: 780px; }
+    .progress-card {
+      position: sticky;
+      top: 18px;
+      min-width: 230px;
+      padding: 22px;
+      border: 1px solid var(--ink);
+      background: var(--surface);
+      box-shadow: 8px 8px 0 var(--yellow);
+    }
+    .progress-number { font-family: var(--serif); font-size: 38px; line-height: 1; }
+    .progress-label { margin-top: 8px; color: var(--muted); font-size: 13px; }
+    .progress-track { height: 8px; margin-top: 16px; background: var(--paper-deep); overflow: hidden; }
+    .progress-fill { width: 0; height: 100%; background: var(--red); transition: width .18s ease; }
+    .status-banner {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: start;
+      margin: 0 0 42px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--yellow);
+      background: var(--surface);
+    }
+    .status-banner strong { color: var(--red-dark); }
+    .status-banner p { margin: 0; color: var(--body-copy); }
+    .section-heading {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      align-items: baseline;
+      margin: 58px 0 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--ink);
+    }
+    .section-no { color: var(--red-dark); font-size: 12px; font-weight: 900; letter-spacing: .12em; }
+    .section-heading h2 { margin: 0; font-family: var(--serif); font-size: clamp(28px, 4vw, 38px); font-weight: 500; }
+    .setup-grid,
+    .scenario-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .scenario-card,
+    .setup-card,
+    .report-card {
+      position: relative;
+      padding: 24px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .scenario-card:has(input:checked),
+    .setup-card:has(input:checked) { border-color: var(--translated); box-shadow: inset 5px 0 0 var(--translated); }
+    .scenario-card.wide,
+    .setup-card.wide { grid-column: 1 / -1; }
+    .card-kicker { margin: 0 0 6px; color: var(--red-dark); font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+    .card-title { margin: 0; font-size: 18px; line-height: 1.35; }
+    .card-copy { margin: 9px 0 0; color: var(--body-copy); font-size: 14px; }
+    .yomitan-target {
+      display: block;
+      margin: 20px 0 14px;
+      padding: 22px 18px;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      background: color-mix(in srgb, var(--yellow) 18%, var(--surface));
+      font-family: var(--japanese);
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 600;
+      line-height: 1.2;
+      text-align: center;
+      user-select: text;
+      cursor: text;
+    }
+    .yomitan-target:focus-visible { outline: 4px solid var(--yellow); outline-offset: 3px; }
+    .target-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 20px 0 14px; }
+    .target-grid .yomitan-target { margin: 0; padding: 16px 8px; font-size: clamp(21px, 3.5vw, 30px); }
+    .expected {
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      color: var(--body-copy);
+      border-left: 3px solid var(--yellow);
+      background: var(--paper-deep);
+      font-size: 13px;
+    }
+    .expected code { color: var(--ink); font-family: var(--sans); font-weight: 750; white-space: normal; }
+    .check-row {
+      display: flex;
+      gap: 11px;
+      align-items: flex-start;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 750;
+    }
+    .check-row input { width: 20px; height: 20px; flex: 0 0 auto; margin: 1px 0 0; accent-color: var(--translated); }
+    .file-link,
+    .inline-link { color: var(--red-dark); text-underline-offset: 3px; }
+    .command {
+      display: block;
+      margin: 14px 0 0;
+      padding: 13px 15px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      background: var(--paper-deep);
+      color: var(--ink);
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .report-card { border-color: var(--ink); box-shadow: 10px 10px 0 var(--yellow); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+    .field { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .field.wide { grid-column: 1 / -1; }
+    .field input,
+    .field textarea {
+      width: 100%;
+      padding: 11px 12px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: var(--surface);
+      font: 14px/1.5 var(--sans);
+    }
+    .field textarea { min-height: 88px; resize: vertical; }
+    .field input:focus,
+    .field textarea:focus { outline: 3px solid var(--yellow); outline-offset: 2px; }
+    .report-preview {
+      max-height: 320px;
+      margin: 18px 0 0;
+      padding: 16px;
+      overflow: auto;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      background: var(--paper-deep);
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+    .button-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .smoke-button {
+      min-height: 44px;
+      padding: 9px 16px;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      border-radius: 0;
+      background: var(--surface);
+      cursor: pointer;
+      font: 800 13px var(--sans);
+    }
+    .smoke-button.primary { color: #171714; background: var(--yellow); }
+    .smoke-button.danger { color: var(--red-dark); border-color: var(--red-dark); }
+    .smoke-button:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+    .smoke-button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+    .report-status { margin: 16px 0 0; color: var(--muted); font-size: 13px; }
+    .report-status.ready { color: var(--translated); font-weight: 850; }
+    .mini-note { margin: 16px 0 0; color: var(--muted); font-size: 12px; }
+    @media (max-width: 900px) {
+      .progress-card { position: static; }
+      .target-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 680px) {
+      .setup-grid,
+      .scenario-grid,
+      .form-grid { grid-template-columns: 1fr; }
+      .field.wide { grid-column: auto; }
+      .target-grid { grid-template-columns: 1fr 1fr; }
+      .status-banner { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .progress-fill { transition: none; }
+    }
+  </style>
+</head>
+<body class="smoke-page">
+  <header class="wrap site-header">
+    <a class="brand" href="index.html"><span class="brand-mark">辞</span><span>Колобок 400k</span></a>
+    <div class="header-actions">
+      <nav class="site-nav" aria-label="Навигация"><a href="#setup">Подготовка</a><a href="#lookups">Поиск</a><a href="#update">Обновление</a><a href="#report">Отчёт</a></nav>
+      <button class="theme-toggle" type="button" aria-label="Переключить тему"><span aria-hidden="true">☾</span></button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="page-intro" aria-labelledby="page-title">
+      <div>
+        <div class="eyebrow">Ручной release gate · v1.0.1</div>
+        <h1 id="page-title">Кликай по словам через <em>Yomitan</em></h1>
+        <p class="lede">Жёлтые поля — точные японские мишени из финального архива. Наведи курсор и удерживай Shift или используй свой триггер Yomitan. После визуальной проверки отметь пункт под карточкой.</p>
+      </div>
+      <aside class="progress-card" aria-live="polite">
+        <div class="progress-number"><span id="progress-done">0</span> / <span id="progress-total">20</span></div>
+        <div class="progress-label" id="progress-label">Подготовка и 18 обязательных проверок</div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+      </aside>
+    </section>
+
+    <div class="status-banner">
+      <strong>Важно</strong>
+      <p>Отмечай только то, что увидел в интерфейсе Yomitan. Страница ничего не проверяет автоматически и хранит отметки только в localStorage этого браузера.</p>
+    </div>
+
+    <section id="setup" aria-labelledby="setup-title">
+      <div class="section-heading"><span class="section-no">00</span><h2 id="setup-title">Подготовка чистого профиля</h2></div>
+      <div class="setup-grid">
+        <article class="setup-card">
+          <p class="card-kicker">Безопасность профиля</p>
+          <h3 class="card-title">Открой новый чистый профиль Chrome</h3>
+          <p class="card-copy">Установи Yomitan в тестовый профиль. Основной профиль не используй: импорт и обновление меняют локальную базу словарей.</p>
+          <label class="check-row"><input id="clean-profile" type="checkbox"><span>Тест идёт в чистом профиле</span></label>
+        </article>
+        <article class="setup-card">
+          <p class="card-kicker">Исходная версия</p>
+          <h3 class="card-title">Импортируй локальный v1.0.0</h3>
+          <p class="card-copy">Сначала запусти updater-сервер. Затем скачай и импортируй старый тестовый архив. Название должно быть <strong>Колобок 400k</strong>, revision оканчивается на <code>v1.0.0-local-smoke</code>.</p>
+          <a class="file-link" href="http://127.0.0.1:8766/jp-ru-kolobok-400k-v1.0.0-local-smoke-yomitan.zip">Скачать тестовый v1.0.0</a>
+          <label class="check-row"><input id="imported" type="checkbox"><span>Старый архив импортирован и название верно</span></label>
+        </article>
+        <article class="setup-card wide">
+          <p class="card-kicker">Два локальных сервера · лимит 2 часа</p>
+          <h3 class="card-title">Команды на случай повторного запуска</h3>
+          <code class="command">./.venv/bin/python scripts/run_with_timeout.py 7200 ./.venv/bin/python -m http.server 8765 --bind 127.0.0.1 --directory site-home</code>
+          <code class="command">./.venv/bin/python scripts/run_with_timeout.py 7200 ./.venv/bin/python -m http.server 8766 --bind 127.0.0.1 --directory work/yomitan-v1.0.1-smoke-server</code>
+        </article>
+      </div>
+    </section>
+
+    <section id="lookups" aria-labelledby="lookups-title">
+      <div class="section-heading"><span class="section-no">01</span><h2 id="lookups-title">Поиск и словоформы</h2></div>
+      <div class="scenario-grid">
+        <article class="scenario-card">
+          <p class="card-kicker">expression_lookup</p><h3 class="card-title">Точное написание</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">食べる</span>
+          <p class="expected">Ожидается заголовок <code>食べる</code>.</p>
+          <label class="check-row"><input type="checkbox" data-check="expression_lookup"><span>Точное написание найдено</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">reading_lookup</p><h3 class="card-title">Поиск по чтению</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">たべる</span>
+          <p class="expected">Ожидается заголовок <code>食べる</code>.</p>
+          <label class="check-row"><input type="checkbox" data-check="reading_lookup"><span>Поиск по чтению работает</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">inflected_lookup</p><h3 class="card-title">Спряжённая форма</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">食べました</span>
+          <p class="expected">Yomitan должен привести форму к <code>食べる</code>.</p>
+          <label class="check-row"><input type="checkbox" data-check="inflected_lookup"><span>Деконъюгация работает</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">kana_only_lookup</p><h3 class="card-title">Слово только каной</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">ありがとう</span>
+          <p class="expected">Ожидается заголовок <code>ありがとう</code>.</p>
+          <label class="check-row"><input type="checkbox" data-check="kana_only_lookup"><span>Кана находится</span></label>
+        </article>
+        <article class="scenario-card wide">
+          <p class="card-kicker">multiple_readings</p><h3 class="card-title">Несколько чтений</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">生</span>
+          <p class="expected">Должны быть доступны чтения: <code>いく, うぶ, き, しょう, せい, なま, なまり, ふ</code>.</p>
+          <label class="check-row"><input type="checkbox" data-check="multiple_readings"><span>Все восемь чтений доступны</span></label>
+        </article>
+      </div>
+    </section>
+
+    <section id="rendering" aria-labelledby="rendering-title">
+      <div class="section-heading"><span class="section-no">02</span><h2 id="rendering-title">Богатое отображение статьи</h2></div>
+      <div class="scenario-grid">
+        <article class="scenario-card">
+          <p class="card-kicker">xrefs + links</p><h3 class="card-title">Перекрёстные ссылки</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">悪どい</span>
+          <p class="expected">Чтение <code>あくどい</code>. Видны внутренняя словарная ссылка, внешняя ссылка и атрибуция JMdict.</p>
+          <label class="check-row"><input type="checkbox" data-check="xrefs"><span>Внутренняя xref-ссылка работает</span></label>
+          <label class="check-row"><input type="checkbox" data-check="links"><span>Внешняя ссылка отображается и открывается</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">ruby</p><h3 class="card-title">Ruby-разметка</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">明白</span>
+          <p class="expected">Чтение <code>めいはく</code>. В статье должна корректно отрисоваться ruby-подпись.</p>
+          <label class="check-row"><input type="checkbox" data-check="ruby"><span>Ruby отображается без поломки вёрстки</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">examples + tables</p><h3 class="card-title">Пример и таблица</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">ＣＤプレーヤー</span>
+          <p class="expected">Чтение <code>シーディープレーヤー</code>. Видны пример, атрибуция Tatoeba и таблица.</p>
+          <label class="check-row"><input type="checkbox" data-check="examples"><span>Пример отображается</span></label>
+          <label class="check-row"><input type="checkbox" data-check="tables"><span>Таблица отображается</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">long_entry</p><h3 class="card-title">Самая длинная статья</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">掛ける</span>
+          <p class="expected">Чтение <code>かける</code>. Большая структурированная статья прокручивается и не ломает popup.</p>
+          <label class="check-row"><input type="checkbox" data-check="long_entry"><span>Длинная статья полностью доступна</span></label>
+        </article>
+      </div>
+    </section>
+
+    <section id="localization" aria-labelledby="localization-title">
+      <div class="section-heading"><span class="section-no">03</span><h2 id="localization-title">Регрессии перевода В1–В3</h2></div>
+      <div class="scenario-grid">
+        <article class="scenario-card">
+          <p class="card-kicker">redirect_localization</p><h3 class="card-title">Redirect на русском</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">社会情報學</span>
+          <p class="expected">Ожидается <code>вариант написания: 社会情報學</code>. Фразы <code>redirected from</code> быть не должно.</p>
+          <label class="check-row"><input type="checkbox" data-check="redirect_localization"><span>Redirect локализован</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">restriction_localization</p><h3 class="card-title">Три класса ограничений</h3>
+          <div class="target-grid">
+            <span class="yomitan-target" lang="ja" tabindex="0">中２</span>
+            <span class="yomitan-target" lang="ja" tabindex="0">オメガ</span>
+            <span class="yomitan-target" lang="ja" tabindex="0">アンド</span>
+          </div>
+          <p class="expected">Ожидается <code>только 中２・中二</code>, <code>только Ω</code>, <code>только ＡＮＤ</code>. Tooltip: <code>допустимо только для этих форм и/или чтений</code>.</p>
+          <label class="check-row"><input type="checkbox" data-check="restriction_localization"><span>Все три ограничения и tooltip локализованы</span></label>
+        </article>
+        <article class="scenario-card wide">
+          <p class="card-kicker">preserved_terminology</p><h3 class="card-title">То, что должно остаться на английском или латинице</h3>
+          <div class="target-grid">
+            <span class="yomitan-target" lang="ja" tabindex="0">悪どい</span>
+            <span class="yomitan-target" lang="ja" tabindex="0">ＣＤプレーヤー</span>
+            <span class="yomitan-target" lang="ja" tabindex="0">Ｗｉｎｄｏｗｓ</span>
+            <span class="yomitan-target" lang="ja" tabindex="0">鱒の介</span>
+            <span class="yomitan-target" lang="ja" tabindex="0">ブルーバック</span>
+            <span class="yomitan-target" lang="ja" tabindex="0">格</span>
+            <span class="yomitan-target" lang="ja" tabindex="0">スベタ</span>
+          </div>
+          <p class="expected">По порядку: <code>JMdict</code>; <code>Tatoeba</code>; <code>операционная система Windows компании Microsoft</code>; <code>чавыча (Oncorhynchus tshawytscha), королевский лосось</code>; <code>синий экран смерти (экран ошибки Windows); BSoD</code>; английское <code>that</code> внутри русского объяснения; <code>Португальский: «espada»</code>.</p>
+          <label class="check-row"><input type="checkbox" data-check="preserved_terminology"><span>Все семь намеренно сохранённых категорий выглядят верно</span></label>
+        </article>
+        <article class="scenario-card wide">
+          <p class="card-kicker">repaired_mixed_alphabet</p><h3 class="card-title">Исправленный смешанный алфавит</h3>
+          <span class="yomitan-target" lang="ja" tabindex="0">バカ騒ぎ</span>
+          <p class="expected">Должно быть: <code>Мы вчера вечером, выпив, ходили по всему городу и вовсю кутили.</code> Бывшего фрагмента <code>losили</code> быть не должно.</p>
+          <label class="check-row"><input type="checkbox" data-check="repaired_mixed_alphabet"><span>Исправленный пример чистый</span></label>
+        </article>
+      </div>
+    </section>
+
+    <section id="update" aria-labelledby="update-title">
+      <div class="section-heading"><span class="section-no">04</span><h2 id="update-title">Обновление через канал Колобка</h2></div>
+      <div class="scenario-grid">
+        <article class="scenario-card wide">
+          <p class="card-kicker">owned_update_upgrade</p><h3 class="card-title">Нажми «Обновить словари» в Yomitan</h3>
+          <p class="card-copy">Перед обновлением запомни порядок словарей и включённость Колобка. Yomitan должен запросить локальный индекс и скачать финальный архив.</p>
+          <code class="command">http://127.0.0.1:8766/yomitan.json</code>
+          <p class="expected">После обновления название остаётся <code>Колобок 400k</code>, revision становится <code>2026.08.21.0-jp-ru-kolobok-400k-v1.0.1-tags-ru-v1</code>.</p>
+          <label class="check-row"><input type="checkbox" data-check="owned_update_upgrade"><span>Колобок обновился с локального v1.0.0 до финального v1.0.1</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">settings_preserved</p><h3 class="card-title">Настройки не сбросились</h3>
+          <p class="card-copy">Сравни порядок словарей и включённость Колобка с состоянием до обновления.</p>
+          <label class="check-row"><input type="checkbox" data-check="settings_preserved"><span>Порядок и включённость сохранены</span></label>
+        </article>
+        <article class="scenario-card">
+          <p class="card-kicker">no_jitendex</p><h3 class="card-title">Английский Jitendex не установился</h3>
+          <p class="card-copy">В списке словарей не появился новый Jitendex. В обновлённом Колобке остаётся русский целевой язык.</p>
+          <label class="check-row"><input type="checkbox" data-check="no_jitendex"><span>Чужой словарь не появился</span></label>
+        </article>
+      </div>
+    </section>
+
+    <section id="report" aria-labelledby="report-title">
+      <div class="section-heading"><span class="section-no">05</span><h2 id="report-title">Готовый smoke-отчёт</h2></div>
+      <article class="report-card">
+        <h3 class="card-title">JSON для release gate</h3>
+        <p class="card-copy">Предпросмотр обновляется сразу. Он содержит ровно те поля, которые принимает <code>record-yomitan-smoke</code>.</p>
+        <div class="form-grid">
+          <label class="field"><span>Версия Chrome</span><input id="chrome-version" type="text" placeholder="например, 140.0.7339.81"></label>
+          <label class="field"><span>Версия Yomitan</span><input id="yomitan-version" type="text" placeholder="например, 25.8.17.0"></label>
+          <label class="field wide"><span>Заметки наблюдателя</span><textarea id="observer-notes" placeholder="Что необычного заметил; если всё штатно, можно оставить пустым."></textarea></label>
+        </div>
+        <pre class="report-preview" id="report-preview" aria-label="Предпросмотр JSON"></pre>
+        <p class="report-status" id="report-status">Отчёт пока неполный.</p>
+        <div class="button-row">
+          <button class="smoke-button primary" id="copy-report" type="button">Скопировать JSON</button>
+          <button class="smoke-button" id="download-report" type="button">Скачать smoke.json</button>
+          <button class="smoke-button danger" id="reset-progress" type="button">Сбросить отметки</button>
+        </div>
+        <p class="mini-note">SHA-256 проверяемого ZIP: <code>f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7</code>.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="wrap site-footer"><span>Локальная карта проверки · данные не отправляются</span><a href="index.html">На главную Колобка</a></footer>
+  <script src="site-theme.js"></script>
+  <script>
+    (() => {
+      const storageKey = 'kolobok-yomitan-smoke-v1.0.1';
+      const requiredChecks = [
+        'examples', 'expression_lookup', 'inflected_lookup', 'kana_only_lookup',
+        'links', 'long_entry', 'multiple_readings', 'no_jitendex',
+        'owned_update_upgrade', 'preserved_terminology', 'reading_lookup',
+        'redirect_localization', 'repaired_mixed_alphabet', 'restriction_localization',
+        'ruby', 'settings_preserved', 'tables', 'xrefs'
+      ];
+      const checkInputs = new Map(
+        [...document.querySelectorAll('[data-check]')].map((input) => [input.dataset.check, input])
+      );
+      const setupInputs = {
+        clean_profile: document.querySelector('#clean-profile'),
+        imported: document.querySelector('#imported')
+      };
+      const environmentInputs = {
+        chrome: document.querySelector('#chrome-version'),
+        yomitan: document.querySelector('#yomitan-version'),
+        notes: document.querySelector('#observer-notes')
+      };
+      const preview = document.querySelector('#report-preview');
+      const status = document.querySelector('#report-status');
+
+      const readState = () => {
+        try {
+          return JSON.parse(localStorage.getItem(storageKey) || '{}');
+        } catch (_) {
+          return {};
+        }
+      };
+
+      const hydrate = () => {
+        const state = readState();
+        Object.entries(setupInputs).forEach(([key, input]) => { input.checked = state[key] === true; });
+        requiredChecks.forEach((key) => { checkInputs.get(key).checked = state.checks?.[key] === true; });
+        Object.entries(environmentInputs).forEach(([key, input]) => { input.value = state.environment?.[key] || ''; });
+      };
+
+      const collect = () => ({
+        clean_profile: setupInputs.clean_profile.checked,
+        imported: setupInputs.imported.checked,
+        checks: Object.fromEntries(requiredChecks.map((key) => [key, checkInputs.get(key).checked])),
+        environment: Object.fromEntries(Object.entries(environmentInputs).map(([key, input]) => [key, input.value.trim()]))
+      });
+
+      const buildNotes = (environment) => {
+        const parts = [];
+        if (environment.chrome) parts.push(`Chrome ${environment.chrome}`);
+        if (environment.yomitan) parts.push(`Yomitan ${environment.yomitan}`);
+        if (environment.notes) parts.push(environment.notes);
+        return parts.join('; ');
+      };
+
+      const buildReport = (state) => ({
+        checks: state.checks,
+        clean_profile: state.clean_profile,
+        imported: state.imported,
+        notes: buildNotes(state.environment),
+        schema_version: 1,
+        zip_sha256: 'f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7'
+      });
+
+      const render = () => {
+        const state = collect();
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        const done = Number(state.clean_profile) + Number(state.imported) + Object.values(state.checks).filter(Boolean).length;
+        const total = requiredChecks.length + 2;
+        document.querySelector('#progress-done').textContent = done;
+        document.querySelector('#progress-total').textContent = total;
+        document.querySelector('#progress-fill').style.width = `${Math.round(done / total * 100)}%`;
+        preview.textContent = JSON.stringify(buildReport(state), null, 2);
+        const complete = done === total;
+        status.textContent = complete
+          ? 'Все обязательные наблюдения отмечены. JSON готов к сохранению.'
+          : `Отчёт пока неполный: осталось ${total - done}.`;
+        status.classList.toggle('ready', complete);
+      };
+
+      const reportText = () => JSON.stringify(buildReport(collect()), null, 2) + '\n';
+      document.querySelectorAll('input, textarea').forEach((input) => input.addEventListener('input', render));
+      document.querySelectorAll('input[type="checkbox"]').forEach((input) => input.addEventListener('change', render));
+
+      document.querySelector('#copy-report').addEventListener('click', async (event) => {
+        await navigator.clipboard.writeText(reportText());
+        const button = event.currentTarget;
+        const original = button.textContent;
+        button.textContent = 'Скопировано';
+        window.setTimeout(() => { button.textContent = original; }, 1400);
+      });
+
+      document.querySelector('#download-report').addEventListener('click', () => {
+        const url = URL.createObjectURL(new Blob([reportText()], {type: 'application/json'}));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'run59-v1.0.1-smoke.json';
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      document.querySelector('#reset-progress').addEventListener('click', () => {
+        localStorage.removeItem(storageKey);
+        [...Object.values(setupInputs), ...checkInputs.values(), ...Object.values(environmentInputs)]
+          .forEach((input) => { input.type === 'checkbox' ? input.checked = false : input.value = ''; });
+        render();
+      });
+
+      hydrate();
+      render();
+    })();
+  </script>
+</body>
+</html>

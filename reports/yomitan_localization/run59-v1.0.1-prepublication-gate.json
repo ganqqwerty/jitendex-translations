@@ -27,8 +27,10 @@
   "hosted_index_sha256": "90017a061ee25d82c1f4fd312175d02c57a792ac1cdea295d21b3ee02e7638c7",
   "manual_smoke": "pending",
   "missing_report_count": 0,
+  "missing_support_file_count": 0,
   "release": "v1.0.1",
   "required_report_count": 14,
+  "required_support_file_count": 1,
   "schema_version": 1,
   "status": "manual_smoke_pending"
 }

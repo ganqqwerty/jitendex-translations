@@ -5,6 +5,7 @@ import json
 import re
 from pathlib import Path
 
+from jitendex_ru.build_dictionary import YOMITAN_SMOKE_CHECKS
 from jitendex_ru.yomitan_remediation import validate_yomitan_metadata
 
 
@@ -120,3 +121,45 @@ def test_hosted_yomitan_index_uses_owned_release_channel() -> None:
     )
     assert "jitendex.org" not in hosted["indexUrl"].lower()
     assert "jitendex.org" not in hosted["downloadUrl"].lower()
+
+
+def test_yomitan_smoke_page_covers_the_release_contract() -> None:
+    project_root = Path(__file__).parents[1]
+    page = (project_root / "site-home" / "yomitan-smoke.html").read_text(
+        encoding="utf-8",
+    )
+
+    page_checks = re.findall(r'data-check="([^"]+)"', page)
+    assert set(page_checks) == YOMITAN_SMOKE_CHECKS
+    assert len(page_checks) == len(YOMITAN_SMOKE_CHECKS)
+    assert page.count('id="clean-profile"') == 1
+    assert page.count('id="imported"') == 1
+    assert "run59-v1.0.1-smoke.json" in page
+    assert "f0e8a6d8823398401994d0c7738aee4dca83b225bf276f9b08282cafbbac68b7" in page
+    assert "http://127.0.0.1:8766/yomitan.json" in page
+    assert "jitendex.org/static/yomitan.json" not in page.lower()
+    assert "github.com/stephenmk/" not in page.lower()
+
+
+def test_yomitan_smoke_page_pins_every_manual_lookup_and_expected_result() -> None:
+    page = (Path(__file__).parents[1] / "site-home" / "yomitan-smoke.html").read_text(
+        encoding="utf-8",
+    )
+
+    for query in (
+        "食べる", "たべる", "食べました", "ありがとう", "生", "悪どい", "明白",
+        "ＣＤプレーヤー", "掛ける", "社会情報學", "中２", "オメガ", "アンド",
+        "Ｗｉｎｄｏｗｓ", "鱒の介", "ブルーバック", "格", "スベタ", "バカ騒ぎ",
+    ):
+        assert f'>{query}</span>' in page
+    for evidence in (
+        "вариант написания: 社会情報學",
+        "только 中２・中二",
+        "только Ω",
+        "только ＡＮＤ",
+        "допустимо только для этих форм и/или чтений",
+        "Oncorhynchus tshawytscha",
+        "Португальский: «espada»",
+        "Мы вчера вечером, выпив, ходили по всему городу и вовсю кутили.",
+    ):
+        assert evidence in page

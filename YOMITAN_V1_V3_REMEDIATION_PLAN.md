@@ -130,6 +130,8 @@ YRP-EXEC-55 — `DONE` for deterministic manual-smoke selection. `scripts/select
 
 YRP-EXEC-56 — `BLOCKED ON USER-OBSERVED YOMITAN UI` after three consecutive goal turns reached the same browser-policy boundary. The two-hour-watchdog local updater server ran for 11 minutes and received no Yomitan request, then was stopped cleanly. The consolidated gate still has five correct artifacts, zero findings, zero missing reports, and only `manual_smoke_pending`. Resume with YSMOKE-V101-2; after a human returns the observed results, complete YRP-CMD-13, rerun YRP-CMD-13A without the pending override, and continue at YRP-PUB-2.
 
+YRP-EXEC-57 — `READY FOR USER CLICK-THROUGH` for YRP-SMOKE-1 through YRP-SMOKE-9. `site-home/yomitan-smoke.html` turns the exact 18-check contract into large Japanese Yomitan targets with archive-backed expectations, persistent local checkboxes, updater instructions, and an exact smoke-report JSON download. The release gate now requires this support page and verifies its check-key contract. The suite collected 170 tests: 168 passed and the same two documented PostgreSQL integration tests skipped. The consolidated gate still has five exact artifacts, zero findings, zero missing reports or support files, and status `manual_smoke_pending` until a person marks only observed UI results. Commit message: `Make Yomitan release smoke directly testable in the browser` because the remaining release barrier needs a low-friction human UI while preserving the fail-closed evidence contract.
+
 ## YRP-SOURCE — Source of truth
 
 YRP-SOURCE-1 — The authoritative database is PostgreSQL configured by `config.luna.toml`. Do not repair the old SQLite database and do not return production writes to SQLite.
