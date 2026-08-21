@@ -11,7 +11,7 @@ from types import MappingProxyType
 from typing import Any
 
 from .attribution import VERSIONED_PRODUCT_NAME, release_description
-from .build_dictionary import MEDIA_SUFFIXES, _frequency_metadata, materialize_run
+from .build_dictionary import MEDIA_SUFFIXES, _frequency_metadata, materialize_localized_run
 from .database import ConnectionLike
 from .jitendex_tags import (
     count_tag_bank_references,
@@ -182,7 +182,7 @@ def entries_from_rows(rows: Sequence[Sequence[Any]]) -> tuple[ExportEntry, ...]:
 
 def prepare_export(connection: ConnectionLike, run_id: int) -> ExportCorpus:
     """Materialize one run and normalize its rich source into the shared model."""
-    run, source_row, rows = materialize_run(connection, run_id)
+    run, source_row, rows, _localization = materialize_localized_run(connection, run_id)
     catalog = load_approved_tag_catalog(connection, run["jitendex_snapshot_id"])
     embedded = localize_embedded_tags(rows, catalog)
     with zipfile.ZipFile(source_row["local_path"]) as source:

@@ -5,6 +5,7 @@ from io import BytesIO
 import pytest
 from PIL import Image
 
+import jitendex_ru.build_dictionary as build_dictionary_module
 from jitendex_ru.batch import claim, make_batches
 from jitendex_ru.apply_translations import _compose_glossary
 from jitendex_ru.build_dictionary import _chunk, build, record_yomitan_smoke, verify
@@ -14,6 +15,26 @@ from jitendex_ru.goldendict import BASENAME as GOLDENDICT_BASENAME, build_golden
 from jitendex_ru.review import apply_adjudication, _review_manifest, _split_review_envelope, ingest_review, make_review_batches
 from jitendex_ru.util import canonical_json, sha256_bytes
 from jitendex_ru.validate_response import ingest_response
+
+
+def test_shared_export_materialization_localizes_source_templates(monkeypatch):
+    rows = [[
+        "語", "ご", "", "", 0,
+        [["redirected from 社会情報學"]],
+        1, "",
+    ]]
+    monkeypatch.setattr(
+        build_dictionary_module,
+        "materialize_run",
+        lambda connection, run_id: ({"id": run_id}, {"id": 1}, rows),
+    )
+
+    _run, _source, localized, counts = build_dictionary_module.materialize_localized_run(
+        object(), 59,
+    )
+
+    assert localized[0][5][0][0] == "вариант написания: 社会情報學"
+    assert counts["redirects_localized"] == 1
 
 
 def test_review_envelope_is_split_at_unit_and_byte_limits():

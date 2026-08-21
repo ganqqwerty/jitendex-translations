@@ -21,7 +21,9 @@ from .attribution import (
     COMPILATION_DATETIME_UTC, DICTIONARY_AUTHORS, DICTIONARY_VERSION,
     VERSIONED_PRODUCT_ID, VERSIONED_PRODUCT_NAME, release_description,
 )
-from .build_dictionary import FIXED_ZIP_TIME, _frequency_metadata, _paths, materialize_run
+from .build_dictionary import (
+    FIXED_ZIP_TIME, _frequency_metadata, _paths, materialize_localized_run,
+)
 from .database import ConnectionLike
 from .db import audit
 from .jitendex_tags import (
@@ -319,7 +321,7 @@ def build_goldendict(
     connection: ConnectionLike, run_id: int, output: Path,
 ) -> dict[str, Any]:
     """Build a deterministic StarDict bundle for GoldenDict."""
-    run, source_row, rows = materialize_run(connection, run_id)
+    run, source_row, rows, _localization = materialize_localized_run(connection, run_id)
     catalog = load_approved_tag_catalog(connection, run["jitendex_snapshot_id"])
     embedded = localize_embedded_tags(rows, catalog)
     groups: dict[str, list[list[Any]]] = defaultdict(list)

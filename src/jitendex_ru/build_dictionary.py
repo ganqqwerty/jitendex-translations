@@ -176,11 +176,19 @@ def materialize_run(
     return run, source_row, rows
 
 
+def materialize_localized_run(
+    connection: ConnectionLike, run_id: int,
+) -> tuple[Any, Any, list[list[Any]], dict[str, int]]:
+    """Materialize one run and localize source-owned rich-content templates."""
+    run, source_row, rows = materialize_run(connection, run_id)
+    localization = localize_yomitan_rows(rows)
+    return run, source_row, rows, localization
+
+
 def build(
     connection: ConnectionLike, run_id: int, output: Path, *, updatable: bool = False,
 ) -> dict[str, Any]:
-    run, source_row, rows = materialize_run(connection, run_id)
-    localization = localize_yomitan_rows(rows)
+    run, source_row, rows, localization = materialize_localized_run(connection, run_id)
     catalog = load_approved_tag_catalog(connection, run["jitendex_snapshot_id"])
     embedded = localize_embedded_tags(rows, catalog)
     media = sorted({path for row in rows for path in _paths(row)})
