@@ -1,0 +1,21 @@
+{
+  "articles": 433885,
+  "embedded_labels_replaced": 0,
+  "embedded_tag_occurrences": 654503,
+  "embedded_tooltips_replaced": 0,
+  "export_id": 90,
+  "files": 370,
+  "graphic_by_localized": 444,
+  "graphic_photo_localized": 60,
+  "graphic_unknown_author_localized": 3,
+  "redirects_localized": 136668,
+  "short_restrictions_localized": 4307,
+  "tag_bank_reference_fields_replaced": 136832,
+  "tag_bank_references": 167269,
+  "tag_bank_rows": 8,
+  "tag_catalog_sha256": "f3f3649806a9de4fc7a0c1a96cffafc343d8d7d31592b0547266809c127a95fa",
+  "tag_catalog_version": "tags-ru-v1",
+  "tooltips_localized": 4307,
+  "updatable": false,
+  "zip_sha256": "199f9bc6e1fa63f0bd47fae972fbe3f35e3cdcb892165d7f421f2ba0e45a4208"
+}

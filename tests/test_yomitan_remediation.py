@@ -5,7 +5,10 @@ import zipfile
 import pytest
 
 from jitendex_ru.attribution import DICTIONARY_VERSION
-from jitendex_ru.yomitan_audit import audit_yomitan_archive
+from jitendex_ru.yomitan_audit import (
+    audit_yomitan_archive, verify_yomitan_visible_latin_approval,
+    write_yomitan_visible_latin_approval,
+)
 from jitendex_ru.yomitan_remediation import (
     FORMS_TOOLTIP_RU,
     PROJECT_URL,
@@ -37,7 +40,7 @@ def test_localizes_every_fixed_v1_shape_without_touching_correct_only_uses():
         {"tag": "span", "lang": "ja", "content": "ＡＮＤ only"},
         {"tag": "div", "data": {"content": "graphic-attribution"}, "content": [
             {"tag": "a", "content": "Photo"}, " by ",
-            {"tag": "a", "content": "Unknown author"},
+            {"tag": "a", "content": "Unknown author"}, " by Unknown author (1909) (",
         ]},
         "read-only member",
         "download-only member",
@@ -50,9 +53,9 @@ def test_localizes_every_fixed_v1_shape_without_touching_correct_only_uses():
         "redirects_localized": 3,
         "tooltips_localized": 1,
         "short_restrictions_localized": 4,
-        "graphic_by_localized": 1,
+        "graphic_by_localized": 2,
         "graphic_photo_localized": 1,
-        "graphic_unknown_author_localized": 1,
+        "graphic_unknown_author_localized": 2,
     }
     glossary = rows[0][5]
     assert glossary[0][0] == f"{REDIRECT_RU_PREFIX}社会情報學"
@@ -66,6 +69,7 @@ def test_localizes_every_fixed_v1_shape_without_touching_correct_only_uses():
     assert glossary[8]["content"] == [
         {"tag": "a", "content": "Фото"}, " — автор: ",
         {"tag": "a", "content": "неизвестный автор"},
+        " — автор: неизвестный автор (1909) (",
     ]
     assert glossary[9:] == ["read-only member", "download-only member", "IF-AND-ONLY-IF"]
     assert localize_yomitan_rows(rows) == {
@@ -197,3 +201,25 @@ def test_archive_audit_records_reproducible_locations_and_counts(tmp_path):
         "mixed_alphabet_token": 1,
     }
     assert report["mixed_alphabet_findings"][0]["member"] == "term_bank_1.json"
+
+
+def test_visible_latin_approval_covers_every_review_identity(tmp_path):
+    archive_path = tmp_path / "reviewed.zip"
+    approval_path = tmp_path / "approval.json"
+    rows = [_row([
+        {"content": ["JMdict", " | Tatoeba "], "data": {"content": "attribution"}, "tag": "div"},
+        {"content": "Португальский: «espada»", "data": {"content": "lang-source-content"}, "tag": "div"},
+        {"content": "бренд Windows", "tag": "li"},
+    ])]
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("index.json", json.dumps({"revision": "test-v1.0.1"}))
+        archive.writestr("term_bank_1.json", json.dumps(rows))
+
+    approval = write_yomitan_visible_latin_approval(archive_path, approval_path)
+
+    assert approval["classification_counts"] == {
+        "MUST_TRANSLATE": 0, "MUST_PRESERVE": 3, "REVIEW": 1,
+    }
+    assert verify_yomitan_visible_latin_approval(
+        archive_path, approval_path,
+    )["visible_latin_approved"]

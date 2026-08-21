@@ -36,7 +36,10 @@ from .run_integrity import run_history_fingerprint, source_identity_report
 from .schema_validation import validate_archive
 from .util import canonical_json, sha256_bytes, sha256_file
 from .validate_response import ValidationFailure, ingest_response
-from .yomitan_audit import write_yomitan_archive_audit, write_yomitan_database_audit
+from .yomitan_audit import (
+    write_yomitan_archive_audit, write_yomitan_database_audit,
+    write_yomitan_visible_latin_approval,
+)
 from .yomitan_remediation import write_yomitan_update_index
 
 
@@ -140,6 +143,7 @@ def _parser() -> argparse.ArgumentParser:
     verify_parser = commands.add_parser("verify")
     verify_parser.add_argument("path", type=Path)
     verify_parser.add_argument("--require-yomitan-updates", action="store_true")
+    verify_parser.add_argument("--lexical-approval", type=Path)
     goldendict_parser = commands.add_parser("export-goldendict")
     goldendict_parser.add_argument("--run-id", type=int)
     goldendict_parser.add_argument("--output", type=Path, required=True)
@@ -181,6 +185,9 @@ def _parser() -> argparse.ArgumentParser:
     update_index = commands.add_parser("generate-yomitan-update-index")
     update_index.add_argument("path", type=Path)
     update_index.add_argument("--output", type=Path, required=True)
+    latin_approval = commands.add_parser("approve-yomitan-visible-latin")
+    latin_approval.add_argument("path", type=Path)
+    latin_approval.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -336,6 +343,15 @@ def execute(args: argparse.Namespace) -> Any:
     if args.command == "generate-yomitan-update-index":
         index = write_yomitan_update_index(args.path.resolve(), args.output.resolve())
         return {"output": str(args.output.resolve()), "revision": index["revision"]}
+    if args.command == "approve-yomitan-visible-latin":
+        approval = write_yomitan_visible_latin_approval(
+            args.path.resolve(), args.output.resolve(),
+        )
+        return {
+            "output": str(args.output.resolve()),
+            "classification_counts": approval["classification_counts"],
+            "review_records_sha256": approval["review_records_sha256"],
+        }
     config = Config.load(args.config)
     database = Database(config)
     if args.command == "init-db":
@@ -581,6 +597,9 @@ def execute(args: argparse.Namespace) -> Any:
             result = verify(
                 connection, args.path.resolve(),
                 require_updatable=args.require_yomitan_updates,
+                lexical_approval=(
+                    args.lexical_approval.resolve() if args.lexical_approval else None
+                ),
             )
             result.update(validate_archive(args.path.resolve(), config.work_dir / "schemas" / "pinned-yomitan"))
             connection.commit()

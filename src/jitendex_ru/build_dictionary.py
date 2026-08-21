@@ -25,6 +25,7 @@ from .yomitan_remediation import (
     YOMITAN_TITLE, build_yomitan_index, localize_yomitan_rows,
     scan_yomitan_rows, validate_yomitan_metadata, yomitan_revision,
 )
+from .yomitan_audit import verify_yomitan_visible_latin_approval
 
 
 MEDIA_SUFFIXES = {".avif", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp3", ".ogg"}
@@ -262,6 +263,7 @@ def build(
 
 def verify(
     connection: ConnectionLike, path: Path, *, require_updatable: bool = False,
+    lexical_approval: Path | None = None,
 ) -> dict[str, Any]:
     zip_hash = sha256_file(path)
     export = connection.execute(
@@ -317,7 +319,7 @@ def verify(
     if article_count != expected:
         raise ValueError(f"expected {expected} articles, found {article_count}")
     connection.execute("UPDATE export SET verified=1 WHERE output_path=? AND zip_sha256=?", (str(path), zip_hash))
-    return {
+    result = {
         "verified": True, "articles": article_count, "files": len(names), "zip_sha256": zip_hash,
         "tag_catalog_version": catalog["version"],
         "tag_catalog_sha256": catalog["source_sha256"],
@@ -326,6 +328,9 @@ def verify(
         "localization_issue_counts": localization_issue_counts,
         "updatable": index.get("isUpdatable") is True,
     }
+    if lexical_approval is not None:
+        result.update(verify_yomitan_visible_latin_approval(path, lexical_approval))
+    return result
 
 
 YOMITAN_SMOKE_CHECKS = {

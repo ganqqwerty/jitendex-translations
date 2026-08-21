@@ -82,13 +82,17 @@ YRP-EXEC-31 — `IN PROGRESS` for the permanent lexical gate. A role-aware datab
 
 YRP-EXEC-32 — `APPROVED` for the residual lexical repair. Detector `yomitan-visible-text-v3` scanned all 2,053,045 accepted targets and selected 27 exact target rows for correction while preserving reviewed brands, taxa, romanized Japanese, grammar quotations, JMdict, Tatoeba, Jitendex, author names, and license identifiers. The lexical audit SHA-256 is `e3447fb4d9e4ba31e0b6c8f3b643b2e26cfde781b17288d3ac2c335002f37775`; the 27-row hash-locked manifest is `terminology/yomitan-v1.0.1-approved-lexical-remediation.json` with SHA-256 `07746f61422324adc5bfd6d5fadb9a12cdc14fba76ca0af8e81883f98bdf0f26`; the separate approval record has SHA-256 `3292a446ff44a69622669889555184c1edd31b777fd40e87bf6718f5cabcf455`.
 
-YRP-EXEC-33 — `DONE` for reviewed image-attribution chrome. The structured build pass now changes all 444 attribution connectors from `by` to `автор`, all 60 generic `Photo` labels to `Фото`, and the one generic `Unknown author` label to `неизвестный автор`. Creator names, original work titles, source links, and license identifiers remain unchanged.
+YRP-EXEC-33 — `DONE` for reviewed image-attribution chrome. The structured build pass now changes all 444 attribution connectors from `by` to `автор`, all 60 generic `Photo` labels to `Фото`, and all three generic `Unknown author` occurrences to `неизвестный автор`. Creator names, original work titles, source links, and license identifiers remain unchanged.
 
 YRP-EXEC-34 — `DONE` for the second production canonicalization. The first transaction applied exactly 27 approved lexical repairs and the second applied zero. Run 59 now has 2,474 immutable canonicalization-history rows: the earlier 2,447 structured/mixed repairs plus these 27 lexical repairs. The final detector reports zero findings across all 2,053,045 accepted targets; validation again reports zero blocking issues and zero batch-membership mismatches.
 
 YRP-EXEC-35 — `DONE` for the final post-data fingerprint. The Run 59 fingerprint is `fa853b11f545436647f3ef1d2c3ad28b64fed5d8644ae459c2185f272cf93eaf`. Article scope, source units, attempts, batches, batch items, reviews, and validation issues are unchanged. Translation history grew only by the approved 27 rows; export tables also contain the separately recorded preflight export 88.
 
 YRP-EXEC-36 — `DONE` for staged owned-update mode. `translationctl build --enable-yomitan-updates` writes the complete Kolobok-owned update tuple, and `translationctl verify --require-yomitan-updates` fails unless that tuple is present and exact. Ordinary preflight builds continue to omit updater fields. The hosted index generator now accepts either staged form and still derives all canonical fields from the archive.
+
+YRP-EXEC-37 — `DONE` for the permanent visible-Latin gate. The content-freeze archive has 353,433 `MUST_PRESERVE` leaves, 19,973 reviewed leaves, and zero `MUST_TRANSLATE` leaves. The checked-in approval covers 12,574 unique exact identities with digest `291c18de9c52a5a18b8826c62f79f9ca00568cdee537c8b27e5a15337e8411d5`; the approval file SHA-256 is `22c1fccd4a36bb74be8739ad2f0654362b595a461e6f5391af50faa9e0cd920b`. Independent verification passed all 131 schema banks and the approval comparison.
+
+YRP-EXEC-38 — `DONE` for process watchdogs. All remaining long-running build, verify, packaging, and publication-wait commands must run through `scripts/run_with_timeout.py`, which terminates the complete process group and returns 124 after the declared limit.
 
 ## YRP-SOURCE — Source of truth
 

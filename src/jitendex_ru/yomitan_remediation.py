@@ -15,7 +15,8 @@ from .attribution import (
     PRODUCT_NAME,
 )
 from .util import (
-    LATIN_LETTER_CLASS, MIXED_ALPHABET_RE, atomic_write, canonical_json,
+    CYRILLIC_RE, LATIN_LETTER_CLASS, MIXED_ALPHABET_RE, atomic_write, canonical_json,
+    sha256_bytes,
 )
 
 
@@ -25,6 +26,8 @@ FORMS_TOOLTIP_SOURCE = "valid only for these forms and/or readings"
 FORMS_TOOLTIP_RU = "допустимо только для этих форм и/или чтений"
 FORM_ONLY_RE = re.compile(r"^(.+?) only$")
 VISIBLE_TOKEN_RE = re.compile(rf"[{LATIN_LETTER_CLASS}\u0400-\u04ff]+")
+LATIN_VISIBLE_RE = re.compile(rf"[{LATIN_LETTER_CLASS}]")
+PRESERVED_VISIBLE_SELECTORS = {"attribution", "lang-source-content"}
 
 YOMITAN_TITLE = PRODUCT_NAME
 PROJECT_URL = "https://ganqqwerty.github.io/jp-ru-kolobok-dictionary/"
@@ -45,7 +48,7 @@ PINNED_LOCALIZATION_COUNTS = {
     "short_restrictions_localized": 4_307,
     "graphic_by_localized": 444,
     "graphic_photo_localized": 60,
-    "graphic_unknown_author_localized": 1,
+    "graphic_unknown_author_localized": 3,
 }
 
 APPROVED_LEXICAL_REMEDIATIONS = {
@@ -237,7 +240,11 @@ def _localize_node(
         if graphic_attribution:
             if node.startswith(" by "):
                 counts["graphic_by_localized"] += 1
-                return f" — автор: {node[4:]}"
+                creator = node[4:]
+                if "Unknown author" in creator:
+                    counts["graphic_unknown_author_localized"] += creator.count("Unknown author")
+                    creator = creator.replace("Unknown author", "неизвестный автор")
+                return f" — автор: {creator}"
             if node == "Photo":
                 counts["graphic_photo_localized"] += 1
                 return "Фото"
@@ -277,6 +284,81 @@ def _visible_strings(node: Any, pointer: str = "") -> Iterator[tuple[str, str]]:
                 yield from _visible_strings(value, f"{pointer}/{key}")
 
 
+def _visible_leaf_records(
+    node: Any, pointer: str = "", *, selector: str | None = None,
+    lang: str | None = None,
+) -> Iterator[dict[str, Any]]:
+    if isinstance(node, str):
+        yield {"pointer": pointer, "text": node, "selector": selector, "lang": lang}
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            yield from _visible_leaf_records(
+                value, f"{pointer}/{index}", selector=selector, lang=lang,
+            )
+    elif isinstance(node, dict):
+        data = node.get("data")
+        own_selector = data.get("content") if isinstance(data, dict) else None
+        own_lang = node.get("lang") if isinstance(node.get("lang"), str) else None
+        for key in ("content", "title"):
+            if key in node:
+                yield from _visible_leaf_records(
+                    node[key], f"{pointer}/{key}",
+                    selector=own_selector or selector, lang=own_lang or lang,
+                )
+
+
+def classify_yomitan_rows(rows: list[list[Any]]) -> dict[str, Any]:
+    counts = {"MUST_TRANSLATE": 0, "MUST_PRESERVE": 0, "REVIEW": 0}
+    preserve_rules: dict[str, int] = {}
+    reviews: list[dict[str, Any]] = []
+    issues: list[dict[str, Any]] = []
+    for row_index, row in enumerate(rows):
+        for leaf in _visible_leaf_records(row[5], "/5"):
+            text = leaf["text"]
+            if not LATIN_VISIBLE_RE.search(text):
+                continue
+            code = None
+            if text.startswith(REDIRECT_SOURCE_PREFIX) or text == FORMS_TOOLTIP_SOURCE:
+                code = "raw_ui_template"
+            elif any(MIXED_ALPHABET_RE.search(token) for token in VISIBLE_TOKEN_RE.findall(text)):
+                code = "mixed_alphabet_token"
+            elif leaf["lang"] == "en" and leaf["selector"] not in PRESERVED_VISIBLE_SELECTORS:
+                code = "unexpected_english_language_markup"
+            if code:
+                counts["MUST_TRANSLATE"] += 1
+                issues.append({"code": code, "row": row_index, **leaf})
+                continue
+            if leaf["selector"] in PRESERVED_VISIBLE_SELECTORS:
+                rule = "attribution" if leaf["selector"] == "attribution" else "source_quotation"
+                counts["MUST_PRESERVE"] += 1
+                preserve_rules[rule] = preserve_rules.get(rule, 0) + 1
+                continue
+            if leaf["lang"] == "ja":
+                counts["MUST_PRESERVE"] += 1
+                preserve_rules["japanese_source"] = preserve_rules.get("japanese_source", 0) + 1
+                continue
+            if not CYRILLIC_RE.search(text) and leaf["selector"] != "graphic-attribution":
+                counts["MUST_PRESERVE"] += 1
+                preserve_rules["code_name_formula_or_source_term"] = (
+                    preserve_rules.get("code_name_formula_or_source_term", 0) + 1
+                )
+                continue
+            counts["REVIEW"] += 1
+            identity = {
+                "text": text, "selector": leaf["selector"], "lang": leaf["lang"],
+            }
+            reviews.append({
+                "identity_sha256": sha256_bytes(canonical_json(identity)),
+                **identity, "row": row_index, "pointer": leaf["pointer"],
+            })
+    return {
+        "classification_counts": counts,
+        "must_preserve_rule_counts": preserve_rules,
+        "review_records": reviews,
+        "must_translate_issues": issues,
+    }
+
+
 def scan_yomitan_rows(rows: list[list[Any]]) -> dict[str, Any]:
     issues: list[dict[str, Any]] = []
     for row_index, row in enumerate(rows):
@@ -307,7 +389,12 @@ def scan_yomitan_rows(rows: list[list[Any]]) -> dict[str, Any]:
     counts: dict[str, int] = {}
     for issue in issues:
         counts[issue["code"]] = counts.get(issue["code"], 0) + 1
-    return {"issues": issues, "issue_counts": counts}
+    classification = classify_yomitan_rows(rows)
+    for issue in classification["must_translate_issues"]:
+        if issue["code"] == "unexpected_english_language_markup":
+            issues.append(issue)
+            counts[issue["code"]] = counts.get(issue["code"], 0) + 1
+    return {"issues": issues, "issue_counts": counts, **classification}
 
 
 def write_yomitan_update_index(archive_path: Path, output_path: Path) -> dict[str, Any]:

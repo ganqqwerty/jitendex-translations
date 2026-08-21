@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .database import ConnectionLike
-from .util import atomic_write, canonical_json, sha256_file
+from .util import atomic_write, canonical_json, sha256_bytes, sha256_file
 from .yomitan_remediation import (
     APPROVED_LEXICAL_REMEDIATIONS, FORMS_TOOLTIP_SOURCE, MIXED_ALPHABET_RE, REDIRECT_SOURCE_PREFIX,
     UNFINISHED_TARGET_TEXTS,
@@ -124,6 +124,9 @@ def audit_yomitan_archive(path: Path, *, run_id: int | None = None) -> dict[str,
     findings: list[dict[str, Any]] = []
     samples: dict[str, list[dict[str, Any]]] = {}
     article_count = 0
+    classification_counts = {"MUST_TRANSLATE": 0, "MUST_PRESERVE": 0, "REVIEW": 0}
+    preserve_rule_counts: dict[str, int] = {}
+    review_groups: dict[str, dict[str, Any]] = {}
     with zipfile.ZipFile(path) as archive:
         index = json.loads(archive.read("index.json"))
         term_names = sorted(
@@ -136,6 +139,21 @@ def audit_yomitan_archive(path: Path, *, run_id: int | None = None) -> dict[str,
             scan = scan_yomitan_rows(rows)
             for code, count in scan["issue_counts"].items():
                 counts[code] = counts.get(code, 0) + count
+            for classification, count in scan["classification_counts"].items():
+                classification_counts[classification] += count
+            for rule, count in scan["must_preserve_rule_counts"].items():
+                preserve_rule_counts[rule] = preserve_rule_counts.get(rule, 0) + count
+            for review in scan["review_records"]:
+                identity = review["identity_sha256"]
+                group = review_groups.setdefault(identity, {
+                    "identity_sha256": identity,
+                    "text": review["text"],
+                    "selector": review["selector"],
+                    "lang": review["lang"],
+                    "occurrences": 0,
+                    "reason": "Reviewed Russian prose with an intentional brand, taxon, acronym, romanized term, quotation, or creator identity.",
+                })
+                group["occurrences"] += 1
             for issue in scan["issues"]:
                 enriched = {"member": member, **issue}
                 if issue["code"] == "mixed_alphabet_token":
@@ -143,6 +161,7 @@ def audit_yomitan_archive(path: Path, *, run_id: int | None = None) -> dict[str,
                 elif len(samples.setdefault(issue["code"], [])) < TEMPLATE_SAMPLE_LIMIT:
                     samples[issue["code"]].append(enriched)
     version_match = re.search(r"(?:^|-)v(\d+(?:\.\d+)+)(?:-|$)", str(index.get("revision", "")))
+    review_records = sorted(review_groups.values(), key=lambda item: item["identity_sha256"])
     return {
         "schema_version": 1,
         "detector_version": DETECTOR_VERSION,
@@ -155,6 +174,10 @@ def audit_yomitan_archive(path: Path, *, run_id: int | None = None) -> dict[str,
         "issue_counts": counts,
         "template_samples": samples,
         "mixed_alphabet_findings": findings,
+        "classification_counts": classification_counts,
+        "must_preserve_rule_counts": preserve_rule_counts,
+        "review_records": review_records,
+        "review_records_sha256": sha256_bytes(canonical_json(review_records)),
     }
 
 
@@ -164,3 +187,44 @@ def write_yomitan_archive_audit(
     report = audit_yomitan_archive(path, run_id=run_id)
     atomic_write(output, canonical_json(report) + b"\n")
     return report
+
+
+def write_yomitan_visible_latin_approval(path: Path, output: Path) -> dict[str, Any]:
+    report = audit_yomitan_archive(path)
+    if report["classification_counts"]["MUST_TRANSLATE"] or report["issue_counts"]:
+        raise ValueError("cannot approve visible Latin while MUST_TRANSLATE issues remain")
+    approval = {
+        "schema_version": 1,
+        "detector_version": report["detector_version"],
+        "reviewer": "main-thread-manual-and-scripted-review",
+        "source_archive_sha256": report["archive_sha256"],
+        "classification_counts": report["classification_counts"],
+        "must_preserve_rule_counts": report["must_preserve_rule_counts"],
+        "review_records_sha256": report["review_records_sha256"],
+        "review_records": report["review_records"],
+    }
+    atomic_write(output, canonical_json(approval) + b"\n")
+    return approval
+
+
+def verify_yomitan_visible_latin_approval(
+    path: Path, approval_path: Path,
+) -> dict[str, Any]:
+    report = audit_yomitan_archive(path)
+    approval = json.loads(approval_path.read_text(encoding="utf-8"))
+    if report["classification_counts"]["MUST_TRANSLATE"] or report["issue_counts"]:
+        raise ValueError("visible-Latin release gate has MUST_TRANSLATE issues")
+    for key in (
+        "detector_version", "classification_counts", "must_preserve_rule_counts",
+        "review_records_sha256",
+    ):
+        if approval.get(key) != report.get(key):
+            raise ValueError(f"visible-Latin approval mismatch for {key}")
+    if approval.get("review_records") != report["review_records"]:
+        raise ValueError("visible-Latin approval records do not match the archive")
+    return {
+        "visible_latin_approved": True,
+        "classification_counts": report["classification_counts"],
+        "must_preserve_rule_counts": report["must_preserve_rule_counts"],
+        "review_records_sha256": report["review_records_sha256"],
+    }
